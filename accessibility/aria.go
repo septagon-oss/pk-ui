@@ -5,8 +5,8 @@ import (
 	"strings"
 	"sync/atomic"
 
-	. "maragu.dev/gomponents"
-	. "maragu.dev/gomponents/html"
+	g "maragu.dev/gomponents"
+	h "maragu.dev/gomponents/html"
 )
 
 // ARIARole represents standard ARIA roles
@@ -322,143 +322,143 @@ func (ap *ARIAProperties) SetTabIndex(tabIndex int) *ARIAProperties {
 }
 
 // ToAttributes converts ARIA properties to gomponents attributes
-func (ap *ARIAProperties) ToAttributes() []Node {
-	var attrs []Node
+func (ap *ARIAProperties) ToAttributes() []g.Node {
+	var attrs []g.Node
 
 	if ap.Role != "" {
-		attrs = append(attrs, Attr("role", string(ap.Role)))
+		attrs = append(attrs, g.Attr("role", string(ap.Role)))
 	}
 
 	if ap.Label != "" {
-		attrs = append(attrs, Attr("aria-label", ap.Label))
+		attrs = append(attrs, g.Attr("aria-label", ap.Label))
 	}
 
 	if ap.LabelledBy != "" {
-		attrs = append(attrs, Attr("aria-labelledby", ap.LabelledBy))
+		attrs = append(attrs, g.Attr("aria-labelledby", ap.LabelledBy))
 	}
 
 	if ap.DescribedBy != "" {
-		attrs = append(attrs, Attr("aria-describedby", ap.DescribedBy))
+		attrs = append(attrs, g.Attr("aria-describedby", ap.DescribedBy))
 	}
 
 	if ap.Checked != nil {
-		attrs = append(attrs, Attr("aria-checked", string(*ap.Checked)))
+		attrs = append(attrs, g.Attr("aria-checked", string(*ap.Checked)))
 	}
 
 	if ap.Disabled != nil {
-		attrs = append(attrs, Attr("aria-disabled", string(*ap.Disabled)))
+		attrs = append(attrs, g.Attr("aria-disabled", string(*ap.Disabled)))
 	}
 
 	if ap.Expanded != nil {
-		attrs = append(attrs, Attr("aria-expanded", string(*ap.Expanded)))
+		attrs = append(attrs, g.Attr("aria-expanded", string(*ap.Expanded)))
 	}
 
 	if ap.HasPopup != "" {
-		attrs = append(attrs, Attr("aria-haspopup", ap.HasPopup))
+		attrs = append(attrs, g.Attr("aria-haspopup", ap.HasPopup))
 	}
 
 	if ap.Hidden != nil {
-		attrs = append(attrs, Attr("aria-hidden", string(*ap.Hidden)))
+		attrs = append(attrs, g.Attr("aria-hidden", string(*ap.Hidden)))
 	}
 
 	if ap.Invalid != nil {
-		attrs = append(attrs, Attr("aria-invalid", string(*ap.Invalid)))
+		attrs = append(attrs, g.Attr("aria-invalid", string(*ap.Invalid)))
 	}
 
 	if ap.Pressed != nil {
-		attrs = append(attrs, Attr("aria-pressed", string(*ap.Pressed)))
+		attrs = append(attrs, g.Attr("aria-pressed", string(*ap.Pressed)))
 	}
 
 	if ap.ReadOnly != nil {
-		attrs = append(attrs, Attr("aria-readonly", string(*ap.ReadOnly)))
+		attrs = append(attrs, g.Attr("aria-readonly", string(*ap.ReadOnly)))
 	}
 
 	if ap.Required != nil {
-		attrs = append(attrs, Attr("aria-required", string(*ap.Required)))
+		attrs = append(attrs, g.Attr("aria-required", string(*ap.Required)))
 	}
 
 	if ap.Selected != nil {
-		attrs = append(attrs, Attr("aria-selected", string(*ap.Selected)))
+		attrs = append(attrs, g.Attr("aria-selected", string(*ap.Selected)))
 	}
 
 	if ap.Live != "" {
-		attrs = append(attrs, Attr("aria-live", ap.Live))
+		attrs = append(attrs, g.Attr("aria-live", ap.Live))
 	}
 
 	if ap.Atomic != nil {
-		attrs = append(attrs, Attr("aria-atomic", string(*ap.Atomic)))
+		attrs = append(attrs, g.Attr("aria-atomic", string(*ap.Atomic)))
 	}
 
 	if ap.Busy != nil {
-		attrs = append(attrs, Attr("aria-busy", string(*ap.Busy)))
+		attrs = append(attrs, g.Attr("aria-busy", string(*ap.Busy)))
 	}
 
 	if ap.Relevant != "" {
-		attrs = append(attrs, Attr("aria-relevant", ap.Relevant))
+		attrs = append(attrs, g.Attr("aria-relevant", ap.Relevant))
 	}
 
 	if ap.Controls != "" {
-		attrs = append(attrs, Attr("aria-controls", ap.Controls))
+		attrs = append(attrs, g.Attr("aria-controls", ap.Controls))
 	}
 
 	if ap.Owns != "" {
-		attrs = append(attrs, Attr("aria-owns", ap.Owns))
+		attrs = append(attrs, g.Attr("aria-owns", ap.Owns))
 	}
 
 	if ap.ActiveDescendant != "" {
-		attrs = append(attrs, Attr("aria-activedescendant", ap.ActiveDescendant))
+		attrs = append(attrs, g.Attr("aria-activedescendant", ap.ActiveDescendant))
 	}
 
 	if ap.ValueMin != nil {
-		attrs = append(attrs, Attr("aria-valuemin", fmt.Sprintf("%.2f", *ap.ValueMin)))
+		attrs = append(attrs, g.Attr("aria-valuemin", fmt.Sprintf("%.2f", *ap.ValueMin)))
 	}
 
 	if ap.ValueMax != nil {
-		attrs = append(attrs, Attr("aria-valuemax", fmt.Sprintf("%.2f", *ap.ValueMax)))
+		attrs = append(attrs, g.Attr("aria-valuemax", fmt.Sprintf("%.2f", *ap.ValueMax)))
 	}
 
 	if ap.ValueNow != nil {
-		attrs = append(attrs, Attr("aria-valuenow", fmt.Sprintf("%.2f", *ap.ValueNow)))
+		attrs = append(attrs, g.Attr("aria-valuenow", fmt.Sprintf("%.2f", *ap.ValueNow)))
 	}
 
 	if ap.ValueText != "" {
-		attrs = append(attrs, Attr("aria-valuetext", ap.ValueText))
+		attrs = append(attrs, g.Attr("aria-valuetext", ap.ValueText))
 	}
 
 	if ap.Level != nil {
-		attrs = append(attrs, Attr("aria-level", fmt.Sprintf("%d", *ap.Level)))
+		attrs = append(attrs, g.Attr("aria-level", fmt.Sprintf("%d", *ap.Level)))
 	}
 
 	if ap.PosInSet != nil {
-		attrs = append(attrs, Attr("aria-posinset", fmt.Sprintf("%d", *ap.PosInSet)))
+		attrs = append(attrs, g.Attr("aria-posinset", fmt.Sprintf("%d", *ap.PosInSet)))
 	}
 
 	if ap.SetSize != nil {
-		attrs = append(attrs, Attr("aria-setsize", fmt.Sprintf("%d", *ap.SetSize)))
+		attrs = append(attrs, g.Attr("aria-setsize", fmt.Sprintf("%d", *ap.SetSize)))
 	}
 
 	if ap.Autocomplete != "" {
-		attrs = append(attrs, Attr("aria-autocomplete", ap.Autocomplete))
+		attrs = append(attrs, g.Attr("aria-autocomplete", ap.Autocomplete))
 	}
 
 	if ap.Multiline != nil {
-		attrs = append(attrs, Attr("aria-multiline", string(*ap.Multiline)))
+		attrs = append(attrs, g.Attr("aria-multiline", string(*ap.Multiline)))
 	}
 
 	if ap.Multiselectable != nil {
-		attrs = append(attrs, Attr("aria-multiselectable", string(*ap.Multiselectable)))
+		attrs = append(attrs, g.Attr("aria-multiselectable", string(*ap.Multiselectable)))
 	}
 
 	if ap.Orientation != "" {
-		attrs = append(attrs, Attr("aria-orientation", ap.Orientation))
+		attrs = append(attrs, g.Attr("aria-orientation", ap.Orientation))
 	}
 
 	if ap.Placeholder != "" {
-		attrs = append(attrs, Attr("aria-placeholder", ap.Placeholder))
+		attrs = append(attrs, g.Attr("aria-placeholder", ap.Placeholder))
 	}
 
 	if ap.TabIndex != nil {
-		attrs = append(attrs, Attr("tabindex", fmt.Sprintf("%d", *ap.TabIndex)))
+		attrs = append(attrs, g.Attr("tabindex", fmt.Sprintf("%d", *ap.TabIndex)))
 	}
 
 	return attrs
@@ -575,19 +575,19 @@ func NewLiveRegion(id, level string) *LiveRegion {
 }
 
 // Render renders the live region as a gomponents Node
-func (lr *LiveRegion) Render() Node {
-	attrs := []Node{
-		ID(lr.ID),
-		Attr("aria-live", lr.Level),
-		Attr("aria-relevant", lr.Relevant),
-		Class("sr-only"), // Screen reader only
+func (lr *LiveRegion) Render() g.Node {
+	attrs := []g.Node{
+		h.ID(lr.ID),
+		g.Attr("aria-live", lr.Level),
+		g.Attr("aria-relevant", lr.Relevant),
+		h.Class("sr-only"), // Screen reader only
 	}
 
 	if lr.Atomic {
-		attrs = append(attrs, Attr("aria-atomic", "true"))
+		attrs = append(attrs, g.Attr("aria-atomic", "true"))
 	}
 
-	return Div(Group(attrs))
+	return h.Div(g.Group(attrs))
 }
 
 // SkipLink creates a skip navigation link
@@ -607,11 +607,11 @@ func NewSkipLink(text, target string) *SkipLink {
 }
 
 // Render renders the skip link as a gomponents Node
-func (sl *SkipLink) Render() Node {
-	return A(
-		Href("#"+sl.Target),
-		Class(sl.Class),
-		Text(sl.Text),
+func (sl *SkipLink) Render() g.Node {
+	return h.A(
+		h.Href("#"+sl.Target),
+		h.Class(sl.Class),
+		g.Text(sl.Text),
 	)
 }
 
@@ -691,17 +691,17 @@ func (ft *FocusTrap) GetJavaScript() string {
 }
 
 // ScreenReaderText creates screen reader only text
-func ScreenReaderText(text string) Node {
-	return Span(
-		Class("sr-only"),
-		Text(text),
+func ScreenReaderText(text string) g.Node {
+	return h.Span(
+		h.Class("sr-only"),
+		g.Text(text),
 	)
 }
 
 // VisuallyHidden creates visually hidden content that's still accessible
-func VisuallyHidden(content Node) Node {
-	return Span(
-		Class("sr-only"),
+func VisuallyHidden(content g.Node) g.Node {
+	return h.Span(
+		h.Class("sr-only"),
 		content,
 	)
 }
@@ -730,22 +730,22 @@ func GenerateID(prefix string) string {
 }
 
 // AddScreenReaderSupport adds screen reader support to existing elements
-func AddScreenReaderSupport(element Node, label, description string) Node {
-	attrs := []Node{element}
+func AddScreenReaderSupport(element g.Node, label, description string) g.Node {
+	attrs := []g.Node{element}
 
 	if label != "" {
-		attrs = append(attrs, Attr("aria-label", label))
+		attrs = append(attrs, g.Attr("aria-label", label))
 	}
 
 	if description != "" {
 		descID := GenerateID("desc")
 		attrs = append(attrs,
-			Attr("aria-describedby", descID),
-			Span(ID(descID), Class("sr-only"), Text(description)),
+			g.Attr("aria-describedby", descID),
+			h.Span(h.ID(descID), h.Class("sr-only"), g.Text(description)),
 		)
 	}
 
-	return Group(attrs)
+	return g.Group(attrs)
 }
 
 // Global accessibility manager instance
