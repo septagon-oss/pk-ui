@@ -739,7 +739,8 @@ func AddScreenReaderSupport(element g.Node, label, description string) g.Node {
 
 	if description != "" {
 		descID := GenerateID("desc")
-		attrs = append(attrs,
+		attrs = append(
+			attrs,
 			g.Attr("aria-describedby", descID),
 			h.Span(h.ID(descID), h.Class("sr-only"), g.Text(description)),
 		)
