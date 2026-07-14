@@ -6,7 +6,7 @@ GO_WORK := GOWORK=off
 else
 GO_WORK := GOWORK=$(abspath $(GOWORK_FILE))
 endif
-GO_ENV ?= $(GO_WORK) GOCACHE=$(CURDIR)/.tmp-go-cache GOTMPDIR=$(CURDIR)/.tmp-go-tmp
+GO_ENV ?= $(GO_WORK) GOTMPDIR=$(CURDIR)/.tmp-go-tmp
 STATICCHECK ?= go run honnef.co/go/tools/cmd/staticcheck@latest
 STATICCHECK_CACHE ?= $(CURDIR)/.tmp-staticcheck-cache
 TMPDIRS := .tmp-go-cache .tmp-go-tmp .tmp-staticcheck-cache
