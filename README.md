@@ -12,5 +12,5 @@ Runtime renderers, product components, private registry wiring, Storybook infras
 ## Verify
 
 ```bash
-go test ./...
+make verify   # go test + go vet + pinned staticcheck + race
 ```

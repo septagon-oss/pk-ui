@@ -1,6 +1,13 @@
 package accessibility
 
+// aria.go — renderer-neutral ARIA primitives and focus-management helpers.
+//
+// Implements: REQ-011.
+// Per: ADR-0029.
+// Discipline: C-14.
+
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -644,10 +651,10 @@ func NewFocusTrap(containerID string) *FocusTrap {
 func (ft *FocusTrap) GetJavaScript() string {
 	return fmt.Sprintf(`
 (function() {
-	const container = document.getElementById('%s');
+	const container = document.getElementById(%s);
 	if (!container) return;
 
-	const focusableElements = container.querySelectorAll('%s');
+	const focusableElements = container.querySelectorAll(%s);
 	const firstFocusable = focusableElements[0];
 	const lastFocusable = focusableElements[focusableElements.length - 1];
 
@@ -680,14 +687,19 @@ func (ft *FocusTrap) GetJavaScript() string {
 		container.removeEventListener('keydown', trapFocus);
 	};
 })();
-`, ft.ContainerID,
-		strings.Join(ft.FocusableSelectors, ","),
+`, javaScriptString(ft.ContainerID),
+		javaScriptString(strings.Join(ft.FocusableSelectors, ",")),
 		func() string {
 			if ft.AutoFocus {
 				return "if (firstFocusable) firstFocusable.focus();"
 			}
 			return ""
 		}())
+}
+
+func javaScriptString(value string) string {
+	encoded, _ := json.Marshal(value) // Strings are always JSON-encodable.
+	return string(encoded)
 }
 
 // ScreenReaderText creates screen reader only text
