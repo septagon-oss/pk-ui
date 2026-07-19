@@ -12,7 +12,7 @@ type NavigationProps struct {
 	Brand    string                  `json:"brand,omitempty"`
 	LogoURL  string                  `json:"logoURL,omitempty"`
 	Items    []molecules.SidebarItem `json:"items"`
-	UserMenu UserMenuProps           `json:"userMenu,omitempty"`
+	UserMenu UserMenuProps           `json:"userMenu"`
 }
 
 // UserMenuProps defines the user menu in navigation.
@@ -29,7 +29,7 @@ type DataGridProps struct {
 	contracts.HTMXProps
 
 	Table      molecules.TableProps      `json:"table"`
-	Pagination molecules.PaginationProps `json:"pagination,omitempty"`
+	Pagination molecules.PaginationProps `json:"pagination"`
 	SearchURL  string                    `json:"searchURL,omitempty"`
 	CreateURL  string                    `json:"createURL,omitempty"`
 	CreateText string                    `json:"createText,omitempty"`
