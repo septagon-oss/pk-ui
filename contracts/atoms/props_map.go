@@ -1,5 +1,8 @@
 package atoms
 
+// Implements: REQ-011.
+// Per: ADR-0031.
+// Discipline: C-14.
 import "encoding/json"
 
 // propsToMap converts any Props struct to map[string]any via JSON round-trip.

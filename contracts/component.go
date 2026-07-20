@@ -10,6 +10,9 @@
 //   - Future renderers (iOS, Android): implement rendering from Props
 package contracts
 
+// Implements: REQ-011.
+// Per: ADR-0031.
+// Discipline: C-14.
 // ComponentProps is the base set of properties shared by all components.
 type ComponentProps struct {
 	ID       string            `json:"id,omitempty"`

@@ -1,5 +1,8 @@
 package contracts
 
+// Implements: REQ-011.
+// Per: ADR-0031.
+// Discipline: C-14.
 // Platform identifies the rendering target.
 type Platform string
 

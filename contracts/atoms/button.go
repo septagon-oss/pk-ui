@@ -1,5 +1,8 @@
 package atoms
 
+// Implements: REQ-011.
+// Per: ADR-0031.
+// Discipline: C-14.
 import "github.com/septagon-oss/platformkit-ui/contracts"
 
 // ButtonProps defines the platform-agnostic properties for a Button component.

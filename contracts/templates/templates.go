@@ -1,5 +1,8 @@
 package templates
 
+// Implements: REQ-011.
+// Per: ADR-0031.
+// Discipline: C-14.
 import "github.com/septagon-oss/platformkit-ui/contracts"
 
 // ListTemplateProps defines properties for an entity list page.
