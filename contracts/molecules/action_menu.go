@@ -3,7 +3,7 @@ package molecules
 // Implements: REQ-011.
 // Per: ADR-0031.
 // Discipline: C-14.
-import "github.com/septagon-oss/platformkit-ui/contracts"
+import "github.com/septagon-oss/pk-ui/contracts"
 
 // ActionMenuProps defines properties for a context/action menu.
 type ActionMenuProps struct {

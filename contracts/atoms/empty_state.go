@@ -3,7 +3,7 @@ package atoms
 // Implements: REQ-011.
 // Per: ADR-0031.
 // Discipline: C-14.
-import "github.com/septagon-oss/platformkit-ui/contracts"
+import "github.com/septagon-oss/pk-ui/contracts"
 
 // EmptyStateProps defines properties for an empty data state placeholder.
 type EmptyStateProps struct {

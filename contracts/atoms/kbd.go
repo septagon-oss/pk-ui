@@ -3,7 +3,7 @@ package atoms
 // Implements: REQ-011.
 // Per: ADR-0031.
 // Discipline: C-14.
-import "github.com/septagon-oss/platformkit-ui/contracts"
+import "github.com/septagon-oss/pk-ui/contracts"
 
 // KbdProps defines properties for a keyboard shortcut display chip.
 type KbdProps struct {

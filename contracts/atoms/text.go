@@ -3,7 +3,7 @@ package atoms
 // Implements: REQ-011.
 // Per: ADR-0031.
 // Discipline: C-14.
-import "github.com/septagon-oss/platformkit-ui/contracts"
+import "github.com/septagon-oss/pk-ui/contracts"
 
 // TextProps defines the platform-agnostic properties for a Text component.
 type TextProps struct {

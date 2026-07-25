@@ -1,4 +1,4 @@
-# platformkit-ui
+# pk-ui
 
 Accessible, server-friendly UI foundation packages for PlatformKit and other Go/web apps.
 

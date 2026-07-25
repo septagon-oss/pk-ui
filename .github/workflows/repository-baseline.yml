@@ -1,0 +1,24 @@
+name: Repository Baseline
+on:
+  push: { branches: [main] }
+  pull_request: {}
+  schedule:
+    - cron: '0 12 * * *'
+permissions: { contents: read }
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify required files
+        run: |
+          for f in LICENSE README.md SECURITY.md CONTRIBUTING.md; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Missing required file: $f"
+              exit 1
+            fi
+          done
+          if [ ! -f CODEOWNERS ] && [ ! -f .github/CODEOWNERS ] && [ ! -f docs/CODEOWNERS ]; then
+            echo "::error::Missing CODEOWNERS (root, .github/, or docs/)"
+            exit 1
+          fi

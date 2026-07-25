@@ -5,8 +5,8 @@
 package organisms
 
 import (
-	"github.com/septagon-oss/platformkit-ui/contracts"
-	"github.com/septagon-oss/platformkit-ui/contracts/molecules"
+	"github.com/septagon-oss/pk-ui/contracts"
+	"github.com/septagon-oss/pk-ui/contracts/molecules"
 )
 
 // NavigationProps defines properties for the main navigation.
