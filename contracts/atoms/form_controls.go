@@ -15,6 +15,7 @@ type CheckboxProps struct {
 	Indeterminate bool   `json:"indeterminate,omitempty"`
 	Value         string `json:"value,omitempty"`
 	Required      bool   `json:"required,omitempty"`
+	HelpText      string `json:"helpText,omitempty"`
 }
 
 // ToMap converts CheckboxProps to map[string]any for unified Component construction.

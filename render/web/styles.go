@@ -58,6 +58,13 @@ func TextClasses(color, size, weight string) tw.ClassList {
 	return cl
 }
 
+// InlineCodeClasses returns the mono chip list for short inline values —
+// identifiers, secrets, keystrokes — matching the Kbd renderer's look.
+func InlineCodeClasses() tw.ClassList { return clKbd }
+
+// HelpTextClasses returns the muted help-line list form controls use.
+func HelpTextClasses() tw.ClassList { return clHelp }
+
 // TableClassSet names every class list the Table renderer composes, so a
 // script that builds rows at runtime styles them identically.
 type TableClassSet struct {

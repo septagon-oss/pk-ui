@@ -289,6 +289,7 @@ func Checkbox(p atoms.CheckboxProps) g.Node {
 	box := []g.Node{
 		h.Class(clCheckbox.Compile()), h.ID(id), h.Name(p.Name), h.Type("checkbox"),
 	}
+	box = append(box, attrPairs(p.Attrs)...)
 	if p.Value != "" {
 		box = append(box, h.Value(p.Value))
 	}
@@ -301,10 +302,21 @@ func Checkbox(p atoms.CheckboxProps) g.Node {
 	if p.Disabled {
 		box = append(box, h.Disabled())
 	}
-	return h.Div(
+	if p.HelpText != "" {
+		box = append(box, g.Attr("aria-describedby", id+"-help"))
+	}
+	row := []g.Node{
 		h.Class(clCheckRow.Compile()),
 		h.Input(box...),
 		h.Label(h.For(id), h.Class(clLabel.Compile()), g.Text(p.Label)),
+	}
+	if p.HelpText == "" {
+		return h.Div(row...)
+	}
+	return h.Div(
+		h.Class(clFieldWrap.Compile()),
+		h.Div(row...),
+		h.P(h.ID(id+"-help"), h.Class(clHelp.Compile()), g.Text(p.HelpText)),
 	)
 }
 
