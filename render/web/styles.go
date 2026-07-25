@@ -65,6 +65,11 @@ func InlineCodeClasses() tw.ClassList { return clKbd }
 // HelpTextClasses returns the muted help-line list form controls use.
 func HelpTextClasses() tw.ClassList { return clHelp }
 
+// CardClasses returns the Card surface list, for elements that need the
+// card treatment but different semantics than the Card renderer's <div> —
+// a form's <fieldset>, for one.
+func CardClasses() tw.ClassList { return clCard }
+
 // TableClassSet names every class list the Table renderer composes, so a
 // script that builds rows at runtime styles them identically.
 type TableClassSet struct {
