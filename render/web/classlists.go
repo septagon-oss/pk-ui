@@ -236,7 +236,8 @@ var (
 	clCardDesc = tw.New().FontSize(tw.TextSM).TextColor(tw.FgMuted)
 
 	// Breadcrumb.
-	clBreadcrumb    = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S2).FontSize(tw.TextSM)
+	clBreadcrumb = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S2).FontSize(tw.TextSM).
+			ListStyle("none").Margin(tw.S0).Padding(tw.S0)
 	clBreadcrumbSep = tw.New().TextColor(tw.FgTertiary)
 	clBreadcrumbCur = tw.New().TextColor(tw.FgPrimary).FontWeight(tw.FontMedium)
 
