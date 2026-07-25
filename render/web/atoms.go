@@ -105,15 +105,16 @@ func Input(p atoms.InputProps) g.Node {
 	if typ == "" {
 		typ = "text"
 	}
-	cl := clInput
+	cl := clInput.Merge(clInputNormal)
 	if p.Error != "" {
-		cl = cl.Merge(clInputError)
+		cl = clInput.Merge(clInputError)
 	}
 
 	input := []g.Node{
 		classes(cl.Compile(), p.Class),
 		h.ID(id), h.Name(p.Name), h.Type(typ),
 	}
+	input = append(input, attrPairs(p.Attrs)...)
 	input = append(input, htmxAttrs(p.HTMXProps)...)
 	if p.Value != "" {
 		input = append(input, h.Value(p.Value))
@@ -164,15 +165,80 @@ func Input(p atoms.InputProps) g.Node {
 	return h.Div(field...)
 }
 
+// Select renders atoms.SelectProps as a labelled native <select>, styled as
+// an input-family control. A Placeholder renders as an empty leading option
+// so an untouched control has no accidental value; when the field is
+// Required the placeholder is how "nothing chosen yet" stays expressible.
+func Select(p atoms.SelectProps) g.Node {
+	id := p.ID
+	if id == "" && p.Name != "" {
+		id = "pk-select-" + p.Name
+	}
+	cl := clInput.Merge(clInputNormal)
+	if p.Error != "" {
+		cl = clInput.Merge(clInputError)
+	}
+
+	var options []g.Node
+	if p.Placeholder != "" || !p.Required {
+		label := p.Placeholder
+		if label == "" {
+			label = "Choose…"
+		}
+		options = append(options, h.Option(h.Value(""), g.Text(label)))
+	}
+	for _, o := range p.Options {
+		opt := []g.Node{h.Value(o.Value), g.Text(o.Label)}
+		if o.Value == p.Value && p.Value != "" {
+			opt = append(opt, h.Selected())
+		}
+		if o.Disabled {
+			opt = append(opt, h.Disabled())
+		}
+		options = append(options, h.Option(opt...))
+	}
+
+	sel := []g.Node{
+		classes(cl.Compile(), p.Class),
+		h.ID(id), h.Name(p.Name),
+	}
+	sel = append(sel, attrPairs(p.Attrs)...)
+	sel = append(sel, htmxAttrs(p.HTMXProps)...)
+	if p.Required {
+		sel = append(sel, h.Required())
+	}
+	if p.Disabled {
+		sel = append(sel, h.Disabled())
+	}
+	if p.Error != "" {
+		sel = append(sel, g.Attr("aria-invalid", "true"), g.Attr("aria-describedby", id+"-error"))
+	} else if p.HelpText != "" {
+		sel = append(sel, g.Attr("aria-describedby", id+"-help"))
+	}
+	sel = append(sel, options...)
+
+	field := []g.Node{h.Class(clFieldWrap.Compile())}
+	if p.Label != "" {
+		field = append(field, Label(atoms.LabelProps{Text: p.Label, For: id, Required: p.Required}))
+	}
+	field = append(field, h.Select(sel...))
+	if p.Error != "" {
+		field = append(field, h.P(h.ID(id+"-error"), h.Class(clFieldErr.Compile()), g.Text(p.Error)))
+	} else if p.HelpText != "" {
+		field = append(field, h.P(h.ID(id+"-help"), h.Class(clHelp.Compile()), g.Text(p.HelpText)))
+	}
+	return h.Div(field...)
+}
+
 // Textarea renders atoms.TextareaProps as a labelled multi-line field.
 func Textarea(p atoms.TextareaProps) g.Node {
 	id := p.ID
 	if id == "" && p.Name != "" {
 		id = "pk-textarea-" + p.Name
 	}
-	cl := clInput
+	cl := clInput.Merge(clInputNormal)
 	if p.ErrorMessage != "" {
-		cl = cl.Merge(clInputError)
+		cl = clInput.Merge(clInputError)
 	}
 	rows := p.Rows
 	if rows == 0 {
@@ -182,6 +248,7 @@ func Textarea(p atoms.TextareaProps) g.Node {
 		classes(cl.Compile(), p.Class),
 		h.ID(id), h.Name(p.Name), h.Rows(itoa(rows)),
 	}
+	area = append(area, attrPairs(p.Attrs)...)
 	area = append(area, htmxAttrs(p.HTMXProps)...)
 	if p.Placeholder != "" {
 		area = append(area, h.Placeholder(p.Placeholder))
@@ -335,12 +402,12 @@ func Spinner(p atoms.SpinnerProps) g.Node {
 
 // EmptyState renders atoms.EmptyStateProps.
 func EmptyState(p atoms.EmptyStateProps) g.Node {
-	cl := clEmpty
+	cl := clEmpty.Merge(clEmptyPad)
+	if p.Compact {
+		cl = clEmpty.Merge(clEmptyCompact)
+	}
 	if p.Bordered {
 		cl = cl.Merge(clEmptyBordered)
-	}
-	if p.Compact {
-		cl = cl.Merge(clEmptyCompact)
 	}
 	var children []g.Node
 	children = append(children, baseAttrs(p.ComponentProps)...)
@@ -410,9 +477,9 @@ func Link(p atoms.LinkProps) g.Node {
 
 // Tag renders atoms.TagProps; removable tags post to OnRemoveURL.
 func Tag(p atoms.TagProps) g.Node {
-	cl := clTag
+	cl := clTagBase.Merge(clTagIdle)
 	if p.Selected {
-		cl = cl.Merge(clTagSelected)
+		cl = clTagBase.Merge(clTagSelected)
 	}
 	var children []g.Node
 	children = append(children, baseAttrs(p.ComponentProps)...)

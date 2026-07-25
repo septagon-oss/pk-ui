@@ -76,6 +76,7 @@ type SearchBarProps struct {
 	contracts.HTMXProps
 
 	SearchURL    string `json:"searchURL"`
+	Label        string `json:"label,omitempty"` // accessible name for the input
 	Placeholder  string `json:"placeholder,omitempty"`
 	Instant      bool   `json:"instant,omitempty"` // search-as-you-type
 	ShowClear    bool   `json:"showClear,omitempty"`

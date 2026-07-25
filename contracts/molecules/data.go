@@ -27,6 +27,7 @@ type TableColumn struct {
 	Key      string `json:"key"`
 	Label    string `json:"label"`
 	Sortable bool   `json:"sortable,omitempty"`
+	Primary  bool   `json:"primary,omitempty"` // emphasized identity cell
 	Width    string `json:"width,omitempty"`
 	Align    string `json:"align,omitempty"` // left, center, right
 }

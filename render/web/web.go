@@ -56,6 +56,23 @@ func baseAttrs(p contracts.ComponentProps, extra ...g.Node) []g.Node {
 	return append(nodes, extra...)
 }
 
+// attrPairs renders a ComponentProps.Attrs map in deterministic order. Form
+// controls apply it directly to the control element (not the field wrapper),
+// so contract attributes like minlength, autocomplete, or data-* land where
+// browsers and scripts read them.
+func attrPairs(attrs map[string]string) []g.Node {
+	keys := make([]string, 0, len(attrs))
+	for k := range attrs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	nodes := make([]g.Node, 0, len(keys))
+	for _, k := range keys {
+		nodes = append(nodes, g.Attr(k, attrs[k]))
+	}
+	return nodes
+}
+
 // htmxAttrs renders HTMXProps as hx-* attributes; zero values emit nothing,
 // so plain server-rendered pages carry no HTMX residue.
 func htmxAttrs(p contracts.HTMXProps) []g.Node {

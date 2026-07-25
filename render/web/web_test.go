@@ -124,6 +124,19 @@ func gallery() []g.Node {
 			Columns:   []molecules.TableColumn{{Key: "a", Label: "A"}},
 			EmptyText: "No rows.", Compact: true,
 		}),
+		Table(molecules.TableProps{
+			Sortable: true, Striped: true, Selectable: true,
+			Columns: []molecules.TableColumn{
+				{Key: "name", Label: "Name", Sortable: true, Primary: true},
+				{Key: "count", Label: "Count", Sortable: true, Align: "right"},
+				{Key: "note", Label: "Note"},
+			},
+			Rows: []molecules.TableRow{
+				{ID: "r1", Cells: map[string]any{"name": "First", "count": 3, "note": "odd"}},
+				{ID: "r2", Cells: map[string]any{"name": "Second", "count": 1, "note": "even"}},
+				{ID: "r3", Cells: map[string]any{"name": "Third", "count": 2}},
+			},
+		}),
 
 		Card(molecules.CardProps{Title: "Plain card", Description: "With copy."}),
 		Card(molecules.CardProps{Title: "Go somewhere", Clickable: true, Href: "/detail"}),
@@ -134,6 +147,16 @@ func gallery() []g.Node {
 
 		Pagination(molecules.PaginationProps{CurrentPage: 5, TotalPages: 12, BaseURL: "/rows"}),
 		Pagination(molecules.PaginationProps{CurrentPage: 1, TotalPages: 2, BaseURL: "/few"}),
+		Pagination(molecules.PaginationProps{CurrentPage: 1}),
+		Pagination(molecules.PaginationProps{CurrentPage: 4}),
+
+		Select(atoms.SelectProps{Name: "kind", Label: "Kind", Required: true,
+			Options: []atoms.SelectOption{{Label: "Post", Value: "post"}, {Label: "Page", Value: "page"}},
+			Value:   "post", HelpText: "What the entry renders as."}),
+		Select(atoms.SelectProps{Name: "state", Label: "State", Placeholder: "Any state",
+			Options: []atoms.SelectOption{{Label: "Draft", Value: "draft"}},
+			Error:   "Pick a state."}),
+		SearchBar(molecules.SearchBarProps{Label: "Search tenants", Placeholder: "Filter this page…"}),
 
 		Tabs(molecules.TabsProps{ActiveTab: "b", Items: []molecules.TabItem{
 			{Key: "a", Label: "First", URL: "/tab/a"}, {Key: "b", Label: "Second"},
@@ -260,7 +283,7 @@ func TestUnimplementedListIsHonest(t *testing.T) {
 		"atoms.Slider", "atoms.Toast", "atoms.Toggle", "atoms.Tooltip",
 		"molecules.Accordion", "molecules.ActionMenu", "molecules.Autocomplete",
 		"molecules.DatePicker", "molecules.Drawer", "molecules.Dropdown",
-		"molecules.FileUpload", "molecules.Modal", "molecules.SearchBar",
+		"molecules.FileUpload", "molecules.Modal",
 		"molecules.Sidebar", "molecules.Stepper",
 	}
 	if len(unimplemented) == 0 {

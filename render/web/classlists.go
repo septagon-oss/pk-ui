@@ -30,10 +30,15 @@ var (
 		})
 
 	// Button: base plus one list per variant.
+	// Variant discipline, applied to every base+variant pair in this file: a
+	// base fragment never declares a property any of its variants declares.
+	// Two single-class utilities on one element have equal specificity, so
+	// stylesheet order — not merge order — would pick the winner.
+	// TestComposedListsHaveNoPropertyCollisions enforces this structurally.
 	clButtonBase = tw.New().
 			Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
 			Gap(tw.S2).FontWeight(tw.FontSemibold).
-			Rounded(tw.RadiusMD).Border(tw.Border1).BorderColor(tw.ColorTransparent).
+			Rounded(tw.RadiusMD).Border(tw.Border1).
 			Cursor(tw.CursorPointer).
 			Transition(tw.TransitionColors).
 			On(tw.StateDisabled, func(c tw.ClassList) tw.ClassList {
@@ -42,22 +47,22 @@ var (
 		Merge(clFocusRing)
 
 	clButtonVariant = map[string]tw.ClassList{
-		"primary": tw.New().Bg(tw.SurfaceBrand).TextColor(tw.FgOnBrand).
+		"primary": tw.New().Bg(tw.SurfaceBrand).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent).
 			On(tw.StateHover, hoverBg(tw.SurfaceBrandHover)),
 		"secondary": tw.New().Bg(tw.SurfacePrimary).TextColor(tw.FgPrimary).
 			BorderColor(tw.BorderPrimary).
 			On(tw.StateHover, hoverBg(tw.SurfaceHover)),
-		"success": tw.New().Bg(tw.SurfaceSuccess).TextColor(tw.FgOnBrand),
-		"warning": tw.New().Bg(tw.SurfaceWarning).TextColor(tw.FgOnBrand),
-		"error":   tw.New().Bg(tw.SurfaceDanger).TextColor(tw.FgOnBrand),
-		"danger":  tw.New().Bg(tw.SurfaceDanger).TextColor(tw.FgOnBrand),
-		"info":    tw.New().Bg(tw.SurfaceInfo).TextColor(tw.FgOnBrand),
+		"success": tw.New().Bg(tw.SurfaceSuccess).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
+		"warning": tw.New().Bg(tw.SurfaceWarning).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
+		"error":   tw.New().Bg(tw.SurfaceDanger).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
+		"danger":  tw.New().Bg(tw.SurfaceDanger).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
+		"info":    tw.New().Bg(tw.SurfaceInfo).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
 		"outline": tw.New().Bg(tw.ColorTransparent).TextColor(tw.FgBrand).
 			BorderColor(tw.BorderBrand).
 			On(tw.StateHover, hoverBg(tw.SurfaceBrandSoft)),
-		"ghost": tw.New().Bg(tw.ColorTransparent).TextColor(tw.FgPrimary).
+		"ghost": tw.New().Bg(tw.ColorTransparent).TextColor(tw.FgPrimary).BorderColor(tw.ColorTransparent).
 			On(tw.StateHover, hoverBg(tw.SurfaceHover)),
-		"link": tw.New().Bg(tw.ColorTransparent).TextColor(tw.FgLink).Underline().
+		"link": tw.New().Bg(tw.ColorTransparent).TextColor(tw.FgLink).BorderColor(tw.ColorTransparent).Underline().
 			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgLinkHover) }),
 	}
 
@@ -94,7 +99,7 @@ var (
 	// Alert.
 	clAlertBase = tw.New().
 			Display(tw.DisplayFlex).Gap(tw.S3).Rounded(tw.RadiusLG).Padding(tw.S4).
-			Border(tw.Border1).BorderColor(tw.ColorTransparent)
+			Border(tw.Border1)
 
 	clAlertVariant = map[string]tw.ClassList{
 		"success": tw.New().Bg(tw.SurfaceSuccessSoft).TextColor(tw.FgSuccess).BorderColor(tw.BorderSuccess),
@@ -117,7 +122,7 @@ var (
 
 	clInput = tw.New().
 		Display(tw.DisplayBlock).Width(tw.SFull).
-		Rounded(tw.RadiusMD).Border(tw.Border1).BorderColor(tw.BorderPrimary).
+		Rounded(tw.RadiusMD).Border(tw.Border1).
 		Bg(tw.SurfacePrimary).TextColor(tw.FgPrimary).
 		PaddingX(tw.S3).PaddingY(tw.S2).FontSize(tw.TextSM).
 		On(tw.StatePlaceholder, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgPlaceholder) }).
@@ -126,7 +131,8 @@ var (
 		}).
 		Merge(clFocusRing)
 
-	clInputError = tw.New().BorderColor(tw.BorderDanger)
+	clInputNormal = tw.New().BorderColor(tw.BorderPrimary)
+	clInputError  = tw.New().BorderColor(tw.BorderDanger)
 
 	clCheckbox = tw.New().
 			Width(tw.S4).Height(tw.S4).Rounded(tw.RadiusSM).
@@ -134,6 +140,17 @@ var (
 			Cursor(tw.CursorPointer).Merge(clFocusRing)
 
 	clCheckRow = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).Gap(tw.S2)
+
+	// Search bar: a bordered wrapper that reads as one field, hosting a
+	// borderless input so the glyph and the text share the control.
+	clSearchWrap = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).Gap(tw.S2).
+			Rounded(tw.RadiusMD).Border(tw.Border1).BorderColor(tw.BorderPrimary).
+			Bg(tw.SurfacePrimary).PaddingX(tw.S3).Flex1().MaxWScaled(tw.MaxWMD).
+			TextColor(tw.FgMuted)
+	clSearchInput = tw.New().Width(tw.SFull).Border(tw.Border0).Bg(tw.ColorTransparent).
+			TextColor(tw.FgPrimary).PaddingY(tw.S2).FontSize(tw.TextSM).
+			On(tw.StatePlaceholder, func(cl tw.ClassList) tw.ClassList { return cl.TextColor(tw.FgPlaceholder) })
+	clSrOnly = tw.New().SrOnly()
 
 	// Text and headings.
 	clTextColor = map[string]tw.Color{
@@ -177,7 +194,8 @@ var (
 
 	clEmpty = tw.New().
 		Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Items(tw.ItemsCenter).
-		Justify(tw.JustifyCenter).Gap(tw.S3).Padding(tw.S12).TextAlign(tw.TextCenter)
+		Justify(tw.JustifyCenter).Gap(tw.S3).TextAlign(tw.TextCenter)
+	clEmptyPad      = tw.New().Padding(tw.S12)
 	clEmptyBordered = tw.New().Border(tw.Border1).BorderColor(tw.BorderPrimary).
 			BorderStyle(tw.BorderStyle("dashed")).Rounded(tw.RadiusLG)
 	clEmptyCompact = tw.New().Padding(tw.S6)
@@ -195,11 +213,11 @@ var (
 		On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgLinkHover) }).
 		Merge(clFocusRing)
 
-	clTag = tw.New().
-		Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).Gap(tw.S1).
-		Rounded(tw.RadiusMD).Border(tw.Border1).BorderColor(tw.BorderPrimary).
-		Bg(tw.SurfacePrimary).TextColor(tw.FgSecondary).
-		PaddingX(tw.S2).PaddingY(tw.S0_5).FontSize(tw.TextXS)
+	clTagBase = tw.New().
+			Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).Gap(tw.S1).
+			Rounded(tw.RadiusMD).Border(tw.Border1).
+			PaddingX(tw.S2).PaddingY(tw.S0_5).FontSize(tw.TextXS)
+	clTagIdle     = tw.New().BorderColor(tw.BorderPrimary).Bg(tw.SurfacePrimary).TextColor(tw.FgSecondary)
 	clTagSelected = tw.New().BorderColor(tw.BorderBrand).Bg(tw.SurfaceBrandSoft).TextColor(tw.FgBrand)
 
 	// Layouts.
@@ -216,13 +234,30 @@ var (
 	// Table.
 	clTableWrap = tw.New().Width(tw.SFull).Overflow(tw.OverflowAuto).
 			Rounded(tw.RadiusLG).Border(tw.Border1).BorderColor(tw.BorderPrimary)
-	clTable     = tw.New().Width(tw.SFull).FontSize(tw.TextSM).TextColor(tw.FgPrimary)
-	clTableHead = tw.New().Bg(tw.SurfaceSecondary).TextAlign(tw.TextLeft)
-	clTableTh   = tw.New().PaddingX(tw.S4).PaddingY(tw.S3).FontWeight(tw.FontSemibold).
+	clTable       = tw.New().Width(tw.SFull).FontSize(tw.TextSM).TextColor(tw.FgPrimary)
+	clTableHead   = tw.New().Bg(tw.SurfaceSecondary).TextAlign(tw.TextLeft)
+	clTableThBase = tw.New().FontWeight(tw.FontSemibold).
 			FontSize(tw.TextXS).Uppercase().Tracking(tw.TrackingWider).TextColor(tw.FgMuted)
+	clTableTh  = clTableThBase.Merge(tw.New().PaddingX(tw.S4).PaddingY(tw.S3))
 	clTableTd  = tw.New().PaddingX(tw.S4).PaddingY(tw.S3).BorderTop(tw.Border1).BorderColor(tw.BorderPrimary)
 	clTableRow = tw.New().On(tw.StateHover, hoverBg(tw.SurfaceHover))
 	clTableTdC = tw.New().PaddingX(tw.S4).PaddingY(tw.S2)
+	// Sortable headers render a real button so keyboards and readers get the
+	// affordance; aria-sort lives on the th, per WAI-ARIA sortable-table
+	// practice. The cell's padding moves onto the button to keep the whole
+	// header surface clickable.
+	clTableThSort  = tw.New().PaddingX(tw.S0).PaddingY(tw.S0)
+	clTableSortBtn = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S1).
+			Width(tw.SFull).PaddingX(tw.S4).PaddingY(tw.S3).
+			FontWeight(tw.FontSemibold).FontSize(tw.TextXS).Uppercase().
+			Tracking(tw.TrackingWider).TextColor(tw.FgMuted).
+			Bg(tw.ColorTransparent).Border(tw.Border0).Cursor(tw.CursorPointer).
+			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgPrimary) }).
+			Merge(clFocusRing)
+	clTableRowAlt   = tw.New().Bg(tw.SurfaceSecondary)
+	clTableTdStrong = tw.New().FontWeight(tw.FontSemibold).TextColor(tw.FgPrimary)
+	clTableActions  = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S2).Justify(tw.JustifyEnd)
+	clTableCellNote = tw.New().TextColor(tw.FgMuted).FontSize(tw.TextXS)
 
 	// Card.
 	clCard = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S2).
@@ -245,18 +280,21 @@ var (
 	clPagination = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S1)
 	clPageBtn    = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).
 			Justify(tw.JustifyCenter).MinWidth(tw.S8).Height(tw.S8).
-			Rounded(tw.RadiusMD).FontSize(tw.TextSM).TextColor(tw.FgSecondary).
-			On(tw.StateHover, hoverBg(tw.SurfaceHover)).Merge(clFocusRing)
-	clPageCur = tw.New().Bg(tw.SurfaceBrand).TextColor(tw.FgOnBrand).FontWeight(tw.FontSemibold)
+			Rounded(tw.RadiusMD).FontSize(tw.TextSM).Merge(clFocusRing)
+	clPageIdle = tw.New().TextColor(tw.FgSecondary).
+			On(tw.StateHover, hoverBg(tw.SurfaceHover))
+	clPageCur   = tw.New().Bg(tw.SurfaceBrand).TextColor(tw.FgOnBrand).FontWeight(tw.FontSemibold)
+	clPageLabel = tw.New().FontSize(tw.TextSM).TextColor(tw.FgMuted).PaddingX(tw.S2)
 
 	// Tabs.
 	clTabList = tw.New().Display(tw.DisplayFlex).Gap(tw.S1).
 			BorderBottom(tw.Border1).BorderColor(tw.BorderPrimary)
 	clTab = tw.New().PaddingX(tw.S4).PaddingY(tw.S2).FontSize(tw.TextSM).
-		FontWeight(tw.FontMedium).TextColor(tw.FgMuted).
-		BorderBottom(tw.Border2).BorderColor(tw.ColorTransparent).
-		On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgPrimary) }).
+		FontWeight(tw.FontMedium).
+		BorderBottom(tw.Border2).
 		Merge(clFocusRing)
+	clTabIdle = tw.New().TextColor(tw.FgMuted).BorderColor(tw.ColorTransparent).
+			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgPrimary) })
 	clTabActive = tw.New().TextColor(tw.FgBrand).BorderColor(tw.BorderBrand)
 )
 
@@ -270,17 +308,19 @@ func ClassLists() []tw.ClassList {
 		clBadgeBase, clBadgeDot,
 		clAlertBase, clAlertTitle, clAlertMessage, clAlertBody,
 		clFieldWrap, clLabel, clHelp, clFieldErr, clRequired,
-		clInput, clInputError, clCheckbox, clCheckRow,
+		clInput, clInputNormal, clInputError, clCheckbox, clCheckRow,
+		clSearchWrap, clSearchInput, clSrOnly,
 		clTruncate, clHeadingBase,
 		clDividerH, clDividerV,
-		clSpinner, clEmpty, clEmptyBordered, clEmptyCompact, clEmptyTitle, clEmptyDesc,
-		clKbd, clLink, clTag, clTagSelected,
+		clSpinner, clEmpty, clEmptyPad, clEmptyBordered, clEmptyCompact, clEmptyTitle, clEmptyDesc,
+		clKbd, clLink, clTagBase, clTagIdle, clTagSelected,
 		clStack, clFlex, clGrid, clContainer,
-		clTableWrap, clTable, clTableHead, clTableTh, clTableTd, clTableRow, clTableTdC,
+		clTableWrap, clTable, clTableHead, clTableThBase, clTableTh, clTableTd, clTableRow, clTableTdC,
+		clTableThSort, clTableSortBtn, clTableRowAlt, clTableTdStrong, clTableActions, clTableCellNote,
 		clCard, clCardClickable, clCardTitle, clCardDesc,
 		clBreadcrumb, clBreadcrumbSep, clBreadcrumbCur,
-		clPagination, clPageBtn, clPageCur,
-		clTabList, clTab, clTabActive,
+		clPagination, clPageBtn, clPageIdle, clPageCur, clPageLabel,
+		clTabList, clTab, clTabIdle, clTabActive,
 	}
 	for _, m := range []map[string]tw.ClassList{
 		clButtonVariant, clButtonSize, clBadgeVariant, clAlertVariant,
