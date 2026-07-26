@@ -6,6 +6,7 @@ package organisms
 
 import (
 	"github.com/septagon-oss/pk-ui/contracts"
+	"github.com/septagon-oss/pk-ui/contracts/atoms"
 	"github.com/septagon-oss/pk-ui/contracts/molecules"
 )
 
@@ -34,7 +35,9 @@ type DataGridProps struct {
 
 	Table      molecules.TableProps      `json:"table"`
 	Pagination molecules.PaginationProps `json:"pagination"`
-	SearchURL  string                    `json:"searchURL,omitempty"`
+	Search     molecules.SearchBarProps  `json:"search,omitzero"`
+	Actions    []atoms.ButtonProps       `json:"actions,omitempty"`
+	SearchURL  string                    `json:"searchURL,omitempty"` // shorthand when Search is zero
 	CreateURL  string                    `json:"createURL,omitempty"`
 	CreateText string                    `json:"createText,omitempty"`
 	Filters    []DataGridFilter          `json:"filters,omitempty"`

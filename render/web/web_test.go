@@ -22,6 +22,7 @@ import (
 	"github.com/septagon-oss/pk-ui/contracts/atoms"
 	"github.com/septagon-oss/pk-ui/contracts/layouts"
 	"github.com/septagon-oss/pk-ui/contracts/molecules"
+	"github.com/septagon-oss/pk-ui/contracts/organisms"
 	"github.com/septagon-oss/tw/emission"
 )
 
@@ -157,6 +158,20 @@ func gallery() []g.Node {
 			Options: []atoms.SelectOption{{Label: "Draft", Value: "draft"}},
 			Error:   "Pick a state."}),
 		SearchBar(molecules.SearchBarProps{Label: "Search tenants", Placeholder: "Filter this page…"}),
+
+		DataGrid(organisms.DataGridProps{
+			Search:    molecules.SearchBarProps{Label: "Search rows", Placeholder: "Filter…"},
+			Actions:   []atoms.ButtonProps{{Text: "Refresh", Variant: "secondary"}},
+			CreateURL: "/rows/new", CreateText: "New row",
+			Filters: []organisms.DataGridFilter{{Key: "state", Label: "State", Type: "select",
+				Options: []molecules.Option{{Label: "Open", Value: "open"}}}},
+			Table: molecules.TableProps{Sortable: true,
+				Columns: []molecules.TableColumn{{Key: "name", Label: "Name", Sortable: true, Primary: true}},
+				Rows:    []molecules.TableRow{{ID: "g1", Cells: map[string]any{"name": "Grid row"}}}},
+			Pagination: molecules.PaginationProps{CurrentPage: 1},
+		},
+			Text(atoms.TextProps{Content: "1 record on this page", Color: "muted", Size: "sm"}),
+		),
 
 		Tabs(molecules.TabsProps{ActiveTab: "b", Items: []molecules.TabItem{
 			{Key: "a", Label: "First", URL: "/tab/a"}, {Key: "b", Label: "Second"},

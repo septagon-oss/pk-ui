@@ -276,6 +276,12 @@ var (
 	clBreadcrumbSep = tw.New().TextColor(tw.FgTertiary)
 	clBreadcrumbCur = tw.New().TextColor(tw.FgPrimary).FontWeight(tw.FontMedium)
 
+	// DataGrid organism: arrangement only — every part inside is a
+	// molecule or atom carrying its own component classes.
+	clGridSection = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S4)
+	clGridToolbar = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S3).FlexWrap()
+	clGridCreate  = tw.New().MarginLeft(tw.SAuto)
+
 	// Pagination.
 	clPagination = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S1)
 	clPageBtn    = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).
@@ -319,6 +325,7 @@ func ClassLists() []tw.ClassList {
 		clTableThSort, clTableSortBtn, clTableRowAlt, clTableTdStrong, clTableActions, clTableCellNote,
 		clCard, clCardClickable, clCardTitle, clCardDesc,
 		clBreadcrumb, clBreadcrumbSep, clBreadcrumbCur,
+		clGridSection, clGridToolbar, clGridCreate,
 		clPagination, clPageBtn, clPageIdle, clPageCur, clPageLabel,
 		clTabList, clTab, clTabIdle, clTabActive,
 	}

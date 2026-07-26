@@ -57,6 +57,7 @@ func composedLists(t *testing.T) map[string]tw.ClassList {
 	out["table/td-primary"] = TableClasses().TdPrimary
 	out["table/row-stripe"] = TableClasses().RowStripe
 	out["card/clickable"] = clCard.Merge(clCardClickable)
+	out["grid/create"] = ButtonClasses("primary", "medium").Merge(clGridCreate)
 	out["search/wrap"] = clSearchWrap
 	out["search/input"] = clSearchInput
 	return out
