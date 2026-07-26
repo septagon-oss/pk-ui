@@ -39,6 +39,10 @@ var (
 			Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
 			Gap(tw.S2).FontWeight(tw.FontSemibold).
 			Rounded(tw.RadiusMD).Border(tw.Border1).
+			// Buttons render as <button> or as <a> (EmptyState actions,
+			// link-shaped calls to action); an anchor must not inherit the
+			// page's link underline.
+			NoUnderline().
 			Cursor(tw.CursorPointer).
 			Transition(tw.TransitionColors).
 			On(tw.StateDisabled, func(c tw.ClassList) tw.ClassList {
