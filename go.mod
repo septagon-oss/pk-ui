@@ -14,4 +14,7 @@ require (
 	github.com/tdewolff/parse/v2 v2.8.13 // indirect
 )
 
-retract v0.0.0 // broken: contained local replace directives
+retract (
+	v0.2.3
+	v0.0.0 // broken: contained local replace directives
+)

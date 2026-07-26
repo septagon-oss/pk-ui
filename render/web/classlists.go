@@ -39,10 +39,6 @@ var (
 			Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
 			Gap(tw.S2).FontWeight(tw.FontSemibold).
 			Rounded(tw.RadiusMD).Border(tw.Border1).
-			// Buttons render as <button> or as <a> (EmptyState actions,
-			// link-shaped calls to action); an anchor must not inherit the
-			// page's link underline.
-			NoUnderline().
 			Cursor(tw.CursorPointer).
 			Transition(tw.TransitionColors).
 			On(tw.StateDisabled, func(c tw.ClassList) tw.ClassList {
@@ -51,20 +47,20 @@ var (
 		Merge(clFocusRing)
 
 	clButtonVariant = map[string]tw.ClassList{
-		"primary": tw.New().Bg(tw.SurfaceBrand).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent).
+		"primary": tw.New().NoUnderline().Bg(tw.SurfaceBrand).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent).
 			On(tw.StateHover, hoverBg(tw.SurfaceBrandHover)),
-		"secondary": tw.New().Bg(tw.SurfacePrimary).TextColor(tw.FgPrimary).
+		"secondary": tw.New().NoUnderline().Bg(tw.SurfacePrimary).TextColor(tw.FgPrimary).
 			BorderColor(tw.BorderPrimary).
 			On(tw.StateHover, hoverBg(tw.SurfaceHover)),
-		"success": tw.New().Bg(tw.SurfaceSuccess).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
-		"warning": tw.New().Bg(tw.SurfaceWarning).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
+		"success": tw.New().NoUnderline().Bg(tw.SurfaceSuccess).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
+		"warning": tw.New().NoUnderline().Bg(tw.SurfaceWarning).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
 		"error":   tw.New().Bg(tw.SurfaceDanger).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
 		"danger":  tw.New().Bg(tw.SurfaceDanger).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
 		"info":    tw.New().Bg(tw.SurfaceInfo).TextColor(tw.FgOnBrand).BorderColor(tw.ColorTransparent),
-		"outline": tw.New().Bg(tw.ColorTransparent).TextColor(tw.FgBrand).
+		"outline": tw.New().NoUnderline().Bg(tw.ColorTransparent).TextColor(tw.FgBrand).
 			BorderColor(tw.BorderBrand).
 			On(tw.StateHover, hoverBg(tw.SurfaceBrandSoft)),
-		"ghost": tw.New().Bg(tw.ColorTransparent).TextColor(tw.FgPrimary).BorderColor(tw.ColorTransparent).
+		"ghost": tw.New().NoUnderline().Bg(tw.ColorTransparent).TextColor(tw.FgPrimary).BorderColor(tw.ColorTransparent).
 			On(tw.StateHover, hoverBg(tw.SurfaceHover)),
 		"link": tw.New().Bg(tw.ColorTransparent).TextColor(tw.FgLink).BorderColor(tw.ColorTransparent).Underline().
 			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgLinkHover) }),
@@ -90,7 +86,7 @@ var (
 	clBadgeVariant = map[string]tw.ClassList{
 		"default":   tw.New().Bg(tw.SurfaceTertiary).TextColor(tw.FgSecondary),
 		"primary":   tw.New().Bg(tw.SurfaceBrandSoft).TextColor(tw.FgBrand),
-		"secondary": tw.New().Bg(tw.SurfaceTertiary).TextColor(tw.FgSecondary),
+		"secondary": tw.New().NoUnderline().Bg(tw.SurfaceTertiary).TextColor(tw.FgSecondary),
 		"success":   tw.New().Bg(tw.SurfaceSuccessSoft).TextColor(tw.FgSuccess),
 		"warning":   tw.New().Bg(tw.SurfaceWarningSoft).TextColor(tw.FgWarning),
 		"error":     tw.New().Bg(tw.SurfaceDangerSoft).TextColor(tw.FgDanger),
@@ -106,8 +102,8 @@ var (
 			Border(tw.Border1)
 
 	clAlertVariant = map[string]tw.ClassList{
-		"success": tw.New().Bg(tw.SurfaceSuccessSoft).TextColor(tw.FgSuccess).BorderColor(tw.BorderSuccess),
-		"warning": tw.New().Bg(tw.SurfaceWarningSoft).TextColor(tw.FgWarning).BorderColor(tw.BorderWarning),
+		"success": tw.New().NoUnderline().Bg(tw.SurfaceSuccessSoft).TextColor(tw.FgSuccess).BorderColor(tw.BorderSuccess),
+		"warning": tw.New().NoUnderline().Bg(tw.SurfaceWarningSoft).TextColor(tw.FgWarning).BorderColor(tw.BorderWarning),
 		"error":   tw.New().Bg(tw.SurfaceDangerSoft).TextColor(tw.FgDanger).BorderColor(tw.BorderDanger),
 		"danger":  tw.New().Bg(tw.SurfaceDangerSoft).TextColor(tw.FgDanger).BorderColor(tw.BorderDanger),
 		"info":    tw.New().Bg(tw.SurfaceInfoSoft).TextColor(tw.FgInfo).BorderColor(tw.BorderInfo),
