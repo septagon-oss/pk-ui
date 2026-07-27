@@ -8,5 +8,5 @@ package surface
 // return a valid, stable contribution and must not expose mutable internal
 // state to callers.
 type Provider interface {
-	SurfaceContribution() Contribution
+	GetSurfaceContribution() Contribution
 }

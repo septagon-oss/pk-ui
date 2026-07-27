@@ -13,6 +13,7 @@ PlatformKit and other Go/web applications.
   typed renderer contributions
 - Renderer-neutral surface, route, navigation, rich-page, presenter, template,
   preview, and route-ownership contracts
+- Deterministic page canonicalization and route-namespace composition
 - Generic gomponents renderers for public contracts
 - Conformance helpers for downstream providers
 

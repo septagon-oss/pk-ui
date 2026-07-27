@@ -8,27 +8,27 @@ import (
 // browser error response. Copy is resolved before crossing this boundary;
 // renderer implementations own visual composition and contextual theming.
 type ErrorDocument struct {
-	StatusCode   int
-	Title        string
-	Description  string
-	ErrorDetails string
-	HomeURL      string
-	HomeLabel    string
-	BackURL      string
-	BackLabel    string
-	LoginURL     string
-	LoginLabel   string
-	SupportURL   string
-	SupportLabel string
-	StatusURL    string
-	StatusLabel  string
-	RetryURL     string
-	RetryLabel   string
-	BrandName    string
-	ReferenceID  string
-	Locale       string
-	Direction    string
-	Nonce        string
+	StatusCode   int    `json:"statusCode"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	ErrorDetails string `json:"errorDetails,omitempty"`
+	HomeURL      string `json:"homeUrl,omitempty"`
+	HomeLabel    string `json:"homeLabel,omitempty"`
+	BackURL      string `json:"backUrl,omitempty"`
+	BackLabel    string `json:"backLabel,omitempty"`
+	LoginURL     string `json:"loginUrl,omitempty"`
+	LoginLabel   string `json:"loginLabel,omitempty"`
+	SupportURL   string `json:"supportUrl,omitempty"`
+	SupportLabel string `json:"supportLabel,omitempty"`
+	StatusURL    string `json:"statusUrl,omitempty"`
+	StatusLabel  string `json:"statusLabel,omitempty"`
+	RetryURL     string `json:"retryUrl,omitempty"`
+	RetryLabel   string `json:"retryLabel,omitempty"`
+	BrandName    string `json:"brandName,omitempty"`
+	ReferenceID  string `json:"referenceId,omitempty"`
+	Locale       string `json:"locale,omitempty"`
+	Direction    string `json:"direction,omitempty"`
+	Nonce        string `json:"nonce,omitempty"`
 }
 
 // ErrorDocumentRenderer builds a complete HTML document. Implementations may
