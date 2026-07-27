@@ -9,8 +9,9 @@ applications.
 - `contracts/`: renderer-neutral component property and slot contracts.
 - `component/`: canonical component identity, atomic-design tiers, ownership,
   and typed renderer contributions.
-- `surface/`: canonical routes, navigation, rich page contracts, route
-  ownership, section rendering, preview providers, and conformance helpers.
+- `surface/`: canonical routes, navigation, rich page contracts, entity-route
+  publication, hypermedia protocol names, section rendering, preview providers,
+  route ownership, and conformance helpers.
 - `render/web/`: generic gomponents renderers for the public contracts.
 
 PlatformKit extends these foundations downstream with its concrete component
