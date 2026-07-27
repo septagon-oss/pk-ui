@@ -4,10 +4,10 @@ github.com/septagon-oss/styleengine v0.1.0 h1:5H/P2aVvr+cLG0LExkdkXgK5m3Qd/SgKbS
 github.com/septagon-oss/styleengine v0.1.0/go.mod h1:bZdiEW66RcjYPdP629M/EQGW+0ES5YXNgo8IOgrhvgw=
 github.com/septagon-oss/tw v0.2.2 h1:hFpnotjMFG/n96WD7GLgfSBi6UnvB1ZKkhQtgvhHHZA=
 github.com/septagon-oss/tw v0.2.2/go.mod h1:ez7x0XcQAyKLJ8dv1F9kF2NTKs50gxhPSBFtGMeQFuo=
-github.com/tdewolff/minify/v2 v2.24.13 h1:xrcF7gKDnUszseEY9WX9mUlZII2v2Go/QAcAwRASw58=
-github.com/tdewolff/minify/v2 v2.24.13/go.mod h1:emvwoYeIl8bfAKqRU5ww95LX9Gpggpqv/naal9a8Yq0=
-github.com/tdewolff/parse/v2 v2.8.13 h1:si/8rLw5BZZTWCCiMm9A3f6x+RmqYfrkEeXCgpX5ick=
-github.com/tdewolff/parse/v2 v2.8.13/go.mod h1:XdsoSFThlVIRIajAuqz1evNY7bagZS8LBOPA3aVopwQ=
+github.com/tdewolff/minify/v2 v2.24.14 h1:y05Dj1YHaCJ0g6nZa5wC6vyI+x5iziYBY20gsC6xvbo=
+github.com/tdewolff/minify/v2 v2.24.14/go.mod h1:ducvuHPTtUvKKK6uCI4p0fR2Mxvoy+XpFy9cC8QDv1c=
+github.com/tdewolff/parse/v2 v2.8.14 h1:GuhuMMPKAqj5BhP9hZUz3r3JqX/lOvQ1E6wxW6p/FhY=
+github.com/tdewolff/parse/v2 v2.8.14/go.mod h1:XdsoSFThlVIRIajAuqz1evNY7bagZS8LBOPA3aVopwQ=
 github.com/tdewolff/test v1.0.12 h1:7F21DqIajswxuche0geHdrUZRCWE4oko4b7bcmkkrxk=
 github.com/tdewolff/test v1.0.12/go.mod h1:XPuWBzvdUzhCuxWO1ojpXsyzsA5bFoS3tO/Q3kFuTG8=
 maragu.dev/gomponents v1.3.0 h1:aa/JBqZl2Ae7r4CubwjoLfgbkWHYs7jnzoQiAD/XOiI=
