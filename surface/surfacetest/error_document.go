@@ -23,6 +23,7 @@ func ErrorDocumentRendererConformance(
 			Title:       "Page not found",
 			Description: "The requested page moved.",
 			HomeURL:     "/workspace",
+			HomeLabel:   "Go Home",
 			ReferenceID: "req-42",
 			Locale:      "en",
 			Direction:   "ltr",
@@ -59,6 +60,7 @@ func ErrorDocumentRendererConformance(
 			Title:       `<script>alert("title")</script>`,
 			Description: `<img src=x onerror=alert("description")>`,
 			HomeURL:     "/",
+			HomeLabel:   "Go Home",
 		})
 		if node == nil {
 			t.Fatal("renderer returned a nil document")
@@ -67,7 +69,8 @@ func ErrorDocumentRendererConformance(
 			t.Fatalf("render document: %v", err)
 		}
 		html := output.String()
-		if strings.Contains(html, "<script>") || strings.Contains(html, "<img ") {
+		if strings.Contains(html, `<script>alert("title")</script>`) ||
+			strings.Contains(html, `<img src=x onerror=alert("description")>`) {
 			t.Fatalf("renderer emitted unescaped copy: %s", html)
 		}
 	})

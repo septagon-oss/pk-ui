@@ -13,11 +13,17 @@ type ErrorDocument struct {
 	Description  string
 	ErrorDetails string
 	HomeURL      string
+	HomeLabel    string
 	BackURL      string
+	BackLabel    string
 	LoginURL     string
+	LoginLabel   string
 	SupportURL   string
+	SupportLabel string
 	StatusURL    string
+	StatusLabel  string
 	RetryURL     string
+	RetryLabel   string
 	BrandName    string
 	ReferenceID  string
 	Locale       string
