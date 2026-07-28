@@ -226,6 +226,11 @@ var (
 	clGrid      = tw.New().Display(tw.DisplayGrid)
 	clContainer = tw.New().MarginX(tw.SAuto).Width(tw.SFull).PaddingX(tw.S4)
 
+	// Canonical OSS solution page shell. It is declared alongside the
+	// component primitives so browser CSS and native design compilation share
+	// the exact same utility vocabulary.
+	clDataManagementPage = tw.New().MinHeight(tw.S96).Bg(tw.SurfaceSecondary).PaddingY(tw.S8)
+
 	clGapScale = map[string]tw.Spacing{
 		"0": tw.S0, "1": tw.S1, "2": tw.S2, "3": tw.S3, "4": tw.S4,
 		"5": tw.S5, "6": tw.S6, "8": tw.S8,
@@ -320,7 +325,7 @@ func ClassLists() []tw.ClassList {
 		clDividerH, clDividerV,
 		clSpinner, clEmpty, clEmptyPad, clEmptyBordered, clEmptyCompact, clEmptyTitle, clEmptyDesc,
 		clKbd, clLink, clTagBase, clTagIdle, clTagSelected,
-		clStack, clFlex, clGrid, clContainer,
+		clStack, clFlex, clGrid, clContainer, clDataManagementPage,
 		clTableWrap, clTable, clTableHead, clTableThBase, clTableTh, clTableTd, clTableRow, clTableTdC,
 		clTableThSort, clTableSortBtn, clTableRowAlt, clTableTdStrong, clTableActions, clTableCellNote,
 		clCard, clCardClickable, clCardTitle, clCardDesc,
