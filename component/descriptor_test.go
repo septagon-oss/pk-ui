@@ -14,8 +14,8 @@ func TestFoundationCatalogIsValidUniqueAndDefensive(t *testing.T) {
 	t.Parallel()
 
 	catalog := component.FoundationCatalog()
-	if len(catalog) != 42 {
-		t.Fatalf("FoundationCatalog() has %d descriptors, want 42", len(catalog))
+	if len(catalog) != 43 {
+		t.Fatalf("FoundationCatalog() has %d descriptors, want 43", len(catalog))
 	}
 
 	seen := make(map[component.ID]struct{}, len(catalog))
@@ -33,6 +33,24 @@ func TestFoundationCatalogIsValidUniqueAndDefensive(t *testing.T) {
 	fresh := component.FoundationCatalog()
 	if fresh[0].Owner != component.FoundationOwner {
 		t.Fatal("FoundationCatalog returned shared mutable storage")
+	}
+}
+
+func TestWindowedCollectionIsFoundationOrganism(t *testing.T) {
+	t.Parallel()
+
+	descriptor, ok := component.FoundationDescriptor(component.TypeWindowedCollection)
+	if !ok {
+		t.Fatal("WindowedCollection is missing from the foundation catalog")
+	}
+	if descriptor.Tier != component.TierOrganism {
+		t.Fatalf("WindowedCollection tier = %q, want %q", descriptor.Tier, component.TierOrganism)
+	}
+	if descriptor.Owner != component.FoundationOwner {
+		t.Fatalf("WindowedCollection owner = %q, want %q", descriptor.Owner, component.FoundationOwner)
+	}
+	if err := descriptor.Validate(); err != nil {
+		t.Fatalf("WindowedCollection descriptor is invalid: %v", err)
 	}
 }
 

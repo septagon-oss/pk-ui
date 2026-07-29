@@ -40,19 +40,20 @@ const (
 	TypeDetailList = "DetailList"
 	TypeListItem   = "ListItem"
 
-	TypeDataTable        = "DataTable"
-	TypeSearchInput      = "SearchInput"
-	TypePagination       = "Pagination"
-	TypeActionBar        = "ActionBar"
-	TypeFormActions      = "FormActions"
-	TypeDetailField      = "DetailField"
-	TypeDetailSection    = "DetailSection"
-	TypeDetailActions    = "DetailActions"
-	TypeNavigation       = "Navigation"
-	TypeMap              = "Map"
-	TypeMovementTimeline = "MovementTimeline"
-	TypeHero             = "Hero"
-	TypeEmptyState       = "EmptyState"
+	TypeDataTable          = "DataTable"
+	TypeSearchInput        = "SearchInput"
+	TypePagination         = "Pagination"
+	TypeWindowedCollection = "WindowedCollection"
+	TypeActionBar          = "ActionBar"
+	TypeFormActions        = "FormActions"
+	TypeDetailField        = "DetailField"
+	TypeDetailSection      = "DetailSection"
+	TypeDetailActions      = "DetailActions"
+	TypeNavigation         = "Navigation"
+	TypeMap                = "Map"
+	TypeMovementTimeline   = "MovementTimeline"
+	TypeHero               = "Hero"
+	TypeEmptyState         = "EmptyState"
 
 	TypeContainer = "Container"
 	TypeGrid      = "Grid"
@@ -91,6 +92,7 @@ var foundationCatalog = []Descriptor{
 	foundation(TypeDataTable, TierOrganism),
 	foundation(TypeSearchInput, TierOrganism),
 	foundation(TypePagination, TierOrganism),
+	foundation(TypeWindowedCollection, TierOrganism),
 	foundation(TypeActionBar, TierOrganism),
 	foundation(TypeFormActions, TierOrganism),
 	foundation(TypeDetailField, TierOrganism),
