@@ -35,7 +35,10 @@ func CanonicalizeAdminRoute(route Route) Route {
 }
 
 // CanonicalizeAdminSurfaceContribution returns an isolated contribution whose
-// routes carry explicit page contracts wherever their patterns are known.
+// admin routes carry explicit page contracts wherever their patterns are
+// known. Routes with no explicit target retain the historical admin default;
+// routes explicitly targeting only other surfaces are left untouched so a
+// mixed contribution does not acquire an invalid admin shell contract.
 func CanonicalizeAdminSurfaceContribution(contribution Contribution) Contribution {
 	contribution.ModuleID = strings.TrimSpace(contribution.ModuleID)
 	if len(contribution.Routes) == 0 {
@@ -44,7 +47,10 @@ func CanonicalizeAdminSurfaceContribution(contribution Contribution) Contributio
 
 	routes := make([]Route, len(contribution.Routes))
 	for index, route := range contribution.Routes {
-		routes[index] = CanonicalizeAdminRoute(route)
+		if len(route.Targets) == 0 || route.IncludesTarget(TargetAdmin) {
+			route = CanonicalizeAdminRoute(route)
+		}
+		routes[index] = route
 	}
 	contribution.Routes = routes
 	return contribution

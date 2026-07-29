@@ -389,7 +389,7 @@ func deliveryPropType(typ reflect.Type) (designcomponent.PropType, error) {
 	case reflect.Map, reflect.Struct:
 		return designcomponent.PropObject, nil
 	default:
-		return "", fmt.Errorf("Go type %s is unsupported", typ)
+		return "", fmt.Errorf("go type %s is unsupported", typ)
 	}
 }
 

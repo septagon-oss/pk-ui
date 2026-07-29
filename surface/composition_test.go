@@ -42,6 +42,35 @@ func TestCanonicalizeAdminSurfaceContributionMaterializesPageContract(t *testing
 	}
 }
 
+func TestCanonicalizeAdminSurfaceContributionLeavesAppRoutesUntouched(t *testing.T) {
+	original := Contribution{
+		ModuleID: "mixed",
+		Routes: []Route{
+			{
+				ID:          "admin",
+				PagePattern: PagePatternDashboard,
+				Targets:     []Target{TargetAdmin},
+			},
+			{
+				ID:          "account",
+				PagePattern: PagePatternSettings,
+				Targets:     []Target{TargetApp},
+			},
+		},
+	}
+
+	got := CanonicalizeAdminSurfaceContribution(original)
+	if got.Routes[0].Page == nil || got.Routes[0].Page.ShellProfile != ShellProfileAdmin {
+		t.Fatalf("admin route was not canonicalized: %#v", got.Routes[0])
+	}
+	if got.Routes[1].Page != nil {
+		t.Fatalf("app route acquired an admin page contract: %#v", got.Routes[1].Page)
+	}
+	if original.Routes[0].Page != nil || original.Routes[1].Page != nil {
+		t.Fatal("canonicalization mutated the caller")
+	}
+}
+
 func TestCanonicalizeAdminRoutePreservesExplicitMetadata(t *testing.T) {
 	route := Route{
 		ID: "review",

@@ -105,15 +105,6 @@ func deliveryClassBound(
 	return node
 }
 
-func deliveryHiddenWhen(node blueprint.Node, conditions map[string]any) blueprint.Node {
-	node.Props = maps.Clone(node.Props)
-	if node.Props == nil {
-		node.Props = make(map[string]any)
-	}
-	node.Props["hidden_when"] = maps.Clone(conditions)
-	return node
-}
-
 func cardProps(title string) molecules.CardProps {
 	return molecules.CardProps{Title: title}
 }
