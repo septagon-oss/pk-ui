@@ -37,9 +37,25 @@ type Artifacts struct {
 	DeliveryDefinition string
 }
 
+// Option configures one generation run.
+type Option func(*settings)
+
+type settings struct{ oracle ClassOracle }
+
+// WithOracle governs the component with a specific class universe. The default
+// is tw's enumerable universe; products that own their CSS supply a
+// StylesheetOracle instead, and the guarantees are identical either way.
+func WithOracle(oracle ClassOracle) Option {
+	return func(s *settings) { s.oracle = oracle }
+}
+
 // Generate produces every artifact for one component.
-func Generate(source Source, style WebStyle) (Artifacts, error) {
-	if err := validate(source, style); err != nil {
+func Generate(source Source, style WebStyle, options ...Option) (Artifacts, error) {
+	resolved := settings{}
+	for _, option := range options {
+		option(&resolved)
+	}
+	if err := validate(source, style, resolved); err != nil {
 		return Artifacts{}, err
 	}
 	contract, err := emitContract(source)
@@ -67,7 +83,7 @@ func Generate(source Source, style WebStyle) (Artifacts, error) {
 	return out, nil
 }
 
-func validate(source Source, style WebStyle) error {
+func validate(source Source, style WebStyle, resolved settings) error {
 	if strings.TrimSpace(source.ID) == "" {
 		return fmt.Errorf("componentgen: component ID is required")
 	}
@@ -102,6 +118,14 @@ func validate(source Source, style WebStyle) error {
 	}
 	if err := vocabulary.ValidateStyle(style); err != nil {
 		return fmt.Errorf("componentgen: %w", err)
+	}
+	// A component governed by another universe has its compiled classes
+	// re-checked there, so the "cannot render unstyled" guarantee holds on
+	// whichever substrate the product actually ships.
+	if resolved.oracle != nil {
+		if err := validateAgainstOracle(vocabulary, resolved.oracle, style); err != nil {
+			return fmt.Errorf("componentgen %s: %w", source.ID, err)
+		}
 	}
 	// pk-ui forbids a base fragment from declaring a CSS property that any of
 	// its variants also declares: two single-class utilities have equal
@@ -465,3 +489,28 @@ func numberLines(source string) string {
 }
 
 var _ = sort.Strings
+
+// validateAgainstOracle re-checks every class a component emits against a
+// second universe. It is what lets one generator serve both the utility
+// substrate and a product that owns its stylesheet.
+func validateAgainstOracle(vocabulary *Vocabulary, oracle ClassOracle, style WebStyle) error {
+	groups := [][]Utility{style.Base}
+	for _, name := range slices.Sorted(maps.Keys(style.Variants)) {
+		groups = append(groups, style.Variants[name])
+	}
+	for _, name := range slices.Sorted(maps.Keys(style.Parts)) {
+		groups = append(groups, style.Parts[name])
+	}
+	for _, group := range groups {
+		compiled, err := vocabulary.Compile(group)
+		if err != nil {
+			return err
+		}
+		for _, class := range strings.Fields(compiled) {
+			if err := oracle.Resolve(class); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}

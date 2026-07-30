@@ -237,3 +237,28 @@ func (v *Vocabulary) ValidateStyle(style WebStyle) error {
 	}
 	return nil
 }
+
+// Name identifies tw's universe in error messages, satisfying ClassOracle.
+func (v *Vocabulary) Name() string { return "tw's enumerable universe" }
+
+// Resolve rejects a class tw cannot resolve, satisfying ClassOracle. It is the
+// same oracle pk-ui's loop-closure test uses.
+func (v *Vocabulary) Resolve(class string) error {
+	if _, err := emission.Rules(class); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Properties lists the CSS properties a tw class declares, satisfying
+// ClassOracle.
+func (v *Vocabulary) Properties(class string) ([]string, error) {
+	sheet, err := emission.Rules(class)
+	if err != nil {
+		return nil, err
+	}
+	return declarationNames(sheet.RenderPretty()), nil
+}
+
+var _ ClassOracle = (*Vocabulary)(nil)
+var _ ClassOracle = (*StylesheetOracle)(nil)
