@@ -19,6 +19,7 @@ import (
 
 	g "maragu.dev/gomponents"
 
+	"github.com/septagon-oss/pk-ui/contracts"
 	"github.com/septagon-oss/pk-ui/contracts/atoms"
 	"github.com/septagon-oss/pk-ui/contracts/layouts"
 	"github.com/septagon-oss/pk-ui/contracts/molecules"
@@ -94,6 +95,23 @@ func gallery() []g.Node {
 		Spinner(atoms.SpinnerProps{Size: "small"}),
 		Spinner(atoms.SpinnerProps{Size: "medium", Label: "Fetching"}),
 		Spinner(atoms.SpinnerProps{Size: "large"}),
+
+		Skeleton(atoms.SkeletonProps{}),
+		Skeleton(atoms.SkeletonProps{Shape: "block", Size: "small"}),
+		Skeleton(atoms.SkeletonProps{Shape: "block", Size: "large"}),
+		Skeleton(atoms.SkeletonProps{Shape: "text"}),
+		Skeleton(atoms.SkeletonProps{Shape: "text", Lines: 3, Size: "small"}),
+		Skeleton(atoms.SkeletonProps{Shape: "text", Lines: 2, Size: "large"}),
+		Skeleton(atoms.SkeletonProps{Shape: "circle", Size: "small"}),
+		Skeleton(atoms.SkeletonProps{Shape: "circle"}),
+		Skeleton(atoms.SkeletonProps{Shape: "circle", Size: "large"}),
+		DeferredSlot(atoms.DeferredSlotProps{
+			HTMXProps: contracts.HTMXProps{Get: "/fragments/activity"},
+		}, Skeleton(atoms.SkeletonProps{Shape: "text", Lines: 3})),
+		TableSkeleton(molecules.TableSkeletonProps{}),
+		TableSkeleton(molecules.TableSkeletonProps{Columns: 2, Rows: 5, Compact: true}),
+		CardSkeleton(molecules.CardSkeletonProps{}),
+		CardSkeleton(molecules.CardSkeletonProps{Lines: 5}),
 
 		EmptyState(atoms.EmptyStateProps{Title: "No tenants yet",
 			Description: "Create the first tenant to get started.", Bordered: true,

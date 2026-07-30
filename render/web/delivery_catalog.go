@@ -15,7 +15,9 @@ import (
 
 	designcomponent "github.com/septagon-oss/pk-design/pkg/components"
 	uicomponent "github.com/septagon-oss/pk-ui/component"
+	"github.com/septagon-oss/pk-ui/contracts/atoms"
 	"github.com/septagon-oss/tw"
+	g "maragu.dev/gomponents"
 )
 
 var (
@@ -44,12 +46,16 @@ func OSSDeliveryCatalog() []DeliveryDefinition {
 		headingDeliveryDefinition(),
 		dividerDeliveryDefinition(),
 		spinnerDeliveryDefinition(),
+		skeletonDeliveryDefinition(),
+		deferredSlotDeliveryDefinition(),
 		emptyStateDeliveryDefinition(),
 		kbdDeliveryDefinition(),
 		linkDeliveryDefinition(),
 		tagDeliveryDefinition(),
 		tableDeliveryDefinition(),
+		tableSkeletonDeliveryDefinition(),
 		cardDeliveryDefinition(),
+		cardSkeletonDeliveryDefinition(),
 		breadcrumbDeliveryDefinition(),
 		paginationDeliveryDefinition(),
 		searchBarDeliveryDefinition(),
@@ -550,6 +556,74 @@ func spinnerDeliveryDefinition() DeliveryDefinition {
 			}),
 		},
 		Spinner,
+	)
+}
+
+func skeletonDeliveryDefinition() DeliveryDefinition {
+	componentType := "Skeleton"
+	root := deliveryClassBound(
+		deliveryFrame(componentType, clSkeleton.Compile()),
+		"size",
+		compileClassMap(clSkeletonBlockSize),
+	)
+	return newDeliveryDefinition(
+		componentType,
+		uicomponent.TierAtom,
+		stableDeliveryID(componentType),
+		"Pulsing placeholder that holds the geometry of content that has not arrived yet.",
+		map[string]PropertyContract{
+			"shape": variantProperty([]string{"block", "text", "circle"}, "block", "Placeholder geometry."),
+			"size":  sizeProperty([]string{"small", "medium", "large"}, "medium", "Placeholder scale."),
+			"lines": contentProperty("Line count for the text shape."),
+		},
+		nil,
+		deliveryDesign("block", "02 Atoms", "Feedback", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "block", map[string]any{
+				"shape": "block", "size": "medium",
+			}),
+			deliveryExample(componentType, "text", map[string]any{
+				"shape": "text", "lines": 3,
+			}),
+			deliveryExample(componentType, "circle", map[string]any{
+				"shape": "circle", "size": "medium",
+			}),
+		},
+		Skeleton,
+	)
+}
+
+func deferredSlotDeliveryDefinition() DeliveryDefinition {
+	componentType := "DeferredSlot"
+	root := deliveryFrame(
+		componentType,
+		"",
+		deliverySlot(
+			"Placeholder",
+			"placeholder",
+			"",
+			deliveryInstance("Pending", "Skeleton", "block", ""),
+		),
+	)
+	return newDeliveryDefinition(
+		componentType,
+		uicomponent.TierAtom,
+		stableDeliveryID(componentType),
+		"HTMX seam that swaps a server-rendered fragment over its skeleton placeholder on load.",
+		map[string]PropertyContract{},
+		[]designcomponent.Slot{{
+			Name:         "placeholder",
+			Description:  "Skeleton shown until the fragment arrives.",
+			AllowedTypes: deliveryAtomicContentTypes(),
+			Cardinality:  designcomponent.SlotMany,
+		}},
+		deliveryDesign("load", "02 Atoms", "Feedback", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "load", map[string]any{}),
+		},
+		func(props atoms.DeferredSlotProps) g.Node {
+			return DeferredSlot(props, Skeleton(atoms.SkeletonProps{Shape: "text", Lines: 3}))
+		},
 	)
 }
 

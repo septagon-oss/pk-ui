@@ -31,19 +31,9 @@ type ProgressProps struct {
 // ToMap converts ProgressProps to map[string]any for unified Component construction.
 func (p ProgressProps) ToMap() map[string]any { return propsToMap(p) }
 
-// SkeletonProps defines properties for a loading placeholder.
-type SkeletonProps struct {
-	contracts.ComponentProps
-
-	Type    string `json:"type,omitempty"` // text, circle, rect, card
-	Lines   int    `json:"lines,omitempty"`
-	Animate bool   `json:"animate,omitempty"`
-	Width   string `json:"width,omitempty"`
-	Height  string `json:"height,omitempty"`
-}
-
-// ToMap converts SkeletonProps to map[string]any for unified Component construction.
-func (p SkeletonProps) ToMap() map[string]any { return propsToMap(p) }
+// SkeletonProps lives in skeleton.go alongside DeferredSlotProps: the earlier
+// contract-only draft here (free-string width/height) predated the audited
+// class pipeline and had no renderer or consumers.
 
 // TooltipProps defines properties for a tooltip.
 type TooltipProps struct {

@@ -192,6 +192,33 @@ var (
 		"large":  tw.New().Width(tw.S8).Height(tw.S8),
 	}
 
+	// Skeleton — pulsing placeholder that holds the geometry of content that
+	// has not arrived yet. Same feedback family as Spinner. The base carries
+	// only surface and motion; each shape owns its dimensions and radius, so
+	// merges never stack two rounded-* utilities (Merge is a plain append).
+	clSkeleton     = tw.New().Bg(tw.SurfaceTertiary).AnimatePulse()
+	clSkeletonText = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S2)
+	// Text lines fill the row; the last line is capped at the named xs width
+	// (percent widths are outside tw's enumerable universe) so a paragraph
+	// placeholder reads as prose, not a solid slab.
+	clSkeletonLine      = tw.New().Width(tw.SFull).Rounded(tw.RadiusMD)
+	clSkeletonLineLast  = tw.New().Width(tw.SFull).MaxWScaled(tw.MaxWXS).Rounded(tw.RadiusMD)
+	clSkeletonBlockSize = map[string]tw.ClassList{
+		"small":  tw.New().Width(tw.SFull).Height(tw.S16).Rounded(tw.RadiusMD),
+		"medium": tw.New().Width(tw.SFull).Height(tw.S24).Rounded(tw.RadiusMD),
+		"large":  tw.New().Width(tw.SFull).Height(tw.S40).Rounded(tw.RadiusMD),
+	}
+	clSkeletonLineSize = map[string]tw.ClassList{
+		"small":  tw.New().Height(tw.S3),
+		"medium": tw.New().Height(tw.S4),
+		"large":  tw.New().Height(tw.S5),
+	}
+	clSkeletonCircleSize = map[string]tw.ClassList{
+		"small":  tw.New().Width(tw.S8).Height(tw.S8).Rounded(tw.RadiusFull),
+		"medium": tw.New().Width(tw.S12).Height(tw.S12).Rounded(tw.RadiusFull),
+		"large":  tw.New().Width(tw.S16).Height(tw.S16).Rounded(tw.RadiusFull),
+	}
+
 	clEmpty = tw.New().
 		Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Items(tw.ItemsCenter).
 		Justify(tw.JustifyCenter).Gap(tw.S3).TextAlign(tw.TextCenter)
@@ -324,6 +351,7 @@ func ClassLists() []tw.ClassList {
 		clTruncate, clHeadingBase,
 		clDividerH, clDividerV,
 		clSpinner, clEmpty, clEmptyPad, clEmptyBordered, clEmptyCompact, clEmptyTitle, clEmptyDesc,
+		clSkeleton, clSkeletonText, clSkeletonLine, clSkeletonLineLast,
 		clKbd, clLink, clTagBase, clTagIdle, clTagSelected,
 		clStack, clFlex, clGrid, clContainer, clDataManagementPage,
 		clTableWrap, clTable, clTableHead, clTableThBase, clTableTh, clTableTd, clTableRow, clTableTdC,
@@ -336,7 +364,7 @@ func ClassLists() []tw.ClassList {
 	}
 	for _, m := range []map[string]tw.ClassList{
 		clButtonVariant, clButtonSize, clBadgeVariant, clAlertVariant,
-		clSpinnerSize,
+		clSpinnerSize, clSkeletonBlockSize, clSkeletonLineSize, clSkeletonCircleSize,
 	} {
 		for _, cl := range m {
 			out = append(out, cl)

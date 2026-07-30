@@ -128,6 +128,85 @@ func cardDeliveryDefinition() DeliveryDefinition {
 	)
 }
 
+func tableSkeletonDeliveryDefinition() DeliveryDefinition {
+	componentType := "TableSkeleton"
+	line := skeletonLine("small", false).Compile()
+	root := deliveryFrame(
+		componentType,
+		clTableWrap.Compile(),
+		deliveryFrame(
+			"Table",
+			clTable.Compile(),
+			deliveryFrame(
+				"Header",
+				clTableHead.Compile(),
+				deliveryFrame("Column", clTableTh.Compile(), deliveryFrame("Line", line)),
+				deliveryFrame("Column", clTableTh.Compile(), deliveryFrame("Line", line)),
+				deliveryFrame("Column", clTableTh.Compile(), deliveryFrame("Line", line)),
+			),
+			deliveryFrame(
+				"Row",
+				clTableRow.Compile(),
+				deliveryFrame("Cell", clTableTd.Compile(), deliveryFrame("Line", line)),
+				deliveryFrame("Cell", clTableTd.Compile(), deliveryFrame("Line", line)),
+				deliveryFrame("Cell", clTableTd.Compile(), deliveryFrame("Line", line)),
+			),
+		),
+	)
+	return newDeliveryDefinition(
+		componentType,
+		uicomponent.TierMolecule,
+		stableDeliveryID(componentType),
+		"Loading rendering of Table: identical wrap, header, and cell classes with pulsing placeholders.",
+		map[string]PropertyContract{
+			"columns": contentProperty("Placeholder column count."),
+			"rows":    contentProperty("Placeholder row count."),
+			"compact": modifierProperty("Whether row density is compact."),
+		},
+		nil,
+		deliveryDesign("loading", "03 Molecules", "Data", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "loading", map[string]any{
+				"columns": 3, "rows": 3,
+			}),
+		},
+		TableSkeleton,
+	)
+}
+
+func cardSkeletonDeliveryDefinition() DeliveryDefinition {
+	componentType := "CardSkeleton"
+	root := deliveryFrame(
+		componentType,
+		clCard.Compile(),
+		deliveryFrame("Title", skeletonLine("large", true).Compile()),
+		deliveryFrame(
+			"Body",
+			clSkeletonText.Compile(),
+			deliveryFrame("Line", skeletonLine("medium", false).Compile()),
+			deliveryFrame("Line", skeletonLine("medium", false).Compile()),
+			deliveryFrame("Line", skeletonLine("medium", true).Compile()),
+		),
+	)
+	return newDeliveryDefinition(
+		componentType,
+		uicomponent.TierMolecule,
+		stableDeliveryID(componentType),
+		"Loading rendering of Card: title and body placeholders inside the real card frame.",
+		map[string]PropertyContract{
+			"lines": contentProperty("Body placeholder line count."),
+		},
+		nil,
+		deliveryDesign("loading", "03 Molecules", "Surfaces", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "loading", map[string]any{
+				"lines": 3,
+			}),
+		},
+		CardSkeleton,
+	)
+}
+
 func breadcrumbDeliveryDefinition() DeliveryDefinition {
 	componentType := "Breadcrumb"
 	root := deliveryFrame(

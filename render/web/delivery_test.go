@@ -22,7 +22,7 @@ func TestOSSDeliveryCatalogIsCompleteNativeAndExecutable(t *testing.T) {
 	t.Parallel()
 
 	catalog := OSSDeliveryCatalog()
-	if got, want := len(catalog), 28; got != want {
+	if got, want := len(catalog), 32; got != want {
 		t.Fatalf("catalog has %d entries, want %d", got, want)
 	}
 
