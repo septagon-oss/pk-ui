@@ -30,6 +30,7 @@ import (
 	h "maragu.dev/gomponents/html"
 
 	"github.com/septagon-oss/pk-ui/contracts"
+	"github.com/septagon-oss/pk-ui/contracts/atoms"
 )
 
 // baseAttrs renders the shared ComponentProps onto any element.
@@ -92,6 +93,17 @@ func htmxAttrs(p contracts.HTMXProps) []g.Node {
 	add("hx-trigger", p.Trigger)
 	add("hx-confirm", p.Confirm)
 	add("hx-ext", p.Ext)
+	add("hx-indicator", p.Indicator)
+	add("hx-disabled-elt", p.DisabledElt)
+	add("hx-vals", p.Vals)
+	add("hx-push-url", p.PushURL)
+	add("hx-select", p.Select)
+	if p.Boost {
+		add("hx-boost", "true")
+	}
+	if p.Disable {
+		add("hx-disable", "true")
+	}
 	return nodes
 }
 
@@ -104,19 +116,14 @@ func classes(compiled, extra string) g.Node {
 	return h.Class(compiled)
 }
 
-// icon renders a decorative icon placeholder span. pk-ui ships no icon font;
-// the name lands in a data attribute for the application's icon system, and
-// the node is hidden from assistive technology because adjacent text carries
-// the meaning.
+// icon renders a decorative vector through the OSS icon provider. Adjacent
+// text carries the meaning, so the Icon atom hides this convenience form from
+// assistive technology.
 func icon(name string) g.Node {
 	if name == "" {
 		return nil
 	}
-	return h.Span(
-		h.Class(clIcon.Compile()),
-		g.Attr("data-pk-icon", name),
-		g.Attr("aria-hidden", "true"),
-	)
+	return Icon(atoms.IconProps{Name: name})
 }
 
 func itoa(n int) string { return strconv.Itoa(n) }

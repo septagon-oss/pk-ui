@@ -10,7 +10,8 @@ type SpinnerProps struct {
 	contracts.ComponentProps
 
 	Label string `json:"label,omitempty"` // sr-only text
-	Size  string `json:"size,omitempty"`  // small, medium, large
+	Size  string `json:"size,omitempty"`  // xs, sm, md, lg, xl, 2xl
+	Tone  string `json:"tone,omitempty"`  // brand, success, warning, danger, info
 }
 
 // ToMap converts SpinnerProps to map[string]any for unified Component construction.

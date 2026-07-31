@@ -33,6 +33,7 @@ func composedLists(t *testing.T) map[string]tw.ClassList {
 		for s := range clButtonSize {
 			out["button/"+v+"/"+s] = ButtonClasses(v, s)
 			out["button-full/"+v+"/"+s] = ButtonClasses(v, s).Merge(clButtonFull)
+			out["button-icon-only/"+v+"/"+s] = ButtonClasses(v, s).Merge(clButtonIconOnly)
 		}
 	}
 	for v := range clBadgeVariant {
@@ -41,8 +42,8 @@ func composedLists(t *testing.T) map[string]tw.ClassList {
 	for v := range clAlertVariant {
 		out["alert/"+v] = clAlertBase.Merge(clAlertVariant[v])
 	}
-	out["input/normal"] = clInput.Merge(clInputNormal)
-	out["input/error"] = clInput.Merge(clInputError)
+	out["input/normal"] = clInput.Merge(clInputNormal).Merge(clInputSize["md"])
+	out["input/error"] = clInput.Merge(clInputError).Merge(clInputSize["md"])
 	out["tag/idle"] = TagClasses(false)
 	out["tag/selected"] = TagClasses(true)
 	out["empty/default"] = clEmpty.Merge(clEmptyPad)
@@ -57,7 +58,7 @@ func composedLists(t *testing.T) map[string]tw.ClassList {
 	out["table/td-primary"] = TableClasses().TdPrimary
 	out["table/row-stripe"] = TableClasses().RowStripe
 	out["card/clickable"] = clCard.Merge(clCardClickable)
-	out["grid/create"] = ButtonClasses("primary", "medium").Merge(clGridCreate)
+	out["grid/actions"] = clGridActions
 	out["search/wrap"] = clSearchWrap
 	out["search/input"] = clSearchInput
 	return out

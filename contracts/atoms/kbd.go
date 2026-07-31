@@ -10,7 +10,7 @@ type KbdProps struct {
 	contracts.ComponentProps
 
 	Keys []string `json:"keys"`           // Key labels (e.g. ["⌘", "K"])
-	Size string   `json:"size,omitempty"` // xs, small, medium, large
+	Size string   `json:"size,omitempty"` // xs, sm, md, lg
 }
 
 // ToMap converts KbdProps to map[string]any for unified Component construction.

@@ -12,6 +12,7 @@ package web
 
 import (
 	"maps"
+	"strings"
 
 	"github.com/septagon-oss/pk-design/pkg/blueprint"
 	"github.com/septagon-oss/pk-ui/contracts/atoms"
@@ -49,6 +50,20 @@ func deliveryFrame(name, classes string, children ...blueprint.Node) blueprint.N
 		Classes:  classes,
 		Children: children,
 	}
+}
+
+func deliverySemantics(node blueprint.Node, role, purpose string) blueprint.Node {
+	node.Props = maps.Clone(node.Props)
+	if node.Props == nil {
+		node.Props = make(map[string]any, 2)
+	}
+	if role = strings.TrimSpace(role); role != "" {
+		node.Props["semantic_role"] = role
+	}
+	if purpose = strings.TrimSpace(purpose); purpose != "" {
+		node.Props["semantic_purpose"] = purpose
+	}
+	return node
 }
 
 func deliveryText(name, classes, fallback string, props ...string) blueprint.Node {
@@ -92,6 +107,24 @@ func deliveryInstance(
 	return node
 }
 
+func deliverySVGBound(
+	name string,
+	classes string,
+	assetPrefix string,
+	prop string,
+) blueprint.Node {
+	return blueprint.Node{
+		Kind:     blueprint.NodeSVG,
+		Name:     name,
+		Classes:  classes,
+		AssetRef: "bound:" + assetPrefix,
+		Props: map[string]any{
+			"svg_bound_prefix": assetPrefix,
+			"bind_" + prop:     true,
+		},
+	}
+}
+
 func deliveryClassBound(
 	node blueprint.Node,
 	prop string,
@@ -102,6 +135,24 @@ func deliveryClassBound(
 		node.ClassBindings = make(map[string]map[string]string)
 	}
 	node.ClassBindings[prop] = maps.Clone(values)
+	return node
+}
+
+func deliveryHiddenWhen(node blueprint.Node, conditions map[string]any) blueprint.Node {
+	node.Props = maps.Clone(node.Props)
+	if node.Props == nil {
+		node.Props = make(map[string]any)
+	}
+	node.Props["hidden_when"] = maps.Clone(conditions)
+	return node
+}
+
+func deliveryVisibleWhen(node blueprint.Node, conditions map[string]any) blueprint.Node {
+	node.Props = maps.Clone(node.Props)
+	if node.Props == nil {
+		node.Props = make(map[string]any)
+	}
+	node.Props["visible_when"] = maps.Clone(conditions)
 	return node
 }
 

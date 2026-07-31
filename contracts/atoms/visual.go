@@ -5,6 +5,20 @@ package atoms
 // Discipline: C-14.
 import "github.com/septagon-oss/pk-ui/contracts"
 
+// IconProps defines a provider-neutral system glyph.
+type IconProps struct {
+	contracts.ComponentProps
+
+	Name      string `json:"name"`
+	Size      string `json:"size,omitempty"`   // xs, sm, md, lg, xl, 2xl
+	Tone      string `json:"tone,omitempty"`   // neutral, brand, success, warning, danger, info
+	Weight    string `json:"weight,omitempty"` // outline; extension providers may add governed weights
+	AriaLabel string `json:"ariaLabel,omitempty"`
+}
+
+// ToMap converts IconProps to map[string]any for unified Component construction.
+func (p IconProps) ToMap() map[string]any { return propsToMap(p) }
+
 // DividerProps defines properties for a divider/separator.
 type DividerProps struct {
 	contracts.ComponentProps
@@ -39,13 +53,12 @@ type LinkProps struct {
 	contracts.ComponentProps
 	contracts.HTMXProps
 
-	Text              string `json:"text"`
-	Href              string `json:"href"`
-	External          bool   `json:"external,omitempty"`          // opens in new tab
-	TrailingAdornment string `json:"trailingAdornment,omitempty"` // optional trailing icon or token
-	Variant           string `json:"variant,omitempty"`           // primary, secondary, text, underline
-	Target            string `json:"target,omitempty"`
-	Rel               string `json:"rel,omitempty"`
+	Label    string `json:"label"`
+	Href     string `json:"href"`
+	External bool   `json:"external,omitempty"` // opens in new tab
+	Variant  string `json:"variant,omitempty"`  // primary, secondary, text, underline
+	Target   string `json:"target,omitempty"`
+	Rel      string `json:"rel,omitempty"`
 }
 
 // ToMap converts LinkProps to map[string]any for unified Component construction.
@@ -55,11 +68,10 @@ func (p LinkProps) ToMap() map[string]any { return propsToMap(p) }
 type TagProps struct {
 	contracts.ComponentProps
 
-	Text        string `json:"text"`
-	Icon        string `json:"icon,omitempty"`
+	Label       string `json:"label"`
+	Tone        string `json:"tone,omitempty"` // neutral, brand, success, warning, danger, info
 	Removable   bool   `json:"removable,omitempty"`
 	Selected    bool   `json:"selected,omitempty"`
-	Variant     string `json:"variant,omitempty"` // default, primary, success, warning, error
 	OnRemoveURL string `json:"onRemoveURL,omitempty"`
 }
 

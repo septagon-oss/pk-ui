@@ -11,10 +11,12 @@ package web
 
 import (
 	"bytes"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/septagon-oss/pk-design/pkg/blueprint"
+	designcomponent "github.com/septagon-oss/pk-design/pkg/components"
 	uicomponent "github.com/septagon-oss/pk-ui/component"
 )
 
@@ -22,7 +24,7 @@ func TestOSSDeliveryCatalogIsCompleteNativeAndExecutable(t *testing.T) {
 	t.Parallel()
 
 	catalog := OSSDeliveryCatalog()
-	if got, want := len(catalog), 32; got != want {
+	if got, want := len(catalog), 34; got != want {
 		t.Fatalf("catalog has %d entries, want %d", got, want)
 	}
 
@@ -44,7 +46,7 @@ func TestOSSDeliveryCatalogIsCompleteNativeAndExecutable(t *testing.T) {
 		assertNativeDeliveryNode(t, identity, definition.Design.Root)
 
 		for _, example := range definition.Examples {
-			node, err := definition.Render(example.Props)
+			node, err := RenderDeliveryExample(identity, example.ID, nil)
 			if err != nil {
 				t.Fatalf("%s/%s: render: %v", identity, example.Name, err)
 			}
@@ -60,6 +62,140 @@ func TestOSSDeliveryCatalogIsCompleteNativeAndExecutable(t *testing.T) {
 
 	if _, ok := identities["DataManagementPage"]; !ok {
 		t.Fatal("catalog has no complete OSS solution page")
+	}
+	for componentType, expectedTag := range map[string]string{
+		"Icon": "icon",
+		"Text": "typography",
+	} {
+		var found bool
+		for _, definition := range catalog {
+			if string(definition.Identity.ID) != componentType {
+				continue
+			}
+			found = slices.Contains(definition.Contract.Tags, expectedTag)
+			break
+		}
+		if !found {
+			t.Errorf("%s does not publish semantic tag %q", componentType, expectedTag)
+		}
+	}
+}
+
+func TestDataGridDeliveryExampleUsesRealNamedSlotComposition(t *testing.T) {
+	t.Parallel()
+
+	node, err := RenderDeliveryExample(
+		"DataGrid",
+		deliveryExampleID("DataGrid", "workspace-list"),
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rendered bytes.Buffer
+	if err := node.Render(&rendered); err != nil {
+		t.Fatal(err)
+	}
+	html := rendered.String()
+	for _, fragment := range []string{
+		`role="search"`,
+		`aria-label="Search workspaces"`,
+		`>New workspace</a>`,
+		`<table`,
+		`Alpha workspace`,
+		`aria-label="Pagination"`,
+	} {
+		if !strings.Contains(html, fragment) {
+			t.Errorf("composed DataGrid example is missing %q:\n%s", fragment, html)
+		}
+	}
+}
+
+func TestIconDeliveryBlueprintIsBoundEditableVector(t *testing.T) {
+	t.Parallel()
+
+	var icon *DeliveryDefinition
+	catalog := OSSDeliveryCatalog()
+	for index := range catalog {
+		if catalog[index].Identity.ID == "Icon" {
+			icon = &catalog[index]
+			break
+		}
+	}
+	if icon == nil {
+		t.Fatal("catalog has no Icon definition")
+	}
+	root := icon.Design.Root
+	if root == nil || root.Kind != blueprint.NodeSVG {
+		t.Fatalf("Icon design root = %#v, want native SVG", root)
+	}
+	if root.AssetRef != "bound:icon-" {
+		t.Errorf("Icon asset ref = %q, want bound:icon-", root.AssetRef)
+	}
+	if root.Text != "" || len(root.Children) != 0 {
+		t.Errorf("Icon design contains placeholder content: %#v", root)
+	}
+	if bound, _ := root.Props["bind_name"].(bool); !bound {
+		t.Errorf("Icon design does not bind SVG asset to name: %#v", root.Props)
+	}
+}
+
+func TestDeliveryRuntimeNeverInjectsExampleContentWithoutSlots(t *testing.T) {
+	t.Parallel()
+
+	catalog := OSSDeliveryCatalog()
+	for _, componentType := range []string{"Card", "Stack", "Grid", "Container"} {
+		var definition *DeliveryDefinition
+		for index := range catalog {
+			if string(catalog[index].Identity.ID) == componentType {
+				definition = &catalog[index]
+				break
+			}
+		}
+		if definition == nil {
+			t.Fatalf("missing %s definition", componentType)
+		}
+		node, err := definition.Render(nil, nil)
+		if err != nil {
+			t.Fatalf("%s: %v", componentType, err)
+		}
+		var rendered bytes.Buffer
+		if err := node.Render(&rendered); err != nil {
+			t.Fatal(err)
+		}
+		for _, forbidden := range []string{
+			"Editable child slot",
+			"Primary content",
+			"Supporting content",
+			"Review the current operational details.",
+		} {
+			if strings.Contains(rendered.String(), forbidden) {
+				t.Errorf(
+					"%s injected example content %q without an authored slot",
+					componentType,
+					forbidden,
+				)
+			}
+		}
+	}
+}
+
+func TestOSSDeliveryCatalogPublishesBooleanRestingStates(t *testing.T) {
+	t.Parallel()
+
+	for _, definition := range OSSDeliveryCatalog() {
+		for _, prop := range definition.Contract.Props {
+			if prop.Type != designcomponent.PropBoolean || prop.Required {
+				continue
+			}
+			if strings.TrimSpace(prop.Default) == "" {
+				t.Errorf(
+					"%s.%s has no explicit boolean resting state",
+					definition.Identity.ID,
+					prop.Name,
+				)
+			}
+		}
 	}
 }
 
@@ -118,6 +254,32 @@ func TestOSSDeliveryCatalogComposesDownTheAtomicGraph(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestDataManagementSolutionHasOneResponsivePrimaryAction(t *testing.T) {
+	t.Parallel()
+
+	var rendered bytes.Buffer
+	if err := renderDataManagementPage(DataManagementPageProps{}).Render(&rendered); err != nil {
+		t.Fatal(err)
+	}
+	html := rendered.String()
+
+	if got := strings.Count(html, "New workspace"); got != 1 {
+		t.Fatalf("primary action rendered %d times, want exactly once:\n%s", got, html)
+	}
+	for _, requiredClass := range []string{
+		"flex-col",
+		"items-stretch",
+		"sm:flex-row",
+		"sm:items-center",
+		"w-full",
+		"sm:ml-auto",
+	} {
+		if !strings.Contains(html, requiredClass) {
+			t.Errorf("responsive data toolbar is missing %q:\n%s", requiredClass, html)
+		}
 	}
 }
 

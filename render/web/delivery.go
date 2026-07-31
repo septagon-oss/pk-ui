@@ -32,10 +32,42 @@ const (
 	DeliveryVersion = "1.0.0"
 )
 
-// DeliveryRenderFunc renders one component from provider-neutral properties.
-// Storybook and other downstream preview runtimes call the same renderer used
-// by applications.
-type DeliveryRenderFunc func(props map[string]any) (g.Node, error)
+// DeliverySlotChildren is the renderer-neutral named-slot input carried by the
+// OSS web delivery contract. Private runtimes adapt their own slot transport
+// into this shape; they never reconstruct an OSS renderer by component name.
+type DeliverySlotChildren map[string][]DeliverySlotInstance
+
+// DeliverySlotInstance is one occupancy of an authored slot. Attrs preserves
+// repeating-slot metadata and Children preserves authored render order.
+type DeliverySlotInstance struct {
+	Attrs    map[string]any
+	Children []g.Node
+}
+
+// Nodes returns the rendered child nodes for one named slot in instance order.
+func (children DeliverySlotChildren) Nodes(name string) []g.Node {
+	var nodes []g.Node
+	for _, instance := range children[name] {
+		nodes = append(nodes, instance.Children...)
+	}
+	return nodes
+}
+
+func firstDeliverySlotNode(children DeliverySlotChildren, name string) g.Node {
+	nodes := children.Nodes(name)
+	if len(nodes) == 0 {
+		return nil
+	}
+	return nodes[0]
+}
+
+// DeliveryRenderFunc renders one component from provider-neutral properties
+// and explicitly named slots. Storybook and downstream application runtimes
+// call the same renderer carried by the canonical OSS contribution.
+type DeliveryRenderFunc func(
+	props map[string]any,
+	slots DeliverySlotChildren,
+) (g.Node, error)
 
 // DeliveryExample is one stable authored fixture shared by native Figma and
 // executable Storybook projections.
@@ -44,7 +76,27 @@ type DeliveryExample struct {
 	Name        string
 	Description string
 	Props       map[string]any
+	Slots       []DeliveryExampleSlot
 	Design      blueprint.ExampleContract
+}
+
+// DeliveryExampleSlot is one explicitly named composition region in an
+// authored example. Examples use the same slot vocabulary as production
+// surfaces; they never smuggle child-component data through opaque props.
+type DeliveryExampleSlot struct {
+	Name       string
+	Components []DeliveryExampleComponent
+}
+
+// DeliveryExampleComponent is one real component instance in an authored
+// example graph. SlotAttrs belongs to the occupancy in its parent slot, while
+// Props configures the component itself.
+type DeliveryExampleComponent struct {
+	ID        string
+	Type      string
+	Props     map[string]any
+	SlotAttrs map[string]any
+	Slots     []DeliveryExampleSlot
 }
 
 // DeliveryDefinition is the complete OSS-owned delivery contribution for one
@@ -127,6 +179,14 @@ func (d DeliveryDefinition) Validate() error {
 		if viewport := strings.TrimSpace(example.Design.Viewport); viewport == "" {
 			return fmt.Errorf("delivery component %q example %q has no viewport", d.Identity.ID, id)
 		}
+		if err := validateDeliveryExampleSlots(
+			string(d.Identity.ID),
+			d.Contract.Slots,
+			example.Slots,
+			id,
+		); err != nil {
+			return err
+		}
 	}
 	if canonical != 1 {
 		return fmt.Errorf(
@@ -144,6 +204,7 @@ func (d DeliveryDefinition) Validate() error {
 // Clone returns a defensive copy safe for downstream assembly.
 func (d DeliveryDefinition) Clone() DeliveryDefinition {
 	cloned := d
+	cloned.Contract.Tags = slices.Clone(d.Contract.Tags)
 	cloned.Contract.Props = slices.Clone(d.Contract.Props)
 	for index := range cloned.Contract.Props {
 		cloned.Contract.Props[index].EnumValues =
@@ -162,6 +223,7 @@ func (d DeliveryDefinition) Clone() DeliveryDefinition {
 	for index, example := range d.Examples {
 		cloned.Examples[index] = example
 		cloned.Examples[index].Props = cloneDeliveryValueMap(example.Props)
+		cloned.Examples[index].Slots = cloneDeliveryExampleSlots(example.Slots)
 		cloned.Examples[index].Design.Viewports =
 			slices.Clone(example.Design.Viewports)
 	}
@@ -178,6 +240,32 @@ func newDeliveryDefinition[T any](
 	design blueprint.Definition,
 	examples []DeliveryExample,
 	render func(T) g.Node,
+) DeliveryDefinition {
+	return newSlottedDeliveryDefinition(
+		componentType,
+		tier,
+		stableID,
+		description,
+		properties,
+		slots,
+		design,
+		examples,
+		func(props T, _ DeliverySlotChildren) g.Node {
+			return render(props)
+		},
+	)
+}
+
+func newSlottedDeliveryDefinition[T any](
+	componentType string,
+	tier uicomponent.Tier,
+	stableID string,
+	description string,
+	properties map[string]PropertyContract,
+	slots []designcomponent.Slot,
+	design blueprint.Definition,
+	examples []DeliveryExample,
+	render func(T, DeliverySlotChildren) g.Node,
 ) DeliveryDefinition {
 	identity := uicomponent.Descriptor{
 		ID:      uicomponent.ID(componentType),
@@ -227,18 +315,61 @@ func newDeliveryDefinition[T any](
 		Contract: normalized,
 		Design:   design,
 		Examples: cloneDeliveryExamples(examples),
-		Render: func(props map[string]any) (g.Node, error) {
+		Render: func(
+			props map[string]any,
+			slots DeliverySlotChildren,
+		) (g.Node, error) {
+			if err := validateRequiredDeliveryProps(
+				componentType,
+				normalized.Props,
+				props,
+			); err != nil {
+				return nil, err
+			}
 			decoded, err := decodeDeliveryProps[T](props)
 			if err != nil {
 				return nil, fmt.Errorf("%s props: %w", componentType, err)
 			}
-			return render(decoded), nil
+			return render(decoded, slots), nil
 		},
 	}
 	if err := definition.Validate(); err != nil {
 		panic(err)
 	}
 	return definition
+}
+
+func validateRequiredDeliveryProps(
+	componentType string,
+	contract []designcomponent.Prop,
+	props map[string]any,
+) error {
+	for _, prop := range contract {
+		if !prop.Required {
+			continue
+		}
+		value, exists := props[prop.Name]
+		if !exists || value == nil {
+			return fmt.Errorf(
+				"%s props: required property %q is missing",
+				componentType,
+				prop.Name,
+			)
+		}
+		switch prop.Type {
+		case designcomponent.PropString,
+			designcomponent.PropEnum,
+			designcomponent.PropToken:
+			if strings.TrimSpace(fmt.Sprint(value)) == "" {
+				return fmt.Errorf(
+					"%s props: required property %q is empty",
+					componentType,
+					prop.Name,
+				)
+			}
+		}
+	}
+	return nil
 }
 
 func newLayoutDeliveryDefinition[T any](
@@ -250,7 +381,7 @@ func newLayoutDeliveryDefinition[T any](
 	examples []DeliveryExample,
 	render func(T, ...g.Node) g.Node,
 ) DeliveryDefinition {
-	definition := newDeliveryDefinition(
+	definition := newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierTemplate,
 		stableID,
@@ -261,17 +392,34 @@ func newLayoutDeliveryDefinition[T any](
 			Description:  "Ordered child components arranged by this layout.",
 			AllowedTypes: deliveryTemplateContentTypes(),
 			Cardinality:  designcomponent.SlotMany,
+			Attrs:        deliveryRepeatingSlotAttrs(),
 		}},
 		design,
 		examples,
-		func(props T) g.Node {
+		func(props T, slots DeliverySlotChildren) g.Node {
 			return render(
 				props,
-				sampleDeliveryChild("Primary content"),
-				sampleDeliveryChild("Supporting content"),
+				slots.Nodes("children")...,
 			)
 		},
 	)
+	return definition
+}
+
+func withDeliveryTags(
+	definition DeliveryDefinition,
+	tags ...string,
+) DeliveryDefinition {
+	definition.Contract.Tags = append(definition.Contract.Tags, tags...)
+	normalized, err := definition.Contract.Normalize()
+	if err != nil {
+		panic(fmt.Errorf(
+			"tag OSS delivery component %q: %w",
+			definition.Identity.ID,
+			err,
+		))
+	}
+	definition.Contract = normalized
 	return definition
 }
 
@@ -310,6 +458,15 @@ func propsFromType[T any](
 	}
 	out := make([]designcomponent.Prop, 0, len(fields))
 	for _, prop := range fields {
+		// Optional Go booleans have an unambiguous zero-value resting state.
+		// Publish it in the portable contract so Storybook, Figma, code
+		// generators, and downstream PlatformKit adapters all observe the same
+		// state without independently inferring language-specific semantics.
+		if prop.Type == designcomponent.PropBoolean &&
+			!prop.Required &&
+			strings.TrimSpace(prop.Default) == "" {
+			prop.Default = "false"
+		}
 		out = append(out, prop)
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Name < out[j].Name })
@@ -323,6 +480,9 @@ func collectDeliveryProps(
 	for index := range typ.NumField() {
 		field := typ.Field(index)
 		if !field.IsExported() {
+			continue
+		}
+		if field.Tag.Get("delivery") == "internal" {
 			continue
 		}
 		tag := field.Tag.Get("json")
@@ -456,6 +616,38 @@ func mobileDeliveryExample(componentType, name string, props map[string]any) Del
 	return example
 }
 
+func withDeliveryExampleSlots(
+	example DeliveryExample,
+	slots ...DeliveryExampleSlot,
+) DeliveryExample {
+	example.Slots = cloneDeliveryExampleSlots(slots)
+	return example
+}
+
+func deliveryExampleSlot(
+	name string,
+	components ...DeliveryExampleComponent,
+) DeliveryExampleSlot {
+	return DeliveryExampleSlot{
+		Name:       name,
+		Components: components,
+	}
+}
+
+func deliveryExampleComponent(
+	id string,
+	componentType string,
+	props map[string]any,
+	slots ...DeliveryExampleSlot,
+) DeliveryExampleComponent {
+	return DeliveryExampleComponent{
+		ID:    id,
+		Type:  componentType,
+		Props: cloneDeliveryValueMap(props),
+		Slots: cloneDeliveryExampleSlots(slots),
+	}
+}
+
 func deliveryExampleID(componentType, name string) string {
 	return "pk-ui.example/" + strings.ToLower(componentType) + "/" +
 		strings.NewReplacer(" ", "-", "_", "-", "/", "-").Replace(strings.ToLower(name))
@@ -463,13 +655,6 @@ func deliveryExampleID(componentType, name string) string {
 
 func stableDeliveryID(componentType string) string {
 	return "pk-ui.component." + strings.ToLower(componentType)
-}
-
-func sampleDeliveryChild(label string) g.Node {
-	return Card(
-		cardProps(label),
-		Text(textProps("Editable child slot", "muted")),
-	)
 }
 
 func cloneDeliverySlots(values []designcomponent.Slot) []designcomponent.Slot {
@@ -536,7 +721,32 @@ func cloneDeliveryExamples(values []DeliveryExample) []DeliveryExample {
 	for index, value := range values {
 		out[index] = value
 		out[index].Props = cloneDeliveryValueMap(value.Props)
+		out[index].Slots = cloneDeliveryExampleSlots(value.Slots)
 		out[index].Design.Viewports = slices.Clone(value.Design.Viewports)
+	}
+	return out
+}
+
+func cloneDeliveryExampleSlots(values []DeliveryExampleSlot) []DeliveryExampleSlot {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make([]DeliveryExampleSlot, len(values))
+	for index, value := range values {
+		out[index].Name = value.Name
+		out[index].Components = make(
+			[]DeliveryExampleComponent,
+			len(value.Components),
+		)
+		for componentIndex, component := range value.Components {
+			out[index].Components[componentIndex] = component
+			out[index].Components[componentIndex].Props =
+				cloneDeliveryValueMap(component.Props)
+			out[index].Components[componentIndex].SlotAttrs =
+				cloneDeliveryValueMap(component.SlotAttrs)
+			out[index].Components[componentIndex].Slots =
+				cloneDeliveryExampleSlots(component.Slots)
+		}
 	}
 	return out
 }
@@ -570,4 +780,163 @@ func deliveryTemplateContentTypes() []string {
 		"Heading", "Input", "Kbd", "Label", "Link", "Pagination", "SearchBar",
 		"Select", "Spinner", "Stack", "Table", "Tabs", "Tag", "Text", "Textarea",
 	}
+}
+
+func deliveryRepeatingSlotAttrs() []designcomponent.Prop {
+	return []designcomponent.Prop{{
+		Name:        "id",
+		Type:        designcomponent.PropString,
+		Role:        designcomponent.PropRoleContent,
+		Description: "Stable component-instance identity within the repeating slot.",
+	}}
+}
+
+func validateDeliveryExampleSlots(
+	componentType string,
+	contractSlots []designcomponent.Slot,
+	exampleSlots []DeliveryExampleSlot,
+	path string,
+) error {
+	contracts := make(map[string]designcomponent.Slot, len(contractSlots))
+	for _, slot := range contractSlots {
+		contracts[slot.Name] = slot
+	}
+	seen := make(map[string]struct{}, len(exampleSlots))
+	for _, exampleSlot := range exampleSlots {
+		name := strings.TrimSpace(exampleSlot.Name)
+		if name == "" {
+			return fmt.Errorf(
+				"delivery component %q example %q has an unnamed slot",
+				componentType,
+				path,
+			)
+		}
+		if _, duplicate := seen[name]; duplicate {
+			return fmt.Errorf(
+				"delivery component %q example %q repeats slot %q",
+				componentType,
+				path,
+				name,
+			)
+		}
+		seen[name] = struct{}{}
+		contract, exists := contracts[name]
+		if !exists {
+			return fmt.Errorf(
+				"delivery component %q example %q uses unknown slot %q",
+				componentType,
+				path,
+				name,
+			)
+		}
+		if contract.Cardinality == designcomponent.SlotOne &&
+			len(exampleSlot.Components) > 1 {
+			return fmt.Errorf(
+				"delivery component %q example %q slot %q has %d components; expected at most one",
+				componentType,
+				path,
+				name,
+				len(exampleSlot.Components),
+			)
+		}
+		for index, component := range exampleSlot.Components {
+			childType := strings.TrimSpace(component.Type)
+			if childType == "" {
+				return fmt.Errorf(
+					"delivery component %q example %q slot %q child %d has no type",
+					componentType,
+					path,
+					name,
+					index,
+				)
+			}
+			if !slices.Contains(contract.AllowedTypes, childType) {
+				return fmt.Errorf(
+					"delivery component %q example %q slot %q does not allow %q",
+					componentType,
+					path,
+					name,
+					childType,
+				)
+			}
+			if strings.TrimSpace(component.ID) == "" {
+				return fmt.Errorf(
+					"delivery component %q example %q slot %q child %d has no stable id",
+					componentType,
+					path,
+					name,
+					index,
+				)
+			}
+			if err := validateDeliverySlotAttrs(
+				componentType,
+				path,
+				contract,
+				component,
+			); err != nil {
+				return err
+			}
+		}
+	}
+	for _, contract := range contractSlots {
+		if !contract.Required {
+			continue
+		}
+		var count int
+		for _, exampleSlot := range exampleSlots {
+			if exampleSlot.Name == contract.Name {
+				count = len(exampleSlot.Components)
+				break
+			}
+		}
+		if count == 0 {
+			return fmt.Errorf(
+				"delivery component %q example %q omits required slot %q",
+				componentType,
+				path,
+				contract.Name,
+			)
+		}
+	}
+	return nil
+}
+
+func validateDeliverySlotAttrs(
+	componentType string,
+	path string,
+	contract designcomponent.Slot,
+	component DeliveryExampleComponent,
+) error {
+	allowed := make(map[string]designcomponent.Prop, len(contract.Attrs))
+	for _, attr := range contract.Attrs {
+		allowed[attr.Name] = attr
+	}
+	for name := range component.SlotAttrs {
+		if _, exists := allowed[name]; !exists {
+			return fmt.Errorf(
+				"delivery component %q example %q slot %q child %q uses unknown slot attr %q",
+				componentType,
+				path,
+				contract.Name,
+				component.ID,
+				name,
+			)
+		}
+	}
+	for _, attr := range contract.Attrs {
+		if !attr.Required {
+			continue
+		}
+		if value, exists := component.SlotAttrs[attr.Name]; !exists || value == nil {
+			return fmt.Errorf(
+				"delivery component %q example %q slot %q child %q omits required slot attr %q",
+				componentType,
+				path,
+				contract.Name,
+				component.ID,
+				attr.Name,
+			)
+		}
+	}
+	return nil
 }

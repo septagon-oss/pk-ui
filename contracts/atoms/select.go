@@ -15,9 +15,12 @@ type SelectProps struct {
 	Name        string         `json:"name"`
 	Label       string         `json:"label,omitempty"`
 	Value       string         `json:"value,omitempty"`
+	Values      []string       `json:"values,omitempty"`
 	Placeholder string         `json:"placeholder,omitempty"` // rendered as a disabled-free empty option
 	Options     []SelectOption `json:"options"`
 	Required    bool           `json:"required,omitempty"`
+	Multiple    bool           `json:"multiple,omitempty"`
+	VisibleRows int            `json:"visibleRows,omitempty"`
 	HelpText    string         `json:"helpText,omitempty"`
 	Error       string         `json:"error,omitempty"`
 }

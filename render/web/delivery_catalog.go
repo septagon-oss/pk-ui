@@ -12,20 +12,21 @@ package web
 import (
 	"fmt"
 	"slices"
+	"strings"
+
+	g "maragu.dev/gomponents"
 
 	designcomponent "github.com/septagon-oss/pk-design/pkg/components"
 	uicomponent "github.com/septagon-oss/pk-ui/component"
 	"github.com/septagon-oss/pk-ui/contracts/atoms"
 	"github.com/septagon-oss/tw"
-	g "maragu.dev/gomponents"
 )
 
 var (
 	buttonVariants = []string{
-		"primary", "secondary", "success", "warning", "error", "info",
-		"outline", "ghost", "link",
+		"primary", "secondary", "outline", "ghost", "link",
 	}
-	controlSizes = []string{"xs", "small", "medium", "large", "xl", "2xl"}
+	controlSizes = []string{"xs", "sm", "md", "lg", "xl", "2xl"}
 	gaps         = []string{"0", "1", "2", "3", "4", "5", "6", "8"}
 )
 
@@ -34,6 +35,7 @@ var (
 // copies; callers can safely adapt them into isolated runtimes.
 func OSSDeliveryCatalog() []DeliveryDefinition {
 	definitions := []DeliveryDefinition{
+		iconDeliveryDefinition(),
 		buttonDeliveryDefinition(),
 		badgeDeliveryDefinition(),
 		alertDeliveryDefinition(),
@@ -61,11 +63,15 @@ func OSSDeliveryCatalog() []DeliveryDefinition {
 		searchBarDeliveryDefinition(),
 		tabsDeliveryDefinition(),
 		dataGridDeliveryDefinition(),
+		windowedCollectionDeliveryDefinition(),
 		stackDeliveryDefinition(),
 		flexDeliveryDefinition(),
 		gridDeliveryDefinition(),
 		containerDeliveryDefinition(),
 		dataManagementPageDeliveryDefinition(),
+	}
+	if err := validateDeliveryCatalogExamples(definitions); err != nil {
+		panic(fmt.Errorf("validate OSS delivery examples: %w", err))
 	}
 	out := make([]DeliveryDefinition, len(definitions))
 	for index, definition := range definitions {
@@ -77,91 +83,510 @@ func OSSDeliveryCatalog() []DeliveryDefinition {
 	return out
 }
 
+// RenderDeliveryExample renders one authored example through the exact same
+// catalog contributions used by production runtimes. Root prop overrides are
+// intended for Storybook controls; the authored child graph remains explicit
+// and stable.
+func RenderDeliveryExample(
+	componentType string,
+	exampleID string,
+	rootOverrides map[string]any,
+) (g.Node, error) {
+	catalog := OSSDeliveryCatalog()
+	index := make(map[string]DeliveryDefinition, len(catalog))
+	for _, definition := range catalog {
+		index[string(definition.Identity.ID)] = definition
+	}
+	definition, exists := index[strings.TrimSpace(componentType)]
+	if !exists {
+		return nil, fmt.Errorf("OSS delivery component %q is not registered", componentType)
+	}
+	for _, example := range definition.Examples {
+		if example.ID != strings.TrimSpace(exampleID) {
+			continue
+		}
+		return renderDeliveryExampleWithCatalog(
+			definition,
+			example,
+			rootOverrides,
+			index,
+		)
+	}
+	return nil, fmt.Errorf(
+		"OSS delivery component %q has no example %q",
+		componentType,
+		exampleID,
+	)
+}
+
+func validateDeliveryCatalogExamples(definitions []DeliveryDefinition) error {
+	index := make(map[string]DeliveryDefinition, len(definitions))
+	for _, definition := range definitions {
+		componentType := string(definition.Identity.ID)
+		if _, duplicate := index[componentType]; duplicate {
+			return fmt.Errorf("duplicate delivery component type %q", componentType)
+		}
+		index[componentType] = definition
+	}
+	for _, definition := range definitions {
+		for _, example := range definition.Examples {
+			node, err := renderDeliveryExampleWithCatalog(
+				definition,
+				example,
+				nil,
+				index,
+			)
+			if err != nil {
+				return fmt.Errorf(
+					"%s/%s: %w",
+					definition.Identity.ID,
+					example.ID,
+					err,
+				)
+			}
+			if node == nil {
+				return fmt.Errorf(
+					"%s/%s rendered a nil node",
+					definition.Identity.ID,
+					example.ID,
+				)
+			}
+		}
+	}
+	return nil
+}
+
+func renderDeliveryExampleWithCatalog(
+	definition DeliveryDefinition,
+	example DeliveryExample,
+	rootOverrides map[string]any,
+	catalog map[string]DeliveryDefinition,
+) (g.Node, error) {
+	seenIDs := map[string]struct{}{example.ID: {}}
+	slots, err := renderDeliveryExampleSlots(
+		example.Slots,
+		definition,
+		example.ID,
+		catalog,
+		seenIDs,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return definition.Render(
+		mergeDeliveryExampleProps(example.Props, rootOverrides),
+		slots,
+	)
+}
+
+func renderDeliveryExampleSlots(
+	exampleSlots []DeliveryExampleSlot,
+	parent DeliveryDefinition,
+	path string,
+	catalog map[string]DeliveryDefinition,
+	seenIDs map[string]struct{},
+) (DeliverySlotChildren, error) {
+	if err := validateDeliveryExampleSlots(
+		string(parent.Identity.ID),
+		parent.Contract.Slots,
+		exampleSlots,
+		path,
+	); err != nil {
+		return nil, err
+	}
+	if len(exampleSlots) == 0 {
+		return nil, nil
+	}
+	contracts := make(map[string]designcomponent.Slot, len(parent.Contract.Slots))
+	for _, slot := range parent.Contract.Slots {
+		contracts[slot.Name] = slot
+	}
+	out := make(DeliverySlotChildren, len(exampleSlots))
+	for _, slot := range exampleSlots {
+		contract := contracts[slot.Name]
+		for _, component := range slot.Components {
+			if _, duplicate := seenIDs[component.ID]; duplicate {
+				return nil, fmt.Errorf(
+					"example %q repeats component id %q",
+					path,
+					component.ID,
+				)
+			}
+			seenIDs[component.ID] = struct{}{}
+			definition, exists := catalog[component.Type]
+			if !exists {
+				return nil, fmt.Errorf(
+					"example %q component %q references unknown type %q",
+					path,
+					component.ID,
+					component.Type,
+				)
+			}
+			childPath := path + "/" + component.ID
+			childSlots, err := renderDeliveryExampleSlots(
+				component.Slots,
+				definition,
+				childPath,
+				catalog,
+				seenIDs,
+			)
+			if err != nil {
+				return nil, err
+			}
+			node, err := definition.Render(component.Props, childSlots)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"render example %q component %q: %w",
+					path,
+					component.ID,
+					err,
+				)
+			}
+			attrs := cloneDeliveryValueMap(component.SlotAttrs)
+			if deliverySlotDeclaresAttr(contract, "id") {
+				if attrs == nil {
+					attrs = make(map[string]any)
+				}
+				if _, exists := attrs["id"]; !exists {
+					attrs["id"] = component.ID
+				}
+			}
+			out[slot.Name] = append(out[slot.Name], DeliverySlotInstance{
+				Attrs:    attrs,
+				Children: []g.Node{node},
+			})
+		}
+	}
+	return out, nil
+}
+
+func deliverySlotDeclaresAttr(slot designcomponent.Slot, name string) bool {
+	for _, attr := range slot.Attrs {
+		if attr.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func mergeDeliveryExampleProps(
+	base map[string]any,
+	overrides map[string]any,
+) map[string]any {
+	out := cloneDeliveryValueMap(base)
+	if len(overrides) == 0 {
+		return out
+	}
+	if out == nil {
+		out = make(map[string]any, len(overrides))
+	}
+	for key, value := range overrides {
+		out[key] = value
+	}
+	return out
+}
+
+func iconDeliveryDefinition() DeliveryDefinition {
+	componentType := "Icon"
+	root := deliveryClassBound(
+		deliveryClassBound(
+			deliverySVGBound(
+				componentType,
+				clIcon.Compile(),
+				"icon-",
+				"name",
+			),
+			"size",
+			compileClassMap(clIconSize),
+		),
+		"tone",
+		compileClassMap(clIconTone),
+	)
+	return withDeliveryTags(newDeliveryDefinition(
+		componentType,
+		uicomponent.TierAtom,
+		stableDeliveryID(componentType),
+		"Reusable system glyph with governed size, semantic tone, and accessibility.",
+		map[string]PropertyContract{
+			"name": contentProperty("Canonical glyph name."),
+			"size": sizeProperty(controlSizes, "md", "Rendered glyph size."),
+			"tone": toneProperty(
+				[]string{"neutral", "brand", "success", "warning", "danger", "info"},
+				"neutral",
+				"Semantic foreground tone.",
+			),
+			"weight":    variantProperty([]string{"outline"}, "outline", "Glyph weight."),
+			"ariaLabel": contentProperty("Accessible label; empty marks the glyph decorative."),
+		},
+		nil,
+		deliveryDesign("Search / Fg Primary / 20", "01 Icons", "System Glyphs", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "Search / Fg Primary / 20", map[string]any{
+				"name": "search", "tone": "neutral", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Search / Fg Tertiary / 20", map[string]any{
+				"name": "search", "tone": "neutral", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "X Mark / Fg Primary / 24", map[string]any{
+				"name": "x-mark", "tone": "neutral", "size": "lg", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Arrow Right / Fg Primary / 24", map[string]any{
+				"name": "arrow-right", "tone": "neutral", "size": "lg", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Calendar / Fg Tertiary / 20", map[string]any{
+				"name": "calendar", "tone": "neutral", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Chat Bubble Left Right / Fg On Brand / 24", map[string]any{
+				"name": "chat-bubble-left-right", "tone": "neutral", "size": "lg", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Check / Fg Brand / 16", map[string]any{
+				"name": "check", "tone": "brand", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Check / Fg On Brand / 16", map[string]any{
+				"name": "check", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Check Circle / Fg Primary / 20", map[string]any{
+				"name": "check-circle", "tone": "neutral", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Check Circle / Fg Success / 20", map[string]any{
+				"name": "check-circle", "tone": "success", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Chevron Down / Fg Tertiary / 16", map[string]any{
+				"name": "chevron-down", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Chevron Down / Fg Tertiary / 20", map[string]any{
+				"name": "chevron-down", "tone": "neutral", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Clock / Fg Primary / 20", map[string]any{
+				"name": "clock", "tone": "neutral", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Cog / Fg Primary / 24", map[string]any{
+				"name": "cog", "tone": "neutral", "size": "lg", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Document / Fg Tertiary / 40", map[string]any{
+				"name": "document", "tone": "neutral", "size": "2xl", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Envelope / Fg Primary / 20", map[string]any{
+				"name": "envelope", "tone": "neutral", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Ellipsis Vertical / Fg Primary / 12", map[string]any{
+				"name": "ellipsis-vertical", "tone": "neutral", "size": "xs", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Exclamation Circle / Fg Warning / 16", map[string]any{
+				"name": "exclamation-circle", "tone": "warning", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Exclamation Triangle / Fg Warning / 20", map[string]any{
+				"name": "exclamation-triangle", "tone": "warning", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Information Circle / Fg Info / 20", map[string]any{
+				"name": "information-circle", "tone": "info", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Trash / Fg Danger / 16", map[string]any{
+				"name": "trash", "tone": "danger", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Upload / Fg Tertiary / 40", map[string]any{
+				"name": "upload", "tone": "neutral", "size": "2xl", "weight": "outline",
+			}),
+			deliveryExample(componentType, "User / Fg Tertiary / 16", map[string]any{
+				"name": "user", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "X Circle / Fg Danger / 20", map[string]any{
+				"name": "x-circle", "tone": "danger", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "X Circle / Fg Primary / 20", map[string]any{
+				"name": "x-circle", "tone": "neutral", "size": "md", "weight": "outline",
+			}),
+		},
+		Icon,
+	), "icon", "glyph")
+}
+
 func buttonDeliveryDefinition() DeliveryDefinition {
 	componentType := "Button"
 	root := deliveryClassBound(
 		deliveryClassBound(
-			deliveryFrame(
-				componentType,
-				clButtonBase.Compile(),
-				deliveryText("Label", "", "Continue", "text"),
+			deliveryClassBound(
+				deliveryClassBound(
+					deliveryFrame(
+						componentType,
+						clButtonBase.Compile(),
+						deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
+						deliveryHiddenWhen(
+							deliveryText("Label", "", "Continue", "label"),
+							map[string]any{"iconOnly": true},
+						),
+						deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
+					),
+					"iconOnly",
+					map[string]string{
+						"false": "",
+						"true":  clButtonIconOnly.Compile(),
+					},
+				),
+				"variant",
+				compileClassMap(clButtonVariant),
 			),
-			"variant",
-			compileClassMap(clButtonVariant),
+			"tone",
+			compileClassMap(clButtonTone),
 		),
 		"size",
 		compileClassMap(clButtonSize),
 	)
-	return newDeliveryDefinition(
+	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
 		stableDeliveryID(componentType),
 		"Accessible action control rendered by the OSS web runtime.",
 		map[string]PropertyContract{
-			"text":         contentProperty("Visible button label."),
-			"variant":      variantProperty(buttonVariants, "primary", "Visual treatment."),
-			"size":         sizeProperty(controlSizes, "medium", "Control size."),
-			"type":         enumProperty([]string{"button", "submit", "reset"}, "button", "HTML button type."),
-			"loading":      stateProperty("Whether progress replaces the leading content."),
-			"fullWidth":    modifierProperty("Whether the control fills its container."),
-			"icon":         contentProperty("Optional icon identity."),
-			"iconPosition": enumProperty([]string{"left", "right"}, "left", "Icon placement."),
+			"label":     contentProperty("Visible button label."),
+			"variant":   variantProperty(buttonVariants, "primary", "Visual treatment."),
+			"tone":      toneProperty([]string{"neutral", "brand", "success", "warning", "danger", "info"}, "neutral", "Semantic intent."),
+			"size":      sizeProperty(controlSizes, "md", "Control size."),
+			"type":      enumProperty([]string{"button", "submit", "reset"}, "button", "HTML button type."),
+			"loading":   stateProperty("Whether progress replaces the leading content."),
+			"fullWidth": modifierProperty("Whether the control fills its container."),
+			"iconOnly":  modifierProperty("Whether the visible label is suppressed for an icon-only control."),
+			"ariaLabel": contentProperty("Accessible name required for icon-only controls."),
 		},
-		nil,
+		[]designcomponent.Slot{
+			{
+				Name:         "iconStart",
+				Description:  "Optional leading icon slot.",
+				AllowedTypes: []string{"Icon"},
+				Cardinality:  designcomponent.SlotOne,
+			},
+			{
+				Name:         "iconEnd",
+				Description:  "Optional trailing icon slot.",
+				AllowedTypes: []string{"Icon"},
+				Cardinality:  designcomponent.SlotOne,
+			},
+		},
 		deliveryDesign("primary", "02 Atoms", "Actions", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "primary", map[string]any{
-				"text": "Continue", "variant": "primary", "size": "medium",
+				"label": "Continue", "variant": "primary", "tone": "neutral", "size": "md",
 			}),
 			deliveryExample(componentType, "secondary", map[string]any{
-				"text": "Cancel", "variant": "secondary", "size": "medium",
+				"label": "Cancel", "variant": "secondary", "tone": "neutral", "size": "md",
 			}),
 			deliveryExample(componentType, "loading", map[string]any{
-				"text": "Saving", "variant": "primary", "size": "medium", "loading": true,
+				"label": "Saving", "variant": "primary", "tone": "neutral", "size": "md", "loading": true,
 			}),
+			deliveryExample(componentType, "danger", map[string]any{
+				"label": "Sign out", "variant": "primary", "tone": "danger", "size": "md",
+			}),
+			deliveryExample(componentType, "outline", map[string]any{
+				"label": "Details", "variant": "outline", "tone": "neutral", "size": "md",
+			}),
+			deliveryExample(componentType, "ghost", map[string]any{
+				"label": "Cancel", "variant": "ghost", "tone": "neutral", "size": "md",
+			}),
+			deliveryExample(componentType, "link", map[string]any{
+				"label": "View all", "variant": "link", "tone": "neutral", "size": "md",
+			}),
+			deliveryExample(componentType, "full-width", map[string]any{
+				"label": "Continue", "variant": "primary", "tone": "neutral", "size": "md", "fullWidth": true,
+			}),
+			withDeliveryExampleSlots(
+				deliveryExample(componentType, "button-icon-only-ghost", map[string]any{
+					"label": "More actions", "variant": "ghost", "tone": "neutral", "size": "xs",
+					"iconOnly": true, "ariaLabel": "More actions",
+				}),
+				deliveryExampleSlot(
+					"iconStart",
+					deliveryExampleComponent(
+						"more-actions-icon",
+						"Icon",
+						map[string]any{
+							"name": "ellipsis-vertical",
+							"size": "xs",
+							"tone": "neutral",
+						},
+					),
+				),
+			),
 		},
-		Button,
+		func(props atoms.ButtonProps, slots DeliverySlotChildren) g.Node {
+			return buttonWithSlots(
+				props,
+				slots.Nodes("iconStart"),
+				slots.Nodes("iconEnd"),
+			)
+		},
 	)
 }
 
 func badgeDeliveryDefinition() DeliveryDefinition {
 	componentType := "Badge"
 	root := deliveryClassBound(
-		deliveryFrame(
-			componentType,
-			clBadgeBase.Compile(),
-			deliveryText("Label", "", "Active", "text"),
+		deliveryClassBound(
+			deliveryClassBound(
+				deliveryFrame(
+					componentType,
+					clBadgeBase.Compile(),
+					deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
+					deliveryText("Label", "", "Active", "label"),
+					deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
+				),
+				"variant",
+				compileClassMap(clBadgeVariant),
+			),
+			"tone",
+			compileClassMap(clBadgeTone),
 		),
-		"variant",
-		compileClassMap(clBadgeVariant),
+		"size",
+		compileClassMap(clBadgeSize),
 	)
-	return newDeliveryDefinition(
+	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
 		stableDeliveryID(componentType),
 		"Compact semantic status label.",
 		map[string]PropertyContract{
-			"text": contentProperty("Visible badge text."),
-			"variant": toneProperty(
-				[]string{"default", "primary", "secondary", "success", "warning", "error", "info"},
-				"default",
-				"Semantic status treatment.",
+			"label":   contentProperty("Visible badge label."),
+			"variant": variantProperty([]string{"primary", "secondary", "outline"}, "primary", "Visual treatment."),
+			"tone": toneProperty(
+				[]string{"neutral", "brand", "success", "warning", "danger", "info"},
+				"neutral",
+				"Semantic intent independent of the visual treatment.",
 			),
-			"size": enumProperty([]string{"small", "medium", "large"}, "medium", "Badge scale."),
+			"size": sizeProperty(controlSizes, "md", "Badge scale."),
 			"dot":  modifierProperty("Shows a leading status dot."),
-			"icon": contentProperty("Optional icon identity."),
 		},
-		nil,
+		[]designcomponent.Slot{
+			{
+				Name:         "iconStart",
+				Description:  "Optional leading icon slot.",
+				AllowedTypes: []string{"Icon"},
+				Cardinality:  designcomponent.SlotOne,
+			},
+			{
+				Name:         "iconEnd",
+				Description:  "Optional trailing icon slot.",
+				AllowedTypes: []string{"Icon"},
+				Cardinality:  designcomponent.SlotOne,
+			},
+		},
 		deliveryDesign("default", "02 Atoms", "Status", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "default", map[string]any{
-				"text": "Active", "variant": "default",
+				"label": "Active", "variant": "primary", "tone": "neutral", "size": "md",
 			}),
 			deliveryExample(componentType, "success", map[string]any{
-				"text": "Published", "variant": "success", "dot": true,
+				"label": "Published", "variant": "primary", "tone": "success", "size": "md", "dot": true,
+			}),
+			deliveryExample(componentType, "tone-info", map[string]any{
+				"label": "Pending", "variant": "secondary", "tone": "info", "size": "md",
 			}),
 		},
-		Badge,
+		func(props atoms.BadgeProps, slots DeliverySlotChildren) g.Node {
+			return badgeWithSlots(
+				props,
+				slots.Nodes("iconStart"),
+				slots.Nodes("iconEnd"),
+			)
+		},
 	)
 }
 
@@ -171,17 +596,19 @@ func alertDeliveryDefinition() DeliveryDefinition {
 		deliveryFrame(
 			componentType,
 			clAlertBase.Compile(),
+			deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
 			deliveryFrame(
 				"Body",
 				clAlertBody.Compile(),
 				deliveryText("Title", clAlertTitle.Compile(), "Update available", "title"),
 				deliveryText("Message", clAlertMessage.Compile(), "Review the latest changes.", "message"),
 			),
+			deliverySlot("Actions", "actions", ""),
 		),
-		"variant",
+		"tone",
 		compileClassMap(clAlertVariant),
 	)
-	return newDeliveryDefinition(
+	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
 		stableDeliveryID(componentType),
@@ -189,51 +616,92 @@ func alertDeliveryDefinition() DeliveryDefinition {
 		map[string]PropertyContract{
 			"message":     contentProperty("Required status message."),
 			"title":       contentProperty("Optional status title."),
-			"variant":     toneProperty([]string{"info", "success", "warning", "error"}, "info", "Severity."),
-			"icon":        contentProperty("Optional icon identity."),
+			"tone":        toneProperty([]string{"info", "success", "warning", "danger"}, "info", "Severity."),
 			"dismissible": stateProperty("Whether a dismiss affordance is exposed."),
 			"bordered":    modifierProperty("Whether the message has an outline."),
 			"compact":     modifierProperty("Whether spacing is compact."),
 		},
-		nil,
+		[]designcomponent.Slot{
+			{
+				Name:         "iconStart",
+				Description:  "Optional leading status glyph.",
+				AllowedTypes: []string{"Icon"},
+				Cardinality:  designcomponent.SlotOne,
+			},
+			{
+				Name:         "actions",
+				Description:  "Optional recovery or contextual actions.",
+				AllowedTypes: []string{"Button", "Link"},
+				Cardinality:  designcomponent.SlotMany,
+				Attrs:        deliveryRepeatingSlotAttrs(),
+			},
+		},
 		deliveryDesign("info", "02 Atoms", "Feedback", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "info", map[string]any{
-				"title": "Update available", "message": "Review the latest changes.", "variant": "info",
+				"title": "Update available", "message": "Review the latest changes.", "tone": "info",
 			}),
 			deliveryExample(componentType, "warning", map[string]any{
-				"title": "Check required", "message": "One field needs attention.", "variant": "warning",
+				"title": "Check required", "message": "One field needs attention.", "tone": "warning",
+			}),
+			deliveryExample(componentType, "info-alert", map[string]any{
+				"title": "Heads up", "message": "Your session will expire in 10 minutes.", "tone": "info",
 			}),
 		},
-		Alert,
+		func(props atoms.AlertProps, slots DeliverySlotChildren) g.Node {
+			return alertWithSlots(
+				props,
+				slots.Nodes("iconStart"),
+				slots.Nodes("actions"),
+			)
+		},
 	)
 }
 
 func inputDeliveryDefinition() DeliveryDefinition {
 	componentType := "Input"
-	root := deliveryFrame(
-		componentType,
-		clFieldWrap.Compile(),
-		deliveryText("Label", clLabel.Compile(), "Email address", "label"),
-		deliveryClassBound(
-			deliveryFrame(
-				"Control",
-				clInput.Compile()+" "+clInputNormal.Compile(),
-				deliveryText("Value", "", "name@example.com", "value", "placeholder"),
+	root := deliverySemantics(
+		deliveryFrame(
+			componentType,
+			clFieldWrap.Compile(),
+			deliverySlot(
+				"LabelSlot",
+				"label",
+				"",
+				deliveryText("Label", clLabel.Compile(), "Email address", "label"),
 			),
-			"error",
-			map[string]string{"": clInputNormal.Compile(), "*": clInputError.Compile()},
+			deliveryClassBound(
+				deliveryFrame(
+					"Control",
+					clInput.Compile()+" "+clInputNormal.Compile(),
+					deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
+					deliveryText("Value", "", "name@example.com", "value", "placeholder"),
+					deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
+				),
+				"error",
+				map[string]string{"": clInputNormal.Compile(), "*": clInputError.Compile()},
+			),
+			deliveryText("Help", clHelp.Compile(), "We never share your email.", "helpText", "error"),
 		),
-		deliveryText("Help", clHelp.Compile(), "We never share your email.", "helpText", "error"),
+		"field",
+		"field",
 	)
-	return newDeliveryDefinition(
+	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
 		stableDeliveryID(componentType),
 		"Labelled single-line form control with help and error states.",
 		map[string]PropertyContract{
-			"name":        contentProperty("Submitted field name."),
-			"type":        variantProperty([]string{"text", "email", "password", "number", "tel", "url", "search", "date", "time"}, "text", "Input kind."),
+			"name": contentProperty("Submitted field name."),
+			"type": variantProperty(
+				[]string{
+					"text", "email", "password", "number", "tel", "url",
+					"search", "date", "time", "datetime-local", "month",
+					"week", "color", "hidden",
+				},
+				"text",
+				"Input kind.",
+			),
 			"value":       contentProperty("Current value."),
 			"placeholder": contentProperty("Empty-state prompt."),
 			"label":       contentProperty("Visible field label."),
@@ -242,9 +710,22 @@ func inputDeliveryDefinition() DeliveryDefinition {
 			"required":    stateProperty("Whether a value is required."),
 			"readOnly":    stateProperty("Whether editing is prevented."),
 			"autoFocus":   stateProperty("Whether focus is requested on mount."),
-			"size":        sizeProperty([]string{"small", "medium", "large"}, "medium", "Control size."),
+			"size":        sizeProperty([]string{"sm", "md", "lg"}, "md", "Control size."),
 		},
-		nil,
+		[]designcomponent.Slot{
+			{
+				Name:         "iconStart",
+				Description:  "Optional leading icon or textual adornment slot.",
+				AllowedTypes: []string{"Icon", "Text"},
+				Cardinality:  designcomponent.SlotOne,
+			},
+			{
+				Name:         "iconEnd",
+				Description:  "Optional trailing icon or textual adornment slot.",
+				AllowedTypes: []string{"Icon", "Text"},
+				Cardinality:  designcomponent.SlotOne,
+			},
+		},
 		deliveryDesign("text", "02 Atoms", "Forms", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "text", map[string]any{
@@ -255,8 +736,22 @@ func inputDeliveryDefinition() DeliveryDefinition {
 				"name": "email", "type": "email", "label": "Email address",
 				"value": "invalid", "error": "Enter a valid email address.",
 			}),
+			deliveryExample(componentType, "email", map[string]any{
+				"name": "email", "type": "email", "label": "Email address",
+				"placeholder": "user@example.com",
+			}),
+			deliveryExample(componentType, "password", map[string]any{
+				"name": "password", "type": "password", "label": "Password",
+				"value": "correct horse battery staple",
+			}),
 		},
-		Input,
+		func(props atoms.InputProps, slots DeliverySlotChildren) g.Node {
+			return inputWithSlots(
+				props,
+				slots.Nodes("iconStart"),
+				slots.Nodes("iconEnd"),
+			)
+		},
 	)
 }
 
@@ -277,14 +772,17 @@ func selectDeliveryDefinition() DeliveryDefinition {
 		componentType,
 		uicomponent.TierMolecule,
 		stableDeliveryID(componentType),
-		"Native single-value choice control.",
+		"Native single- or multiple-value choice control.",
 		map[string]PropertyContract{
 			"name":        contentProperty("Submitted field name."),
 			"label":       contentProperty("Visible field label."),
 			"value":       contentProperty("Selected option value."),
+			"values":      contentProperty("Selected option values in multiple mode."),
 			"placeholder": contentProperty("Unselected prompt."),
 			"options":     contentProperty("Available choices."),
 			"required":    stateProperty("Whether a choice is required."),
+			"multiple":    stateProperty("Whether more than one choice can be selected."),
+			"visibleRows": roleProperty(designcomponent.PropRoleSize, "Visible option rows in multiple mode."),
 			"helpText":    contentProperty("Supporting guidance."),
 			"error":       stateProperty("Validation message."),
 		},
@@ -298,6 +796,15 @@ func selectDeliveryDefinition() DeliveryDefinition {
 					{"label": "Published", "value": "published"},
 				},
 			}),
+			mobileDeliveryExample(componentType, "multiple-select", map[string]any{
+				"name": "status", "label": "Status", "multiple": true,
+				"visibleRows": 3, "values": []string{"draft", "published"},
+				"options": []map[string]any{
+					{"label": "Draft", "value": "draft"},
+					{"label": "Published", "value": "published"},
+					{"label": "Archived", "value": "archived"},
+				},
+			}),
 		},
 		Select,
 	)
@@ -305,16 +812,20 @@ func selectDeliveryDefinition() DeliveryDefinition {
 
 func textareaDeliveryDefinition() DeliveryDefinition {
 	componentType := "Textarea"
-	root := deliveryFrame(
-		componentType,
-		clFieldWrap.Compile(),
-		deliveryText("Label", clLabel.Compile(), "Notes", "label"),
+	root := deliverySemantics(
 		deliveryFrame(
-			"Control",
-			clInput.Compile()+" "+clInputNormal.Compile(),
-			deliveryText("Value", "", "Add context for reviewers.", "value", "placeholder"),
+			componentType,
+			clFieldWrap.Compile(),
+			deliveryText("Label", clLabel.Compile(), "Notes", "label"),
+			deliveryFrame(
+				"Control",
+				clInput.Compile()+" "+clInputNormal.Compile(),
+				deliveryText("Value", "", "Add context for reviewers.", "value", "placeholder"),
+			),
+			deliveryText("Help", clHelp.Compile(), "Keep it concise.", "helperText", "errorMessage"),
 		),
-		deliveryText("Help", clHelp.Compile(), "Keep it concise.", "helperText", "errorMessage"),
+		"field",
+		"field",
 	)
 	return newDeliveryDefinition(
 		componentType,
@@ -331,6 +842,8 @@ func textareaDeliveryDefinition() DeliveryDefinition {
 			"required":     stateProperty("Whether a value is required."),
 			"readOnly":     stateProperty("Whether editing is prevented."),
 			"rows":         roleProperty(designcomponent.PropRoleSize, "Visible row count."),
+			"minLength":    roleProperty(designcomponent.PropRoleSize, "Minimum accepted character count."),
+			"maxLength":    roleProperty(designcomponent.PropRoleSize, "Maximum accepted character count."),
 			"fullWidth":    modifierProperty("Whether the field fills its container."),
 		},
 		nil,
@@ -339,6 +852,11 @@ func textareaDeliveryDefinition() DeliveryDefinition {
 			canonicalDeliveryExample(componentType, "default", map[string]any{
 				"name": "notes", "label": "Notes", "placeholder": "Add context for reviewers.",
 				"helperText": "Keep it concise.", "rows": 4,
+			}),
+			deliveryExample(componentType, "auto-resize", map[string]any{
+				"name": "description", "label": "Description",
+				"placeholder": "Enter a detailed description...",
+				"maxLength":   500, "fullWidth": true,
 			}),
 		},
 		Textarea,
@@ -381,6 +899,12 @@ func checkboxDeliveryDefinition() DeliveryDefinition {
 			}),
 			deliveryExample(componentType, "checked", map[string]any{
 				"name": "archived", "label": "Include archived items", "checked": true,
+			}),
+			deliveryExample(componentType, "basic", map[string]any{
+				"name": "agree", "label": "I agree to the terms",
+			}),
+			deliveryExample(componentType, "required", map[string]any{
+				"name": "terms", "label": "Accept terms of service", "required": true,
 			}),
 		},
 		Checkbox,
@@ -434,14 +958,14 @@ func textDeliveryDefinition() DeliveryDefinition {
 		"color",
 		textColorClasses(),
 	)
-	return newDeliveryDefinition(
+	return withDeliveryTags(newDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
 		stableDeliveryID(componentType),
 		"Semantic body-copy primitive.",
 		map[string]PropertyContract{
 			"content":  contentProperty("Visible copy."),
-			"size":     sizeProperty([]string{"xs", "sm", "base", "md", "lg", "xl", "2xl"}, "base", "Text scale."),
+			"size":     sizeProperty([]string{"xs", "sm", "base", "lg", "xl", "2xl"}, "base", "Text scale."),
 			"weight":   variantProperty([]string{"normal", "medium", "semibold", "bold"}, "normal", "Font weight."),
 			"color":    toneProperty([]string{"primary", "secondary", "muted", "brand", "success", "warning", "danger", "info"}, "primary", "Semantic foreground."),
 			"truncate": modifierProperty("Whether overflow is truncated."),
@@ -457,9 +981,12 @@ func textDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "muted", map[string]any{
 				"content": "Supporting metadata", "size": "sm", "color": "muted",
 			}),
+			deliveryExample(componentType, "muted-body", map[string]any{
+				"content": "Muted supporting copy", "size": "base", "color": "muted",
+			}),
 		},
 		Text,
-	)
+	), "typography")
 }
 
 func headingDeliveryDefinition() DeliveryDefinition {
@@ -524,6 +1051,10 @@ func dividerDeliveryDefinition() DeliveryDefinition {
 			canonicalDeliveryExample(componentType, "horizontal", map[string]any{
 				"orientation": "horizontal",
 			}),
+			deliveryExample(componentType, "with-text", map[string]any{
+				"orientation": "horizontal",
+				"text":        "Or continue with",
+			}),
 			deliveryExample(componentType, "vertical", map[string]any{
 				"orientation": "vertical",
 			}),
@@ -535,9 +1066,13 @@ func dividerDeliveryDefinition() DeliveryDefinition {
 func spinnerDeliveryDefinition() DeliveryDefinition {
 	componentType := "Spinner"
 	root := deliveryClassBound(
-		deliveryFrame(componentType, clSpinner.Compile()),
-		"size",
-		compileClassMap(clSpinnerSize),
+		deliveryClassBound(
+			deliveryFrame(componentType, clSpinner.Compile()),
+			"size",
+			compileClassMap(clSpinnerSize),
+		),
+		"tone",
+		compileClassMap(clSpinnerTone),
 	)
 	return newDeliveryDefinition(
 		componentType,
@@ -546,13 +1081,14 @@ func spinnerDeliveryDefinition() DeliveryDefinition {
 		"Accessible indeterminate progress indicator.",
 		map[string]PropertyContract{
 			"label": contentProperty("Screen-reader status label."),
-			"size":  sizeProperty([]string{"small", "medium", "large"}, "medium", "Indicator size."),
+			"size":  sizeProperty(controlSizes, "md", "Indicator size."),
+			"tone":  toneProperty([]string{"brand", "success", "warning", "danger", "info"}, "brand", "Semantic progress tone."),
 		},
 		nil,
 		deliveryDesign("medium", "02 Atoms", "Feedback", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "medium", map[string]any{
-				"label": "Loading results", "size": "medium",
+				"label": "Loading results", "size": "md", "tone": "brand",
 			}),
 		},
 		Spinner,
@@ -632,6 +1168,7 @@ func emptyStateDeliveryDefinition() DeliveryDefinition {
 	root := deliveryFrame(
 		componentType,
 		clEmpty.Merge(clEmptyPad).Compile(),
+		deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
 		deliveryText("Title", clEmptyTitle.Compile(), "No projects yet", "title"),
 		deliveryText("Description", clEmptyDesc.Compile(), "Create a project to begin.", "description"),
 		deliverySlot(
@@ -641,39 +1178,64 @@ func emptyStateDeliveryDefinition() DeliveryDefinition {
 			deliveryInstance("PrimaryAction", "Button", "primary", ""),
 		),
 	)
-	return newDeliveryDefinition(
+	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
 		stableDeliveryID(componentType),
 		"Empty-data explanation with optional actions.",
 		map[string]PropertyContract{
-			"icon":        contentProperty("Optional illustration identity."),
 			"title":       contentProperty("Primary empty-state message."),
 			"description": contentProperty("Supporting guidance."),
 			"compact":     modifierProperty("Whether spacing is compact."),
 			"bordered":    modifierProperty("Whether a dashed outline is shown."),
-			"actions":     contentProperty("Call-to-action definitions."),
 		},
-		[]designcomponent.Slot{{
-			Name:         "actions",
-			Description:  "Optional call-to-action controls.",
-			AllowedTypes: []string{"Button", "Link"},
-			Cardinality:  designcomponent.SlotMany,
-		}},
+		[]designcomponent.Slot{
+			{
+				Name:         "iconStart",
+				Description:  "Optional leading illustration or icon.",
+				AllowedTypes: []string{"Icon"},
+				Cardinality:  designcomponent.SlotOne,
+			},
+			{
+				Name:         "actions",
+				Description:  "Optional call-to-action controls.",
+				AllowedTypes: []string{"Button", "Link"},
+				Cardinality:  designcomponent.SlotMany,
+				Attrs:        deliveryRepeatingSlotAttrs(),
+			},
+		},
 		deliveryDesign("default", "02 Atoms", "Feedback", root),
 		[]DeliveryExample{
-			canonicalDeliveryExample(componentType, "default", map[string]any{
-				"title": "No projects yet", "description": "Create a project to begin.",
-				"bordered": true,
-				"actions": []map[string]any{{
-					"label": "Create project", "href": "/projects/new", "variant": "primary",
-				}},
-			}),
+			withDeliveryExampleSlots(
+				canonicalDeliveryExample(componentType, "default", map[string]any{
+					"title": "No projects yet", "description": "Create a project to begin.",
+					"bordered": true,
+				}),
+				deliveryExampleSlot(
+					"actions",
+					deliveryExampleComponent(
+						"create-project",
+						"Button",
+						map[string]any{
+							"label":   "Create project",
+							"variant": "primary",
+							"tone":    "neutral",
+							"size":    "md",
+						},
+					),
+				),
+			),
 			mobileDeliveryExample(componentType, "compact", map[string]any{
 				"title": "No results", "description": "Try a different filter.", "compact": true,
 			}),
 		},
-		EmptyState,
+		func(props atoms.EmptyStateProps, slots DeliverySlotChildren) g.Node {
+			return emptyStateWithSlots(
+				props,
+				slots.Nodes("iconStart"),
+				slots.Nodes("actions"),
+			)
+		},
 	)
 }
 
@@ -692,13 +1254,13 @@ func kbdDeliveryDefinition() DeliveryDefinition {
 		"Keyboard shortcut key sequence.",
 		map[string]PropertyContract{
 			"keys": contentProperty("Ordered key labels."),
-			"size": sizeProperty([]string{"xs", "small", "medium", "large"}, "medium", "Key cap size."),
+			"size": sizeProperty([]string{"xs", "sm", "md", "lg"}, "md", "Key cap size."),
 		},
 		nil,
 		deliveryDesign("shortcut", "02 Atoms", "Actions", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "shortcut", map[string]any{
-				"keys": []string{"⌘", "K"}, "size": "medium",
+				"keys": []string{"⌘", "K"}, "size": "md",
 			}),
 		},
 		Kbd,
@@ -710,73 +1272,92 @@ func linkDeliveryDefinition() DeliveryDefinition {
 	root := deliveryFrame(
 		componentType,
 		clLink.Compile(),
-		deliveryText("Label", "", "View documentation", "text"),
+		deliveryText("Label", "", "View documentation", "label"),
+		deliverySlot("TrailingAdornment", "trailingAdornment", clIcon.Compile()),
 	)
-	return newDeliveryDefinition(
+	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
 		stableDeliveryID(componentType),
 		"Accessible navigation link with safe external behavior.",
 		map[string]PropertyContract{
-			"text":     contentProperty("Visible link label."),
+			"label":    contentProperty("Visible link label."),
 			"href":     contentProperty("Navigation target."),
 			"external": stateProperty("Whether the target opens externally."),
 			"variant":  variantProperty([]string{"primary", "secondary", "text", "underline"}, "primary", "Visual treatment."),
 			"target":   contentProperty("Optional browsing context."),
 			"rel":      contentProperty("Link relationship tokens."),
 		},
-		nil,
+		[]designcomponent.Slot{{
+			Name:         "trailingAdornment",
+			Description:  "Optional trailing icon or token.",
+			AllowedTypes: []string{"Icon"},
+			Cardinality:  designcomponent.SlotOne,
+		}},
 		deliveryDesign("default", "02 Atoms", "Actions", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "default", map[string]any{
-				"text": "View documentation", "href": "/docs",
+				"label": "View documentation", "href": "/docs",
 			}),
 			deliveryExample(componentType, "external", map[string]any{
-				"text": "Open reference", "href": "https://example.com", "external": true,
+				"label": "Open reference", "href": "https://example.com", "external": true,
 			}),
 		},
-		Link,
+		func(props atoms.LinkProps, slots DeliverySlotChildren) g.Node {
+			return linkWithSlots(props, slots.Nodes("trailingAdornment"))
+		},
 	)
 }
 
 func tagDeliveryDefinition() DeliveryDefinition {
 	componentType := "Tag"
 	root := deliveryClassBound(
-		deliveryFrame(
-			componentType,
-			clTagBase.Compile()+" "+clTagIdle.Compile(),
-			deliveryText("Label", "", "Design", "text"),
+		deliveryClassBound(
+			deliveryFrame(
+				componentType,
+				clTagBase.Compile()+" "+clTagIdle.Compile(),
+				deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
+				deliveryText("Label", "", "Design", "label"),
+			),
+			"selected",
+			map[string]string{
+				"false": clTagIdle.Compile(),
+				"true":  clTagSelected.Compile(),
+			},
 		),
-		"selected",
-		map[string]string{
-			"false": clTagIdle.Compile(),
-			"true":  clTagSelected.Compile(),
-		},
+		"tone",
+		compileClassMap(clTagTone),
 	)
-	return newDeliveryDefinition(
+	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
 		stableDeliveryID(componentType),
 		"Selectable or removable metadata chip.",
 		map[string]PropertyContract{
-			"text":        contentProperty("Visible tag label."),
-			"icon":        contentProperty("Optional icon identity."),
+			"label":       contentProperty("Visible tag label."),
+			"tone":        toneProperty([]string{"neutral", "brand", "success", "warning", "danger", "info"}, "neutral", "Semantic intent."),
 			"removable":   stateProperty("Whether removal is available."),
 			"selected":    stateProperty("Whether the tag is selected."),
-			"variant":     toneProperty([]string{"default", "primary", "success", "warning", "error"}, "default", "Semantic treatment."),
 			"onRemoveURL": contentProperty("Optional progressive-enhancement removal endpoint."),
 		},
-		nil,
+		[]designcomponent.Slot{{
+			Name:         "iconStart",
+			Description:  "Optional leading icon slot.",
+			AllowedTypes: []string{"Icon"},
+			Cardinality:  designcomponent.SlotOne,
+		}},
 		deliveryDesign("default", "02 Atoms", "Status", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "default", map[string]any{
-				"text": "Design",
+				"label": "Design", "tone": "neutral",
 			}),
 			deliveryExample(componentType, "selected", map[string]any{
-				"text": "Design", "selected": true,
+				"label": "Design", "tone": "neutral", "selected": true,
 			}),
 		},
-		Tag,
+		func(props atoms.TagProps, slots DeliverySlotChildren) g.Node {
+			return tagWithSlots(props, slots.Nodes("iconStart"))
+		},
 	)
 }
 

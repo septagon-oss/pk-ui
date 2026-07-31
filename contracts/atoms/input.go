@@ -10,20 +10,24 @@ type InputProps struct {
 	contracts.ComponentProps
 	contracts.HTMXProps
 
-	Name        string `json:"name"`
-	Type        string `json:"type,omitempty"` // text, email, password, number, tel, url, search, date, time
-	Value       string `json:"value,omitempty"`
-	Placeholder string `json:"placeholder,omitempty"`
-	Label       string `json:"label,omitempty"`
-	HelpText    string `json:"helpText,omitempty"`
-	Error       string `json:"error,omitempty"`
-	Required    bool   `json:"required,omitempty"`
-	ReadOnly    bool   `json:"readOnly,omitempty"`
-	AutoFocus   bool   `json:"autoFocus,omitempty"`
-	Min         string `json:"min,omitempty"`
-	Max         string `json:"max,omitempty"`
-	Pattern     string `json:"pattern,omitempty"`
-	Size        string `json:"size,omitempty"` // small, medium, large
+	Name         string `json:"name"`
+	Type         string `json:"type,omitempty"` // text, email, password, number, tel, url, search, date, time
+	Value        string `json:"value,omitempty"`
+	Placeholder  string `json:"placeholder,omitempty"`
+	Label        string `json:"label,omitempty"`
+	HelpText     string `json:"helpText,omitempty"`
+	Error        string `json:"error,omitempty"`
+	Required     bool   `json:"required,omitempty"`
+	ReadOnly     bool   `json:"readOnly,omitempty"`
+	AutoFocus    bool   `json:"autoFocus,omitempty"`
+	Min          string `json:"min,omitempty"`
+	Max          string `json:"max,omitempty"`
+	Step         string `json:"step,omitempty"`
+	MinLength    int    `json:"minLength,omitempty"`
+	MaxLength    int    `json:"maxLength,omitempty"`
+	Pattern      string `json:"pattern,omitempty"`
+	Autocomplete string `json:"autocomplete,omitempty"`
+	Size         string `json:"size,omitempty"` // sm, md, lg
 }
 
 // ToMap converts InputProps to map[string]any for unified Component construction.

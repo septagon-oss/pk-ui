@@ -10,15 +10,15 @@ type ButtonProps struct {
 	contracts.ComponentProps
 	contracts.HTMXProps
 
-	Text         string `json:"text"`
-	Variant      string `json:"variant,omitempty"` // primary, secondary, success, warning, error, info, outline, ghost, link
-	Size         string `json:"size,omitempty"`    // xs, small, medium, large, xl, 2xl
-	Type         string `json:"type,omitempty"`    // button, submit, reset
-	Loading      bool   `json:"loading,omitempty"`
-	FullWidth    bool   `json:"fullWidth,omitempty"`
-	Icon         string `json:"icon,omitempty"`
-	IconPosition string `json:"iconPosition,omitempty"` // left, right
-	IconStyle    string `json:"iconStyle,omitempty"`    // outline, solid
+	Label     string `json:"label"`
+	Variant   string `json:"variant,omitempty"` // primary, secondary, outline, ghost, link
+	Tone      string `json:"tone,omitempty"`    // neutral, brand, success, warning, danger, info
+	Size      string `json:"size,omitempty"`    // xs, sm, md, lg, xl, 2xl
+	Type      string `json:"type,omitempty"`    // button, submit, reset
+	Loading   bool   `json:"loading,omitempty"`
+	FullWidth bool   `json:"fullWidth,omitempty"`
+	IconOnly  bool   `json:"iconOnly,omitempty"`
+	AriaLabel string `json:"ariaLabel,omitempty"`
 }
 
 // ToMap converts ButtonProps to map[string]any for unified Component construction.

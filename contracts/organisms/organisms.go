@@ -6,7 +6,6 @@ package organisms
 
 import (
 	"github.com/septagon-oss/pk-ui/contracts"
-	"github.com/septagon-oss/pk-ui/contracts/atoms"
 	"github.com/septagon-oss/pk-ui/contracts/molecules"
 )
 
@@ -28,27 +27,33 @@ type UserMenuProps struct {
 	LogoutURL string `json:"logoutURL,omitempty"`
 }
 
-// DataGridProps defines properties for a rich data grid (table + filters + pagination).
+// DataGridProps defines the scalar and transport properties of a rich data
+// grid. Search, filters, actions, table, status, and pagination are composed
+// through the renderer's named slots rather than nested component props.
 type DataGridProps struct {
 	contracts.ComponentProps
 	contracts.HTMXProps
-
-	Table      molecules.TableProps      `json:"table"`
-	Pagination molecules.PaginationProps `json:"pagination"`
-	Search     molecules.SearchBarProps  `json:"search,omitzero"`
-	Actions    []atoms.ButtonProps       `json:"actions,omitempty"`
-	SearchURL  string                    `json:"searchURL,omitempty"` // shorthand when Search is zero
-	CreateURL  string                    `json:"createURL,omitempty"`
-	CreateText string                    `json:"createText,omitempty"`
-	Filters    []DataGridFilter          `json:"filters,omitempty"`
 }
 
-// DataGridFilter represents a filterable column.
-type DataGridFilter struct {
-	Key     string             `json:"key"`
-	Label   string             `json:"label"`
-	Type    string             `json:"type"` // text, select, date
-	Options []molecules.Option `json:"options,omitempty"`
+// WindowedCollectionProps defines the bounded collection shell shared by web,
+// adaptive, and native projections. Item content and navigation are slots.
+type WindowedCollectionProps struct {
+	contracts.ComponentProps
+	contracts.HTMXProps
+
+	State                 string `json:"state,omitempty"`
+	ItemCount             int    `json:"itemCount,omitempty"`
+	MaxItems              int    `json:"maxItems,omitempty"`
+	CollectionLabel       string `json:"collectionLabel,omitempty"`
+	EmptyTitle            string `json:"emptyTitle,omitempty"`
+	EmptyDescription      string `json:"emptyDescription,omitempty"`
+	LoadingLabel          string `json:"loadingLabel,omitempty"`
+	ErrorTitle            string `json:"errorTitle,omitempty"`
+	ErrorDescription      string `json:"errorDescription,omitempty"`
+	RetryLabel            string `json:"retryLabel,omitempty"`
+	RetryURL              string `json:"retryURL,omitempty"`
+	NavigationUnavailable string `json:"navigationUnavailable,omitempty"`
+	ContractError         bool   `json:"contractError,omitempty" delivery:"internal"`
 }
 
 // CommandPaletteProps defines properties for a Cmd+K command palette.

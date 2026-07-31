@@ -21,6 +21,7 @@ type TextareaProps struct {
 	Rows         int    `json:"rows,omitempty"`
 	MinRows      int    `json:"minRows,omitempty"`
 	MaxRows      int    `json:"maxRows,omitempty"`
+	MinLength    int    `json:"minLength,omitempty"`
 	MaxLength    int    `json:"maxLength,omitempty"`
 	ShowCount    bool   `json:"showCount,omitempty"`
 	AutoResize   bool   `json:"autoResize,omitempty"`

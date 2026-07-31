@@ -15,25 +15,38 @@ package contracts
 // Discipline: C-14.
 // ComponentProps is the base set of properties shared by all components.
 type ComponentProps struct {
-	ID       string            `json:"id,omitempty"`
-	Class    string            `json:"class,omitempty"`
-	Disabled bool              `json:"disabled,omitempty"`
-	Hidden   bool              `json:"hidden,omitempty"`
-	Attrs    map[string]string `json:"attrs,omitempty"`
+	// ID is supplied by the component-tree transport, not authored as a
+	// component property in design manifests or A2UI schemas.
+	ID string `json:"id,omitempty" delivery:"internal"`
+	// Class is a renderer escape hatch for trusted Go composition. It is not a
+	// portable design-system property and is therefore excluded from delivery.
+	Class    string `json:"class,omitempty" delivery:"internal"`
+	Disabled bool   `json:"disabled,omitempty"`
+	Hidden   bool   `json:"hidden,omitempty"`
+	// Attrs is restricted to trusted direct-render callers; portable contracts
+	// expose explicit typed properties instead of arbitrary HTML attributes.
+	Attrs map[string]string `json:"attrs,omitempty" delivery:"internal"`
 }
 
 // HTMXProps contains HTMX-specific properties for server-driven interactions.
 type HTMXProps struct {
-	Get     string `json:"hx-get,omitempty"`
-	Post    string `json:"hx-post,omitempty"`
-	Put     string `json:"hx-put,omitempty"`
-	Patch   string `json:"hx-patch,omitempty"`
-	Delete  string `json:"hx-delete,omitempty"`
-	Target  string `json:"hx-target,omitempty"`
-	Swap    string `json:"hx-swap,omitempty"`
-	Trigger string `json:"hx-trigger,omitempty"`
-	Confirm string `json:"hx-confirm,omitempty"`
-	Ext     string `json:"hx-ext,omitempty"`
+	Get         string `json:"hx-get,omitempty"`
+	Post        string `json:"hx-post,omitempty"`
+	Put         string `json:"hx-put,omitempty"`
+	Patch       string `json:"hx-patch,omitempty"`
+	Delete      string `json:"hx-delete,omitempty"`
+	Target      string `json:"hx-target,omitempty"`
+	Swap        string `json:"hx-swap,omitempty"`
+	Trigger     string `json:"hx-trigger,omitempty"`
+	Confirm     string `json:"hx-confirm,omitempty"`
+	Ext         string `json:"hx-ext,omitempty"`
+	Indicator   string `json:"hx-indicator,omitempty"`
+	DisabledElt string `json:"hx-disabled-elt,omitempty"`
+	Vals        string `json:"hx-vals,omitempty"`
+	PushURL     string `json:"hx-push-url,omitempty"`
+	Select      string `json:"hx-select,omitempty"`
+	Boost       bool   `json:"hx-boost,omitempty"`
+	Disable     bool   `json:"hx-disable,omitempty"`
 }
 
 // ARIAProps contains accessibility attributes.

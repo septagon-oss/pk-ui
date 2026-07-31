@@ -70,11 +70,18 @@ type PaginationProps struct {
 	contracts.ComponentProps
 	contracts.HTMXProps
 
-	CurrentPage int    `json:"currentPage"`
-	TotalPages  int    `json:"totalPages"`
-	PerPage     int    `json:"perPage,omitempty"`
-	Siblings    int    `json:"siblings,omitempty"` // pages shown around current
-	BaseURL     string `json:"baseURL,omitempty"`
+	CurrentPage     int    `json:"currentPage"`
+	TotalPages      int    `json:"totalPages"`
+	PerPage         int    `json:"perPage,omitempty"`
+	Siblings        int    `json:"siblings,omitempty"` // pages shown around current
+	BaseURL         string `json:"baseURL,omitempty"`
+	CursorMode      string `json:"cursorMode,omitempty"` // previous-next, load-more
+	PreviousURL     string `json:"previousURL,omitempty"`
+	NextURL         string `json:"nextURL,omitempty"`
+	PreviousLabel   string `json:"previousLabel,omitempty"`
+	NextLabel       string `json:"nextLabel,omitempty"`
+	LoadMoreLabel   string `json:"loadMoreLabel,omitempty"`
+	NavigationLabel string `json:"navigationLabel,omitempty"`
 }
 
 // ToMap converts PaginationProps to map[string]any for unified Component construction.

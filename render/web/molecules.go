@@ -12,46 +12,95 @@ package web
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
+	"github.com/septagon-oss/pk-ui/contracts"
 	"github.com/septagon-oss/pk-ui/contracts/atoms"
 	"github.com/septagon-oss/pk-ui/contracts/molecules"
 )
 
+// TableSlots is the trusted Go composition seam for rich web cells and
+// server-driven sorting. Portable table data remains in TableProps; callers
+// only opt into these callbacks when a cell needs real markup.
+type TableSlots struct {
+	Cell           func(molecules.TableRow, molecules.TableColumn) g.Node
+	SortURL        func(molecules.TableColumn) string
+	SortState      func(molecules.TableColumn) string
+	SelectAllLabel string
+	SelectRowLabel func(molecules.TableRow) string
+}
+
 // Table renders molecules.TableProps. Cell values render via fmt.Sprint;
 // rows are keyed by column order. An empty Rows slice renders EmptyText.
 func Table(p molecules.TableProps) g.Node {
+	return TableWithSlots(p, TableSlots{})
+}
+
+// TableWithSlots renders the canonical table while allowing trusted Go
+// composition to project rich cell nodes without creating a second table
+// renderer.
+func TableWithSlots(p molecules.TableProps, slots TableSlots) g.Node {
 	sortable := func(c molecules.TableColumn) bool { return p.Sortable && c.Sortable }
 
 	head := []g.Node{h.Class(clTableHead.Compile())}
 	var headCells []g.Node
 	if p.Selectable {
+		label := fallbackText(slots.SelectAllLabel, "Select all rows")
 		headCells = append(headCells, h.Th(
 			h.Class(clTableTh.Compile()), g.Attr("scope", "col"),
 			h.Input(h.Class(clCheckbox.Compile()), h.Type("checkbox"),
-				g.Attr("data-pk-select", "all"), g.Attr("aria-label", "Select all rows")),
+				g.Attr("data-pk-select", "all"), g.Attr("aria-label", label)),
 		))
 	}
 	for _, c := range p.Columns {
 		if sortable(c) {
+			sortState := "none"
+			if slots.SortState != nil {
+				switch state := slots.SortState(c); state {
+				case "ascending", "descending":
+					sortState = state
+				}
+			}
+			glyph := "↕"
+			switch sortState {
+			case "ascending":
+				glyph = "↑"
+			case "descending":
+				glyph = "↓"
+			}
+			button := []g.Node{
+				h.Class(clTableSortBtn.Compile()), h.Type("button"),
+				g.Attr("data-pk-sort", c.Key),
+				g.Text(c.Label),
+				h.Span(g.Attr("aria-hidden", "true"), g.Attr("data-pk-sort-icon", ""), g.Text(glyph)),
+			}
+			if slots.SortURL != nil {
+				if sortURL := slots.SortURL(c); sortURL != "" {
+					enhancement := p.HTMXProps
+					enhancement.Get = sortURL
+					enhancement.Trigger = ""
+					button = append(button, htmxAttrs(enhancement)...)
+				}
+			}
 			// A real button inside the th: keyboard operable, and the page
 			// script owns cycling aria-sort none → ascending → descending.
 			headCells = append(headCells, h.Th(
 				h.Class(clTableThSort.Compile()), g.Attr("scope", "col"),
-				g.Attr("aria-sort", "none"),
-				h.Button(h.Class(clTableSortBtn.Compile()), h.Type("button"),
-					g.Attr("data-pk-sort", c.Key),
-					g.Text(c.Label),
-					h.Span(g.Attr("aria-hidden", "true"), g.Attr("data-pk-sort-icon", ""), g.Text("↕")),
-				),
+				g.Attr("aria-sort", sortState),
+				g.If(c.Width != "", g.Attr("style", "width:"+c.Width)),
+				h.Button(button...),
 			))
 			continue
 		}
-		headCells = append(headCells, h.Th(
-			h.Class(clTableTh.Compile()), g.Attr("scope", "col"), g.Text(c.Label),
-		))
+		cell := []g.Node{h.Class(clTableTh.Compile()), g.Attr("scope", "col")}
+		if c.Width != "" {
+			cell = append(cell, g.Attr("style", "width:"+c.Width))
+		}
+		headCells = append(headCells, h.Th(append(cell, g.Text(c.Label))...))
 	}
 	head = append(head, h.Tr(headCells...))
 
@@ -70,9 +119,13 @@ func Table(p molecules.TableProps) g.Node {
 			cells = append(cells, g.Attr("data-pk-row", r.ID))
 		}
 		if p.Selectable {
+			label := "Select row"
+			if slots.SelectRowLabel != nil {
+				label = fallbackText(slots.SelectRowLabel(r), label)
+			}
 			cells = append(cells, h.Td(h.Class(tdClass.Compile()),
 				h.Input(h.Class(clCheckbox.Compile()), h.Type("checkbox"),
-					g.Attr("data-pk-select", r.ID), g.Attr("aria-label", "Select row")),
+					g.Attr("data-pk-select", r.ID), g.Attr("aria-label", label)),
 			))
 		}
 		for _, c := range p.Columns {
@@ -91,7 +144,13 @@ func Table(p molecules.TableProps) g.Node {
 			case "right":
 				td = append(td, g.Attr("style", "text-align:right"))
 			}
-			bodyCell := h.Td(append(td, g.Text(v))...)
+			content := g.Node(g.Text(v))
+			if slots.Cell != nil {
+				if rich := slots.Cell(r, c); rich != nil {
+					content = rich
+				}
+			}
+			bodyCell := h.Td(append(td, content)...)
 			cells = append(cells, bodyCell)
 		}
 		bodyRows = append(bodyRows, h.Tr(cells...))
@@ -151,25 +210,59 @@ func Breadcrumb(p molecules.BreadcrumbProps) g.Node {
 	if sep == "" {
 		sep = "/"
 	}
+	visible := breadcrumbItems(p.Items, p.MaxItems)
 	items := []g.Node{h.Class(clBreadcrumb.Compile())}
-	for i, it := range p.Items {
+	for i, it := range visible {
 		if i > 0 {
 			items = append(items, h.Li(
 				h.Class(clBreadcrumbSep.Compile()), g.Attr("aria-hidden", "true"), g.Text(sep),
 			))
 		}
-		current := it.Current || (it.Href == "" && i == len(p.Items)-1)
-		if current {
+		if it.Label == "…" && it.Href == "" && !it.Current {
 			items = append(items, h.Li(
-				h.Class(clBreadcrumbCur.Compile()), g.Attr("aria-current", "page"), g.Text(it.Label),
+				h.Class(clBreadcrumbSep.Compile()),
+				g.Attr("aria-hidden", "true"),
+				g.Attr("data-breadcrumb-ellipsis", ""),
+				g.Text("…"),
 			))
 			continue
 		}
-		items = append(items, h.Li(Link(atoms.LinkProps{Text: it.Label, Href: it.Href})))
+		current := it.Current || (it.Href == "" && i == len(visible)-1)
+		if current {
+			content := []g.Node{g.Text(it.Label)}
+			if it.Icon != "" {
+				content = append([]g.Node{icon(it.Icon)}, content...)
+			}
+			items = append(items, h.Li(append(
+				[]g.Node{h.Class(clBreadcrumbCur.Compile()), g.Attr("aria-current", "page")},
+				content...,
+			)...))
+			continue
+		}
+		var adornment []g.Node
+		if it.Icon != "" {
+			adornment = []g.Node{icon(it.Icon)}
+		}
+		items = append(items, h.Li(linkWithSlots(
+			atoms.LinkProps{Label: it.Label, Href: it.Href},
+			adornment,
+		)))
 	}
 	nav := baseAttrs(p.ComponentProps)
 	nav = append(nav, g.Attr("aria-label", "Breadcrumb"), h.Ol(items...))
 	return h.Nav(nav...)
+}
+
+func breadcrumbItems(items []molecules.BreadcrumbItem, maxItems int) []molecules.BreadcrumbItem {
+	if maxItems <= 0 || len(items) <= maxItems || maxItems < 2 {
+		return items
+	}
+
+	tailCount := max(maxItems-1, 1)
+	startOfTail := len(items) - tailCount
+	visible := make([]molecules.BreadcrumbItem, 0, maxItems+1)
+	visible = append(visible, items[0], molecules.BreadcrumbItem{Label: "…"})
+	return append(visible, items[startOfTail:]...)
 }
 
 // Pagination renders molecules.PaginationProps as previous/next plus a
@@ -187,27 +280,52 @@ func Pagination(p molecules.PaginationProps) g.Node {
 		siblings = 1
 	}
 	pageHref := func(n int) string {
-		return p.BaseURL + "?page=" + itoa(n)
+		return paginationPageURL(p.BaseURL, n)
 	}
-	pageLink := func(n int, label string, current bool, ariaLabel string) g.Node {
+	pageLink := func(n int, label string, current bool, ariaLabel, marker string) g.Node {
 		cl := clPageBtn.Merge(clPageIdle)
 		if current {
 			cl = clPageBtn.Merge(clPageCur)
 		}
-		nodes := []g.Node{h.Class(cl.Compile()), h.Href(pageHref(n))}
-		nodes = append(nodes, htmxAttrs(p.HTMXProps)...)
+		nodes := []g.Node{
+			h.Class(cl.Compile()),
+			h.Href(pageHref(n)),
+			g.Attr("data-page", itoa(n)),
+		}
+		if marker != "" {
+			nodes = append(nodes, g.Attr(marker, ""))
+		}
 		if current {
 			nodes = append(nodes, g.Attr("aria-current", "page"))
 		}
 		if ariaLabel != "" {
 			nodes = append(nodes, g.Attr("aria-label", ariaLabel))
 		}
+		if !current {
+			enhancement := p.HTMXProps
+			if hasHTMXEnhancement(enhancement) {
+				enhancement.Get = pageHref(n)
+			}
+			nodes = append(nodes, htmxAttrs(enhancement)...)
+		}
 		return h.A(append(nodes, g.Text(label))...)
+	}
+	disabledBoundary := func(label, marker, glyph string) g.Node {
+		return h.Button(
+			h.Class(clPageBtn.Merge(clPageIdle).Compile()),
+			h.Type("button"),
+			g.Attr(marker, ""),
+			g.Attr("aria-label", label),
+			h.Disabled(),
+			g.Text(glyph),
+		)
 	}
 
 	items := []g.Node{h.Class(clPagination.Compile())}
 	if p.CurrentPage > 1 {
-		items = append(items, pageLink(p.CurrentPage-1, "‹", false, "Previous page"))
+		items = append(items, pageLink(p.CurrentPage-1, "‹", false, "Previous page", "data-pagination-prev"))
+	} else {
+		items = append(items, disabledBoundary("Previous page", "data-pagination-prev", "‹"))
 	}
 	lo, hi := p.CurrentPage-siblings, p.CurrentPage+siblings
 	if lo < 1 {
@@ -217,41 +335,114 @@ func Pagination(p molecules.PaginationProps) g.Node {
 		hi = p.TotalPages
 	}
 	if lo > 1 {
-		items = append(items, pageLink(1, "1", p.CurrentPage == 1, ""))
+		items = append(items, pageLink(1, "1", p.CurrentPage == 1, "Go to page 1", ""))
 		if lo > 2 {
 			items = append(items, h.Span(h.Class(clBreadcrumbSep.Compile()), g.Text("…")))
 		}
 	}
 	for n := lo; n <= hi; n++ {
-		items = append(items, pageLink(n, itoa(n), n == p.CurrentPage, ""))
+		ariaLabel := "Go to page " + itoa(n)
+		if n == p.CurrentPage {
+			ariaLabel = "Page " + itoa(n) + ", current page"
+		}
+		items = append(items, pageLink(n, itoa(n), n == p.CurrentPage, ariaLabel, ""))
 	}
 	if hi < p.TotalPages {
 		if hi < p.TotalPages-1 {
 			items = append(items, h.Span(h.Class(clBreadcrumbSep.Compile()), g.Text("…")))
 		}
-		items = append(items, pageLink(p.TotalPages, itoa(p.TotalPages), false, ""))
+		items = append(items, pageLink(p.TotalPages, itoa(p.TotalPages), false, "Go to page "+itoa(p.TotalPages), ""))
 	}
 	if p.CurrentPage < p.TotalPages {
-		items = append(items, pageLink(p.CurrentPage+1, "›", false, "Next page"))
+		items = append(items, pageLink(p.CurrentPage+1, "›", false, "Next page", "data-pagination-next"))
+	} else {
+		items = append(items, disabledBoundary("Next page", "data-pagination-next", "›"))
 	}
 
 	nav := baseAttrs(p.ComponentProps)
-	nav = append(nav, g.Attr("aria-label", "Pagination"))
+	nav = append(nav, g.Attr("data-component", "pagination"), g.Attr("aria-label", "Pagination"))
 	nav = append(nav, items...)
 	return h.Nav(nav...)
 }
 
-// paginationCursor renders offset pagination for the common API shape that
-// reports no total count: previous/next controls around a page label. The
-// elements carry data-pk-pagination hooks — prev, next, label — because this
-// mode is a progressive-enhancement shell: the application's script owns
-// fetching and enables, disables, and relabels as pages load. Server-side,
-// previous starts disabled on the first page and next starts enabled.
+func paginationPageURL(baseURL string, page int) string {
+	parsed, err := url.Parse(baseURL)
+	if err == nil {
+		query := parsed.Query()
+		query.Set("page", itoa(page))
+		parsed.RawQuery = query.Encode()
+		return parsed.String()
+	}
+
+	separator := "?"
+	if strings.Contains(baseURL, "?") {
+		separator = "&"
+	}
+	return baseURL + separator + "page=" + itoa(page)
+}
+
+// paginationCursor renders bounded cursor links when continuation URLs are
+// supplied. The older button shell remains available when no URLs are present.
 func paginationCursor(p molecules.PaginationProps) g.Node {
 	page := p.CurrentPage
 	if page < 1 {
 		page = 1
 	}
+	navigationLabel := p.NavigationLabel
+	if navigationLabel == "" {
+		navigationLabel = "Pagination"
+	}
+	previousLabel := p.PreviousLabel
+	if previousLabel == "" {
+		previousLabel = "Previous"
+	}
+	nextLabel := p.NextLabel
+	if nextLabel == "" {
+		nextLabel = "Next"
+	}
+	loadMoreLabel := p.LoadMoreLabel
+	if loadMoreLabel == "" {
+		loadMoreLabel = "Load more"
+	}
+	mode := p.CursorMode
+	if mode == "" {
+		mode = "previous-next"
+	}
+
+	if p.PreviousURL != "" || p.NextURL != "" {
+		items := baseAttrs(p.ComponentProps)
+		items = append(
+			items,
+			g.Attr("aria-label", navigationLabel),
+			g.Attr("data-component", "cursor-pagination"),
+			g.Attr("data-cursor-mode", mode),
+			classes(clPagination.Compile(), p.Class),
+		)
+		if mode == "previous-next" && p.PreviousURL != "" {
+			items = append(items, paginationCursorLink(
+				p,
+				p.PreviousURL,
+				previousLabel,
+				"backward",
+				"prev",
+			))
+		}
+		if p.NextURL != "" {
+			label := nextLabel
+			if mode == "load-more" {
+				label = loadMoreLabel
+			}
+			items = append(items, paginationCursorLink(
+				p,
+				p.NextURL,
+				label,
+				"forward",
+				"next",
+			))
+		}
+		return h.Nav(items...)
+	}
+
 	prev := []g.Node{
 		h.Class(clPageBtn.Merge(clPageIdle).Compile()), h.Type("button"),
 		g.Attr("data-pk-pagination", "prev"), g.Attr("aria-label", "Previous page"),
@@ -261,7 +452,7 @@ func paginationCursor(p molecules.PaginationProps) g.Node {
 		prev = append(prev, h.Disabled())
 	}
 	nav := baseAttrs(p.ComponentProps)
-	nav = append(nav, g.Attr("aria-label", "Pagination"), h.Class(clPagination.Compile()),
+	nav = append(nav, g.Attr("aria-label", navigationLabel), h.Class(clPagination.Compile()),
 		h.Button(prev...),
 		h.Span(h.Class(clPageLabel.Compile()), g.Attr("data-pk-pagination", "label"),
 			g.Attr("aria-live", "polite"), g.Text("Page "+itoa(page))),
@@ -270,6 +461,56 @@ func paginationCursor(p molecules.PaginationProps) g.Node {
 			g.Text("Next →")),
 	)
 	return h.Nav(nav...)
+}
+
+func paginationCursorLink(
+	p molecules.PaginationProps,
+	url string,
+	label string,
+	direction string,
+	rel string,
+) g.Node {
+	enhancement := p.HTMXProps
+	if hasHTMXEnhancement(enhancement) {
+		enhancement.Get = url
+	}
+	nodes := []g.Node{
+		h.Href(url),
+		h.Class(clPageBtn.Merge(clPageIdle).Compile() + " break-words"),
+		g.Attr("data-cursor-direction", direction),
+		g.Attr("rel", rel),
+		g.Attr("aria-label", label),
+	}
+	if controlledID, ok := simpleIDTarget(p.Target); ok {
+		nodes = append(nodes, g.Attr("aria-controls", controlledID))
+	}
+	nodes = append(nodes, htmxAttrs(enhancement)...)
+	return h.A(append(nodes, g.Text(label))...)
+}
+
+func hasHTMXEnhancement(p contracts.HTMXProps) bool {
+	return p.Get != "" || p.Post != "" || p.Put != "" || p.Patch != "" ||
+		p.Delete != "" || p.Target != "" || p.Swap != "" || p.Trigger != "" ||
+		p.Confirm != "" || p.Ext != "" || p.Indicator != "" ||
+		p.DisabledElt != "" || p.Vals != "" || p.PushURL != "" ||
+		p.Select != "" || p.Boost || p.Disable
+}
+
+func simpleIDTarget(target string) (string, bool) {
+	if !strings.HasPrefix(target, "#") || len(target) < 2 {
+		return "", false
+	}
+	id := strings.TrimPrefix(target, "#")
+	for _, char := range id {
+		if (char >= 'a' && char <= 'z') ||
+			(char >= 'A' && char <= 'Z') ||
+			(char >= '0' && char <= '9') ||
+			char == '_' || char == '-' || char == ':' || char == '.' {
+			continue
+		}
+		return "", false
+	}
+	return id, true
 }
 
 // SearchBar renders molecules.SearchBarProps as a labelled search field. The
@@ -281,26 +522,114 @@ func SearchBar(p molecules.SearchBarProps) g.Node {
 	if label == "" {
 		label = "Search"
 	}
+	name := p.Name
+	if name == "" {
+		name = "search"
+	}
+	debounce := p.DebounceMS
+	if debounce <= 0 {
+		debounce = 300
+	}
+	clearLabel := p.ClearLabel
+	if clearLabel == "" {
+		clearLabel = "Clear search"
+	}
+	shortcutKey := p.ShortcutKey
+	if shortcutKey == "" {
+		shortcutKey = "/"
+	}
+
+	enhancement := p.HTMXProps
+	if p.Instant && p.SearchURL != "" {
+		if enhancement.Get == "" {
+			enhancement.Get = p.SearchURL
+		}
+		if enhancement.Trigger == "" {
+			enhancement.Trigger = fmt.Sprintf("keyup changed delay:%dms, search", debounce)
+		}
+		if enhancement.Indicator == "" {
+			enhancement.Indicator = "#" + name + "-indicator"
+		}
+	}
+
 	input := []g.Node{
 		h.Class(clSearchInput.Compile()), h.Type("search"),
+		h.Name(name), h.ID(name),
 		g.Attr("aria-label", label), h.AutoComplete("off"),
+		g.Attr("data-searchbar-input", "true"),
+		g.Attr("data-action", "input->searchbar#syncInput"),
 	}
-	if p.ID != "" {
-		input = append(input, h.ID(p.ID))
+	if p.Value != "" {
+		input = append(input, h.Value(p.Value))
 	}
-	input = append(input, attrPairs(p.Attrs)...)
-	input = append(input, htmxAttrs(p.HTMXProps)...)
+	if p.Disabled {
+		input = append(input, h.Disabled())
+	}
+	if p.MinChars > 0 {
+		input = append(input, g.Attr("data-search-min-chars", itoa(p.MinChars)))
+	}
+	input = append(input, htmxAttrs(enhancement)...)
 	if p.Placeholder != "" {
 		input = append(input, h.Placeholder(p.Placeholder))
 	}
 	if p.SearchURL != "" {
 		input = append(input, g.Attr("data-pk-search-url", p.SearchURL))
 	}
-	return h.Label(
-		classes(clSearchWrap.Compile(), p.Class),
-		h.Span(g.Attr("aria-hidden", "true"), g.Text("⌕")),
+
+	children := []g.Node{
+		Icon(atoms.IconProps{Name: "search", Size: "md", Tone: "neutral"}),
 		h.Input(input...),
+	}
+	if p.Instant && p.SearchURL != "" {
+		children = append(children, h.Span(
+			h.ID(name+"-indicator"),
+			h.Class("htmx-indicator"),
+			g.Attr("data-searchbar-indicator", "true"),
+			Spinner(atoms.SpinnerProps{Size: "sm", Label: "Searching"}),
+		))
+	}
+	if p.ShowClear {
+		children = append(children, buttonWithSlots(
+			atoms.ButtonProps{
+				Label: clearLabel, Variant: "ghost", Tone: "neutral", Size: "xs",
+				IconOnly: true, AriaLabel: clearLabel,
+				ComponentProps: contracts.ComponentProps{
+					Disabled: p.Disabled,
+					Hidden:   p.Value == "",
+					Attrs: map[string]string{
+						"data-action":                 "click->searchbar#clear",
+						"data-searchbar-clear-button": "true",
+					},
+				},
+			},
+			[]g.Node{Icon(atoms.IconProps{Name: "x-mark", Size: "sm", Tone: "neutral"})},
+			nil,
+		))
+	}
+	if p.ShowShortcut {
+		shortcut := []g.Node{
+			h.Class(clKbd.Compile()),
+			g.Attr("data-searchbar-shortcut", "true"),
+			g.Text(shortcutKey),
+		}
+		if p.Disabled || p.Value != "" {
+			shortcut = append(shortcut, g.Attr("hidden"))
+		}
+		children = append(children, h.Kbd(shortcut...))
+	}
+
+	root := baseAttrs(p.ComponentProps)
+	root = append(root,
+		classes(clSearchWrap.Compile(), p.Class),
+		h.Role("search"),
+		g.Attr("aria-label", label),
+		g.Attr("data-component", "searchbar"),
+		g.Attr("data-controller", "searchbar"),
+		g.Attr("data-searchbar-show-clear-value", fmt.Sprintf("%t", p.ShowClear)),
+		g.Attr("data-searchbar-show-shortcut-value", fmt.Sprintf("%t", p.ShowShortcut)),
+		g.Attr("data-searchbar-trigger-search-on-clear-value", fmt.Sprintf("%t", p.Instant && p.SearchURL != "")),
 	)
+	return h.Label(append(root, children...)...)
 }
 
 // Tabs renders molecules.TabsProps as link-style tabs. Items with a URL

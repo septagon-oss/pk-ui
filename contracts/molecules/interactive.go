@@ -78,9 +78,15 @@ type SearchBarProps struct {
 	SearchURL    string `json:"searchURL"`
 	Label        string `json:"label,omitempty"` // accessible name for the input
 	Placeholder  string `json:"placeholder,omitempty"`
+	Name         string `json:"name,omitempty"`
+	Value        string `json:"value,omitempty"`
 	Instant      bool   `json:"instant,omitempty"` // search-as-you-type
 	ShowClear    bool   `json:"showClear,omitempty"`
 	ShowShortcut bool   `json:"showShortcut,omitempty"` // show keyboard shortcut hint
+	DebounceMS   int    `json:"debounceMs,omitempty"`
+	MinChars     int    `json:"minChars,omitempty"`
+	ClearLabel   string `json:"clearLabel,omitempty"`
+	ShortcutKey  string `json:"shortcutKey,omitempty"`
 }
 
 // ToMap converts SearchBarProps to map[string]any for unified Component construction.

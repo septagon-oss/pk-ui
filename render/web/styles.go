@@ -19,17 +19,19 @@ import "github.com/septagon-oss/tw"
 
 // ButtonClasses returns the complete class list for a Button of the given
 // variant and size — the same composition the Button renderer applies.
-// Unknown values fall back to primary/medium, mirroring the renderer.
+// Unknown values fall back to primary/md, mirroring the renderer.
 func ButtonClasses(variant, size string) tw.ClassList {
 	return clButtonBase.
 		Merge(variantOr(clButtonVariant, variant, "primary")).
-		Merge(variantOr(clButtonSize, size, "medium"))
+		Merge(variantOr(clButtonSize, size, "md"))
 }
 
 // BadgeClasses returns the complete class list for a Badge of the given
-// variant; unknown variants fall back to default.
+// variant; unknown variants fall back to primary.
 func BadgeClasses(variant string) tw.ClassList {
-	return clBadgeBase.Merge(variantOr(clBadgeVariant, variant, "default"))
+	return clBadgeBase.
+		Merge(variantOr(clBadgeVariant, variant, "primary")).
+		Merge(variantOr(clBadgeSize, "md", "md"))
 }
 
 // TagClasses returns the complete class list for a Tag in its idle or
@@ -60,7 +62,7 @@ func TextClasses(color, size, weight string) tw.ClassList {
 
 // InlineCodeClasses returns the mono chip list for short inline values —
 // identifiers, secrets, keystrokes — matching the Kbd renderer's look.
-func InlineCodeClasses() tw.ClassList { return clKbd }
+func InlineCodeClasses() tw.ClassList { return clKbd.Merge(variantOr(clKbdSize, "md", "md")) }
 
 // HelpTextClasses returns the muted help-line list form controls use.
 func HelpTextClasses() tw.ClassList { return clHelp }
