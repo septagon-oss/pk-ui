@@ -1152,6 +1152,9 @@ func deferredSlotDeliveryDefinition() DeliveryDefinition {
 			Description:  "Skeleton shown until the fragment arrives.",
 			AllowedTypes: deliveryAtomicContentTypes(),
 			Cardinality:  designcomponent.SlotMany,
+			// A placeholder may be several skeleton pieces standing in for the
+			// fragment's shape, so each occupancy carries its own identity.
+			Attrs: deliveryRepeatingSlotAttrs(),
 		}},
 		deliveryDesign("load", "02 Atoms", "Feedback", root),
 		[]DeliveryExample{
