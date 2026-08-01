@@ -225,8 +225,10 @@ func TestSubjectStylesAttributeDeclarationsToTheElementTheyLandOn(t *testing.T) 
 		t.Errorf("pack-front resolved to %v; the contextual width did not land", got)
 	}
 	// A compound subject requires the whole compound: attributing white to
-	// pack-face alone would paint the back face with the front's fill.
-	if got := find("pack-face", "pack-front"); got["background"] != "white" {
+	// pack-face alone would paint the back face with the front's fill. The
+	// value arrives as the longhand it sets — a one-token background is the
+	// background colour.
+	if got := find("pack-face", "pack-front"); got["background-color"] != "white" {
 		t.Errorf("the compound subject resolved to %v", got)
 	}
 	// A sole-class rule is the degenerate case of the same mechanism.

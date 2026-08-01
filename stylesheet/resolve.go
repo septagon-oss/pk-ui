@@ -283,9 +283,16 @@ type SubjectStyle struct {
 	// ".pack-face.pack-front" requires both; a node carrying only pack-face
 	// is a different face and must not receive the front's styling.
 	Requires []string
-	// Declarations is what lands there, later rules overriding earlier ones
-	// as the cascade does at equal footing. Specificity is not modelled; the
-	// same stated approximation as Declarations.
+	// Declarations is what lands there, keyed by longhand property, later
+	// rules overriding earlier ones as the cascade does at equal footing.
+	// Specificity is not modelled; the same stated approximation as
+	// Declarations.
+	//
+	// Longhand rather than as-written, and merged here rather than by the
+	// caller, because this is where rule order still exists. "padding" and a
+	// later "padding-left" both speak about the left padding; a caller
+	// handed a property-keyed map has lost which came second, and any merge
+	// it does is a coin toss presenting itself as a cascade.
 	Declarations map[string]string
 }
 
@@ -331,7 +338,9 @@ func (i *Index) SubjectStyles(classes ...string) []SubjectStyle {
 			subjects[key] = rule.subject
 			order = append(order, key)
 		}
-		merged[key][rule.declaration.Property] = rule.declaration.Value
+		for longhand, value := range ExpandDeclaration(rule.declaration.Property, rule.declaration.Value) {
+			merged[key][longhand] = value
+		}
 	}
 
 	out := make([]SubjectStyle, 0, len(order))
