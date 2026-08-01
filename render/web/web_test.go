@@ -501,6 +501,194 @@ func TestTableWithSlotsCarriesTrustedRowAndCellProjection(t *testing.T) {
 	}
 }
 
+func TestCardWithSlotsRendersEachCanonicalRegionOnce(t *testing.T) {
+	t.Parallel()
+
+	node := CardWithSlots(molecules.CardProps{
+		ComponentProps: contracts.ComponentProps{
+			ID:    "settings-card",
+			Class: "account-settings",
+			Attrs: map[string]string{"data-owner": "profile"},
+		},
+		HTMXProps: contracts.HTMXProps{
+			Get:    "/settings/card",
+			Target: "#settings-card",
+		},
+	}, CardSlots{
+		Header:  []g.Node{g.El("strong", g.Text("Unique header"))},
+		Content: []g.Node{g.El("main", g.Text("Unique content"))},
+		Footer:  []g.Node{g.El("small", g.Text("Unique footer"))},
+	})
+
+	var rendered strings.Builder
+	if err := node.Render(&rendered); err != nil {
+		t.Fatal(err)
+	}
+	html := rendered.String()
+	for _, fragment := range []string{
+		`<article`,
+		`id="settings-card"`,
+		`account-settings`,
+		`data-owner="profile"`,
+		`data-component="card"`,
+		`hx-get="/settings/card"`,
+		`hx-target="#settings-card"`,
+	} {
+		if !strings.Contains(html, fragment) {
+			t.Errorf("CardWithSlots output is missing %q: %s", fragment, html)
+		}
+	}
+	for _, content := range []string{"Unique header", "Unique content", "Unique footer"} {
+		if count := strings.Count(html, content); count != 1 {
+			t.Errorf("CardWithSlots rendered %q %d times, want exactly once: %s", content, count, html)
+		}
+	}
+}
+
+func TestExistingBadgeAndAlertTreatmentsRemainCompatible(t *testing.T) {
+	t.Parallel()
+
+	var badge strings.Builder
+	if err := Badge(atoms.BadgeProps{Label: "New", Dot: true}).Render(&badge); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(badge.String(), `class="w-1.5 h-1.5 rounded-full bg-fg-brand"`) {
+		t.Errorf("Badge lost its visible dot treatment: %s", badge.String())
+	}
+
+	var alert strings.Builder
+	if err := Alert(atoms.AlertProps{Message: "Saved", Tone: "success"}).Render(&alert); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(alert.String(), `class="flex gap-3 rounded-lg p-4 border`) {
+		t.Errorf("Alert lost its padded compatibility treatment: %s", alert.String())
+	}
+}
+
+func TestTabsWithPanelsOwnsActiveDisabledLazyAndAccessibilityContracts(t *testing.T) {
+	t.Parallel()
+
+	node := TabsWithPanels(
+		molecules.TabsProps{
+			ComponentProps: contracts.ComponentProps{
+				ID:    "account-tabs",
+				Class: "account-navigation",
+				Attrs: map[string]string{"data-owner": "profile"},
+			},
+			ActiveTab:    "disabled",
+			Orientation:  "vertical",
+			Variant:      "pills",
+			LoadingLabel: "Loading activity",
+		},
+		TabSlot{ID: "disabled", Label: "Disabled", Disabled: true},
+		TabSlot{
+			ID:      "safe",
+			Label:   "Safe",
+			Icon:    `<img src=x onerror=alert(1)>`,
+			Badge:   "New",
+			Content: []g.Node{g.El("strong", g.Text("Safe panel"))},
+		},
+		TabSlot{ID: "lazy", Label: "Activity", HxGet: "/activity"},
+	)
+
+	var rendered strings.Builder
+	if err := node.Render(&rendered); err != nil {
+		t.Fatal(err)
+	}
+	html := rendered.String()
+	for _, fragment := range []string{
+		`id="account-tabs"`,
+		`account-navigation`,
+		`data-owner="profile"`,
+		`data-controller="tabs"`,
+		`data-tabs-contract="1"`,
+		`data-tabs-active-tab-value="safe"`,
+		`role="tablist"`,
+		`aria-orientation="vertical"`,
+		`id="account-tabs-tab-safe"`,
+		`aria-controls="account-tabs-panel-safe"`,
+		`aria-selected="true"`,
+		`tabindex="0"`,
+		`data-action="click-&gt;tabs#activate"`,
+		`data-pk-icon="&lt;img src=x onerror=alert(1)&gt;"`,
+		`id="account-tabs-panel-safe"`,
+		`aria-labelledby="account-tabs-tab-safe"`,
+		`aria-hidden="false"`,
+		`data-state="active"`,
+		`<strong>Safe panel</strong>`,
+		`id="account-tabs-tab-disabled"`,
+		`aria-disabled="true"`,
+		`disabled`,
+		`id="account-tabs-panel-lazy"`,
+		`data-tabs-lazy="true"`,
+		`hx-get="/activity"`,
+		`hx-trigger="tabs:activate from:this once"`,
+		`hx-swap="innerHTML"`,
+		`Loading activity`,
+	} {
+		if !strings.Contains(html, fragment) {
+			t.Errorf("TabsWithPanels output is missing %q: %s", fragment, html)
+		}
+	}
+	if selected := strings.Count(html, `aria-selected="true"`); selected != 1 {
+		t.Errorf("TabsWithPanels rendered %d selected tabs, want exactly one: %s", selected, html)
+	}
+	if focusable := strings.Count(html, `tabindex="0"`); focusable != 1 {
+		t.Errorf("TabsWithPanels rendered %d focusable tabs, want exactly one: %s", focusable, html)
+	}
+	for _, unsafe := range []string{"<img", "<script", `data-pk-icon="<`} {
+		if strings.Contains(html, unsafe) {
+			t.Errorf("TabsWithPanels rendered unsafe icon markup %q: %s", unsafe, html)
+		}
+	}
+}
+
+func TestTabsNavigationEmitsOneCoherentTablistClassAttribute(t *testing.T) {
+	t.Parallel()
+
+	node := Tabs(molecules.TabsProps{
+		ComponentProps: contracts.ComponentProps{
+			ID:    "section-tabs",
+			Class: "section-navigation",
+		},
+		ActiveTab:   "second",
+		Orientation: "horizontal",
+		Variant:     "underline",
+		Items: []molecules.TabItem{
+			{Key: "first", Label: "First", URL: "/first"},
+			{Key: "second", Label: "Second"},
+		},
+	})
+
+	var rendered strings.Builder
+	if err := node.Render(&rendered); err != nil {
+		t.Fatal(err)
+	}
+	html := rendered.String()
+	end := strings.IndexByte(html, '>')
+	if end < 0 {
+		t.Fatalf("Tabs output has no opening element: %s", html)
+	}
+	openingTag := html[:end]
+	if count := strings.Count(openingTag, `class="`); count != 1 {
+		t.Fatalf("Tabs opening tag has %d class attributes, want exactly one: %s", count, openingTag)
+	}
+	for _, fragment := range []string{
+		`<nav`,
+		`id="section-tabs"`,
+		`class="flex gap-1 flex-row border-b border-border-primary section-navigation"`,
+		`data-component="tabs"`,
+		`role="tablist"`,
+		`aria-orientation="horizontal"`,
+		`href="/first"`,
+		`aria-selected="true"`,
+	} {
+		if !strings.Contains(html, fragment) {
+			t.Errorf("Tabs output is missing %q: %s", fragment, html)
+		}
+	}
+}
+
 func renderAll(t *testing.T) string {
 	t.Helper()
 	var b strings.Builder

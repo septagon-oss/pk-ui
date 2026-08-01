@@ -185,30 +185,12 @@ var (
 		"2xl": tw.New().PaddingX(tw.S4).PaddingY(tw.S1).FontSize(tw.TextBase),
 	}
 
-	clBadgeDot     = tw.New().Width(tw.S1_5).Height(tw.S1_5).Rounded(tw.RadiusFull)
-	clBadgeDotTone = map[string]tw.ClassList{
-		"neutral": tw.New().Bg(tw.FgSecondary),
-		"brand":   tw.New().Bg(tw.FgBrand),
-		"success": tw.New().Bg(tw.FgSuccess),
-		"warning": tw.New().Bg(tw.FgWarning),
-		"danger":  tw.New().Bg(tw.FgDanger),
-		"info":    tw.New().Bg(tw.FgInfo),
-	}
-	clBadgeCount  = tw.New().MarginLeft(tw.S1).FontWeight(tw.FontSemibold).TabularNums()
-	clBadgeRemove = tw.New().MarginLeft(tw.S1).Display(tw.DisplayInlineFlex).
-			Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
-			Bg(tw.ColorTransparent).Border(tw.Border0).Padding(tw.S0).
-			Rounded(tw.RadiusFull).Cursor(tw.CursorPointer).
-			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Opacity(tw.Opacity75) }).
-			Merge(clFocusRing)
+	clBadgeDot = tw.New().Width(tw.S1_5).Height(tw.S1_5).Rounded(tw.RadiusFull).Bg(tw.FgBrand)
 
 	// Alert.
 	clAlertBase = tw.New().
-			Display(tw.DisplayFlex).Items(tw.ItemsStart).Gap(tw.S3).Rounded(tw.RadiusLG).
+			Display(tw.DisplayFlex).Gap(tw.S3).Rounded(tw.RadiusLG).Padding(tw.S4).
 			Border(tw.Border1)
-	clAlertRegular  = tw.New().Padding(tw.S4)
-	clAlertCompact  = tw.New().PaddingX(tw.S3).PaddingY(tw.S2)
-	clAlertBordered = tw.New().BorderLeft(tw.Border4)
 
 	clAlertVariant = map[string]tw.ClassList{
 		"success": tw.New().NoUnderline().Bg(tw.SurfaceSuccessSoft).TextColor(tw.FgSuccess).BorderColor(tw.BorderSuccess),
@@ -221,15 +203,6 @@ var (
 	clAlertTitle   = tw.New().FontWeight(tw.FontSemibold).FontSize(tw.TextSM)
 	clAlertMessage = tw.New().FontSize(tw.TextSM)
 	clAlertBody    = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1).Flex1()
-	clAlertIcon    = tw.New().
-			MarginTop(tw.S0_5).Display(tw.DisplayFlex).Height(tw.S9).Width(tw.S9).
-			FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter).Rounded(tw.RadiusFull)
-	clAlertActions = tw.New().MarginTop(tw.S3).Display(tw.DisplayFlex).FlexWrap().
-			Items(tw.ItemsCenter).Gap(tw.S3).FontSize(tw.TextSM)
-	clAlertClose = tw.New().MarginLeft(tw.SAuto).Display(tw.DisplayInlineFlex).
-			FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
-			Rounded(tw.RadiusMD).Padding(tw.S1_5).Cursor(tw.CursorPointer).
-			Transition(tw.TransitionColors).Merge(clFocusRing)
 
 	// Inputs.
 	clFieldWrap     = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1_5)
@@ -744,9 +717,8 @@ func ClassLists() []tw.ClassList {
 	out := []tw.ClassList{
 		clIcon, clAvatarBase, clAvatarInitials, clAvatarImage, clAvatarStatus,
 		clFocusRing, clButtonBase, clButtonFull, clButtonIconOnly,
-		clBadgeBase, clBadgeDot, clBadgeCount, clBadgeRemove,
-		clAlertBase, clAlertRegular, clAlertCompact, clAlertBordered,
-		clAlertTitle, clAlertMessage, clAlertBody, clAlertIcon, clAlertActions, clAlertClose,
+		clBadgeBase, clBadgeDot,
+		clAlertBase, clAlertTitle, clAlertMessage, clAlertBody,
 		clFieldWrap, clFieldWrapFull, clLabel, clHelp, clFieldErr, clRequired,
 		clInput, clInputNormal, clInputError,
 		clInputIconWrap, clInputIconStart, clInputIconEnd, clInputPadStart, clInputPadEnd,
@@ -793,7 +765,7 @@ func ClassLists() []tw.ClassList {
 	}
 	for _, m := range []map[string]tw.ClassList{
 		clButtonVariant, clButtonTone, clButtonSize,
-		clBadgeVariant, clBadgeTone, clBadgeSize, clBadgeDotTone, clAlertVariant,
+		clBadgeVariant, clBadgeTone, clBadgeSize, clAlertVariant,
 		clIconSize, clIconTone, clAvatarSize, clAvatarShape, clAvatarTone,
 		clAvatarInitialsSize, clAvatarStatusTone, clAvatarStatusSize, clAvatarStatusPosition,
 		clInputSize, clSliderTone, clToggleTrackSize, clToggleTrackState, clToggleKnobSize, clToggleKnobChecked,

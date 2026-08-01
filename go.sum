@@ -2,8 +2,8 @@ github.com/septagon-oss/pk-design v0.4.0 h1:ew5uQP3XwZ68w2Sn5zIxWpULAVhqXlKtVH5B
 github.com/septagon-oss/pk-design v0.4.0/go.mod h1:gHPDkDfgfgEAOGeSG7mv3gtN0DyDLh7KpxsCg6onsv4=
 github.com/septagon-oss/styleengine v0.1.1 h1:daUTe0iv73PFJcyHbWhyL3+Dg3oEBBoNbWa8gQS8X10=
 github.com/septagon-oss/styleengine v0.1.1/go.mod h1:/VV3Cppy5mcopvCKwHwIbgMTl0PuVXye3MKQSFNunWA=
-github.com/septagon-oss/tw v0.2.2 h1:hFpnotjMFG/n96WD7GLgfSBi6UnvB1ZKkhQtgvhHHZA=
-github.com/septagon-oss/tw v0.2.2/go.mod h1:ez7x0XcQAyKLJ8dv1F9kF2NTKs50gxhPSBFtGMeQFuo=
+github.com/septagon-oss/tw v0.2.3 h1:QFoGZGKM6+bGC27S9vMIsWfaXZrNTMXspGEfyIU+mTo=
+github.com/septagon-oss/tw v0.2.3/go.mod h1:ez7x0XcQAyKLJ8dv1F9kF2NTKs50gxhPSBFtGMeQFuo=
 github.com/tdewolff/minify/v2 v2.24.14 h1:y05Dj1YHaCJ0g6nZa5wC6vyI+x5iziYBY20gsC6xvbo=
 github.com/tdewolff/minify/v2 v2.24.14/go.mod h1:ducvuHPTtUvKKK6uCI4p0fR2Mxvoy+XpFy9cC8QDv1c=
 github.com/tdewolff/parse/v2 v2.8.14 h1:GuhuMMPKAqj5BhP9hZUz3r3JqX/lOvQ1E6wxW6p/FhY=

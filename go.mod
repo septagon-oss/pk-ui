@@ -9,7 +9,7 @@ require (
 
 require (
 	github.com/septagon-oss/styleengine v0.1.1
-	github.com/septagon-oss/tw v0.2.2
+	github.com/septagon-oss/tw v0.2.3
 )
 
 require (

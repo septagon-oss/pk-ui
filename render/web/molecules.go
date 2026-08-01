@@ -844,11 +844,7 @@ func Tabs(p molecules.TabsProps) g.Node {
 	if p.Disabled {
 		active = ""
 	}
-	items := []g.Node{
-		h.Class(style.list),
-		h.Role("tablist"),
-		g.Attr("aria-orientation", tabsOrientation(p.Orientation)),
-	}
+	var items []g.Node
 	for _, it := range p.Items {
 		disabled := it.Disabled || p.Disabled
 		isActive := it.Key == active && !disabled
@@ -886,7 +882,12 @@ func Tabs(p molecules.TabsProps) g.Node {
 	rootProps := p.ComponentProps
 	rootProps.Disabled = false
 	nav := baseAttrs(rootProps)
-	nav = append(nav, classes(style.root, p.Class), g.Attr("data-component", "tabs"))
+	nav = append(nav,
+		classes(style.list, p.Class),
+		g.Attr("data-component", "tabs"),
+		h.Role("tablist"),
+		g.Attr("aria-orientation", tabsOrientation(p.Orientation)),
+	)
 	nav = append(nav, items...)
 	return h.Nav(nav...)
 }
