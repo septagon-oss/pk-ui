@@ -15,8 +15,6 @@ import (
 	"strings"
 
 	"github.com/septagon-oss/pk-design/pkg/blueprint"
-	"github.com/septagon-oss/pk-ui/contracts/atoms"
-	"github.com/septagon-oss/pk-ui/contracts/molecules"
 )
 
 func deliveryDesign(
@@ -154,16 +152,4 @@ func deliveryVisibleWhen(node blueprint.Node, conditions map[string]any) bluepri
 	}
 	node.Props["visible_when"] = maps.Clone(conditions)
 	return node
-}
-
-func cardProps(title string) molecules.CardProps {
-	return molecules.CardProps{Title: title}
-}
-
-func textProps(content, color string) atoms.TextProps {
-	return atoms.TextProps{
-		Content: content,
-		Size:    "sm",
-		Color:   color,
-	}
 }
