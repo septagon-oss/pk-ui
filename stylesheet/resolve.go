@@ -240,6 +240,47 @@ func (i *Index) Mentions(class string) bool {
 	return false
 }
 
+// MissingContext reports the classes a document would have to gain for rules
+// it nearly matches to take effect, counted by how many rules each would
+// enable.
+//
+// It answers a question that looks like a bug in the stylesheet and is usually
+// a bug in the caller: markup carrying .trace-slider renders unstyled because
+// every rule for it is written ".collect-trace .trace-slider", and the page
+// that supplies .collect-trace is not around. A preview or a test harness that
+// renders a component outside the context its styles assume shows something
+// the product never displays.
+//
+// Only rules whose subject the document already has are considered, so this
+// reports context the markup is missing rather than every rule in the
+// stylesheet it fails to match.
+func (i *Index) MissingContext(classes ...string) map[string]int {
+	present := make(map[string]struct{}, len(classes))
+	for _, class := range classes {
+		present[class] = struct{}{}
+	}
+
+	missing := map[string]int{}
+	for _, rule := range i.contextual {
+		var absent []string
+		var anyPresent bool
+		for _, required := range rule.requires {
+			if _, ok := present[required]; ok {
+				anyPresent = true
+				continue
+			}
+			absent = append(absent, required)
+		}
+		if !anyPresent || len(absent) == 0 {
+			continue
+		}
+		for _, class := range absent {
+			missing[class]++
+		}
+	}
+	return missing
+}
+
 // Defines reports whether the stylesheet styles this class unconditionally.
 func (i *Index) Defines(class string) bool {
 	_, ok := i.declarations[class]

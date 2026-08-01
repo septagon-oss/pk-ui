@@ -162,3 +162,34 @@ func collectStylesheet(t *testing.T) string {
 		"collectibles_management", "browser", "css", "collect.css",
 	)
 }
+
+// TestMissingContextNamesWhatTheMarkupLacks pins the diagnosis that a
+// component rendered outside its page needs.
+//
+// A stylesheet that writes ".album .cover" and never ".cover" leaves markup
+// carrying only .cover completely unstyled, and nothing about that markup says
+// why. This names the ancestor it is waiting on.
+func TestMissingContextNamesWhatTheMarkupLacks(t *testing.T) {
+	t.Parallel()
+
+	index := newIndex(t, `
+.album .cover { border-radius: 12px; }
+.album .cover img { width: 100%; }
+.page .sidebar { width: 200px; }
+.cover { display: block; }
+`)
+
+	missing := index.MissingContext("cover")
+	if missing["album"] != 2 {
+		t.Errorf("MissingContext reported .album enabling %d rules, want 2", missing["album"])
+	}
+	// A rule the document shares nothing with is not this document's missing
+	// context; reporting it would bury the answer in every other page's rules.
+	if _, reported := missing["page"]; reported {
+		t.Error("an unrelated rule was reported as missing context")
+	}
+	// A rule that already matches is not missing anything.
+	if _, reported := missing["cover"]; reported {
+		t.Error("a satisfied rule was counted as missing its own subject")
+	}
+}
