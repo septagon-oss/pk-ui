@@ -3,7 +3,7 @@ module github.com/septagon-oss/pk-ui
 go 1.26
 
 require (
-	github.com/septagon-oss/pk-design v0.2.2
+	github.com/septagon-oss/pk-design v0.4.0
 	maragu.dev/gomponents v1.3.0
 )
 
