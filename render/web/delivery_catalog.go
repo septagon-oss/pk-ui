@@ -1109,20 +1109,20 @@ func skeletonDeliveryDefinition() DeliveryDefinition {
 		"Pulsing placeholder that holds the geometry of content that has not arrived yet.",
 		map[string]PropertyContract{
 			"shape": variantProperty([]string{"block", "text", "circle"}, "block", "Placeholder geometry."),
-			"size":  sizeProperty([]string{"small", "medium", "large"}, "medium", "Placeholder scale."),
+			"size":  sizeProperty([]string{"sm", "md", "lg"}, "md", "Placeholder scale."),
 			"lines": contentProperty("Line count for the text shape."),
 		},
 		nil,
 		deliveryDesign("block", "02 Atoms", "Feedback", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "block", map[string]any{
-				"shape": "block", "size": "medium",
+				"shape": "block", "size": "md",
 			}),
 			deliveryExample(componentType, "text", map[string]any{
 				"shape": "text", "lines": 3,
 			}),
 			deliveryExample(componentType, "circle", map[string]any{
-				"shape": "circle", "size": "medium",
+				"shape": "circle", "size": "md",
 			}),
 		},
 		Skeleton,

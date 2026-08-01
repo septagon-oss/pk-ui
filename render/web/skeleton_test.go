@@ -81,6 +81,35 @@ func TestSkeletonPlaceholdersAreHiddenFromAssistiveTech(t *testing.T) {
 	}
 }
 
+func TestSkeletonUsesCanonicalControlSizes(t *testing.T) {
+	t.Parallel()
+
+	for _, size := range []string{"sm", "md", "lg"} {
+		t.Run(size, func(t *testing.T) {
+			block := renderNode(t, Skeleton(atoms.SkeletonProps{Shape: "block", Size: size}))
+			if want := clSkeletonBlockSize[size].Compile(); !strings.Contains(block, want) {
+				t.Errorf("block size %q missing classes %q: %s", size, want, block)
+			}
+
+			circle := renderNode(t, Skeleton(atoms.SkeletonProps{Shape: "circle", Size: size}))
+			if want := clSkeletonCircleSize[size].Compile(); !strings.Contains(circle, want) {
+				t.Errorf("circle size %q missing classes %q: %s", size, want, circle)
+			}
+
+			line := renderNode(t, Skeleton(atoms.SkeletonProps{Shape: "text", Size: size}))
+			if want := clSkeletonLineSize[size].Compile(); !strings.Contains(line, want) {
+				t.Errorf("text size %q missing classes %q: %s", size, want, line)
+			}
+		})
+	}
+
+	for _, legacy := range []string{"small", "medium", "large"} {
+		if _, ok := clSkeletonBlockSize[legacy]; ok {
+			t.Errorf("legacy size alias %q remains in the public class map", legacy)
+		}
+	}
+}
+
 func TestSkeletonTextRendersRequestedLinesWithShortLast(t *testing.T) {
 	t.Parallel()
 

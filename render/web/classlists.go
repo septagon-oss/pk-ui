@@ -263,19 +263,19 @@ var (
 	clSkeletonLine      = tw.New().Width(tw.SFull).Rounded(tw.RadiusMD)
 	clSkeletonLineLast  = tw.New().Width(tw.SFull).MaxWScaled(tw.MaxWXS).Rounded(tw.RadiusMD)
 	clSkeletonBlockSize = map[string]tw.ClassList{
-		"small":  tw.New().Width(tw.SFull).Height(tw.S16).Rounded(tw.RadiusMD),
-		"medium": tw.New().Width(tw.SFull).Height(tw.S24).Rounded(tw.RadiusMD),
-		"large":  tw.New().Width(tw.SFull).Height(tw.S40).Rounded(tw.RadiusMD),
+		"sm": tw.New().Width(tw.SFull).Height(tw.S16).Rounded(tw.RadiusMD),
+		"md": tw.New().Width(tw.SFull).Height(tw.S24).Rounded(tw.RadiusMD),
+		"lg": tw.New().Width(tw.SFull).Height(tw.S40).Rounded(tw.RadiusMD),
 	}
 	clSkeletonLineSize = map[string]tw.ClassList{
-		"small":  tw.New().Height(tw.S3),
-		"medium": tw.New().Height(tw.S4),
-		"large":  tw.New().Height(tw.S5),
+		"sm": tw.New().Height(tw.S3),
+		"md": tw.New().Height(tw.S4),
+		"lg": tw.New().Height(tw.S5),
 	}
 	clSkeletonCircleSize = map[string]tw.ClassList{
-		"small":  tw.New().Width(tw.S8).Height(tw.S8).Rounded(tw.RadiusFull),
-		"medium": tw.New().Width(tw.S12).Height(tw.S12).Rounded(tw.RadiusFull),
-		"large":  tw.New().Width(tw.S16).Height(tw.S16).Rounded(tw.RadiusFull),
+		"sm": tw.New().Width(tw.S8).Height(tw.S8).Rounded(tw.RadiusFull),
+		"md": tw.New().Width(tw.S12).Height(tw.S12).Rounded(tw.RadiusFull),
+		"lg": tw.New().Width(tw.S16).Height(tw.S16).Rounded(tw.RadiusFull),
 	}
 
 	clEmpty = tw.New().

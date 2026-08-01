@@ -27,11 +27,11 @@ import (
 func Skeleton(p atoms.SkeletonProps) g.Node {
 	size := p.Size
 	if size == "" {
-		size = "medium"
+		size = "md"
 	}
 	switch p.Shape {
 	case "circle":
-		cl := clSkeleton.Merge(variantOr(clSkeletonCircleSize, size, "medium"))
+		cl := clSkeleton.Merge(variantOr(clSkeletonCircleSize, size, "md"))
 		return h.Div(append(baseAttrs(p.ComponentProps),
 			classes(cl.Compile(), p.Class), g.Attr("aria-hidden", "true"))...)
 	case "text":
@@ -48,7 +48,7 @@ func Skeleton(p atoms.SkeletonProps) g.Node {
 		}
 		return h.Div(nodes...)
 	default:
-		cl := clSkeleton.Merge(variantOr(clSkeletonBlockSize, size, "medium"))
+		cl := clSkeleton.Merge(variantOr(clSkeletonBlockSize, size, "md"))
 		return h.Div(append(baseAttrs(p.ComponentProps),
 			classes(cl.Compile(), p.Class), g.Attr("aria-hidden", "true"))...)
 	}
@@ -61,7 +61,7 @@ func skeletonLine(size string, last bool) tw.ClassList {
 	if last {
 		width = clSkeletonLineLast
 	}
-	return clSkeleton.Merge(width).Merge(variantOr(clSkeletonLineSize, size, "medium"))
+	return clSkeleton.Merge(width).Merge(variantOr(clSkeletonLineSize, size, "md"))
 }
 
 // DeferredSlot renders atoms.DeferredSlotProps around a placeholder. HTMX
@@ -102,7 +102,7 @@ func TableSkeleton(p molecules.TableSkeletonProps) g.Node {
 	if p.Compact {
 		tdClass = clTableTdC
 	}
-	cellLine := skeletonLine("small", false)
+	cellLine := skeletonLine("sm", false)
 
 	headCells := make([]g.Node, 0, cols)
 	for i := 0; i < cols; i++ {
@@ -145,7 +145,7 @@ func CardSkeleton(p molecules.CardSkeletonProps) g.Node {
 	nodes := baseAttrs(p.ComponentProps)
 	nodes = append(nodes, classes(clCard.Compile(), p.Class),
 		g.Attr("aria-hidden", "true"),
-		h.Div(h.Class(skeletonLine("large", true).Compile())),
+		h.Div(h.Class(skeletonLine("lg", true).Compile())),
 		Skeleton(atoms.SkeletonProps{Shape: "text", Lines: lines}),
 	)
 	return h.Div(nodes...)

@@ -1153,7 +1153,7 @@ func dataGridSlots(rows []molecules.TableRow) DataGridSlots {
 
 func tableSkeletonDeliveryDefinition() DeliveryDefinition {
 	componentType := "TableSkeleton"
-	line := skeletonLine("small", false).Compile()
+	line := skeletonLine("sm", false).Compile()
 	root := deliveryFrame(
 		componentType,
 		clTableWrap.Compile(),
@@ -1202,13 +1202,13 @@ func cardSkeletonDeliveryDefinition() DeliveryDefinition {
 	root := deliveryFrame(
 		componentType,
 		clCard.Compile(),
-		deliveryFrame("Title", skeletonLine("large", true).Compile()),
+		deliveryFrame("Title", skeletonLine("lg", true).Compile()),
 		deliveryFrame(
 			"Body",
 			clSkeletonText.Compile(),
-			deliveryFrame("Line", skeletonLine("medium", false).Compile()),
-			deliveryFrame("Line", skeletonLine("medium", false).Compile()),
-			deliveryFrame("Line", skeletonLine("medium", true).Compile()),
+			deliveryFrame("Line", skeletonLine("md", false).Compile()),
+			deliveryFrame("Line", skeletonLine("md", false).Compile()),
+			deliveryFrame("Line", skeletonLine("md", true).Compile()),
 		),
 	)
 	return newDeliveryDefinition(

@@ -13,7 +13,7 @@ type SkeletonProps struct {
 	contracts.ComponentProps
 
 	Shape string `json:"shape,omitempty"` // block, text, circle
-	Size  string `json:"size,omitempty"`  // small, medium, large
+	Size  string `json:"size,omitempty"`  // sm, md, lg
 	Lines int    `json:"lines,omitempty"` // shape=text: placeholder line count (default 1)
 }
 
