@@ -27,11 +27,15 @@ import (
 // server-driven sorting. Portable table data remains in TableProps; callers
 // only opt into these callbacks when a cell needs real markup.
 type TableSlots struct {
-	Cell           func(molecules.TableRow, molecules.TableColumn) g.Node
-	SortURL        func(molecules.TableColumn) string
-	SortState      func(molecules.TableColumn) string
-	SelectAllLabel string
-	SelectRowLabel func(molecules.TableRow) string
+	Cell             func(molecules.TableRow, molecules.TableColumn) g.Node
+	CellAttrs        func(molecules.TableRow, molecules.TableColumn) []g.Node
+	RowAttrs         func(molecules.TableRow) []g.Node
+	SortURL          func(molecules.TableColumn) string
+	SortState        func(molecules.TableColumn) string
+	SortButtonAttrs  func(molecules.TableColumn) []g.Node
+	SelectAllLabel   string
+	SelectRowLabel   func(molecules.TableRow) string
+	SelectRowChecked func(molecules.TableRow) bool
 }
 
 // Table renders molecules.TableProps. Cell values render via fmt.Sprint;
@@ -86,6 +90,9 @@ func TableWithSlots(p molecules.TableProps, slots TableSlots) g.Node {
 					button = append(button, htmxAttrs(enhancement)...)
 				}
 			}
+			if slots.SortButtonAttrs != nil {
+				button = append(button, slots.SortButtonAttrs(c)...)
+			}
 			// A real button inside the th: keyboard operable, and the page
 			// script owns cycling aria-sort none → ascending → descending.
 			headCells = append(headCells, h.Th(
@@ -118,15 +125,20 @@ func TableWithSlots(p molecules.TableProps, slots TableSlots) g.Node {
 		if r.ID != "" {
 			cells = append(cells, g.Attr("data-pk-row", r.ID))
 		}
+		if slots.RowAttrs != nil {
+			cells = append(cells, slots.RowAttrs(r)...)
+		}
 		if p.Selectable {
 			label := "Select row"
 			if slots.SelectRowLabel != nil {
 				label = fallbackText(slots.SelectRowLabel(r), label)
 			}
-			cells = append(cells, h.Td(h.Class(tdClass.Compile()),
-				h.Input(h.Class(clCheckbox.Compile()), h.Type("checkbox"),
-					g.Attr("data-pk-select", r.ID), g.Attr("aria-label", label)),
-			))
+			input := []g.Node{h.Class(clCheckbox.Compile()), h.Type("checkbox"),
+				g.Attr("data-pk-select", r.ID), g.Attr("aria-label", label)}
+			if slots.SelectRowChecked != nil && slots.SelectRowChecked(r) {
+				input = append(input, h.Checked())
+			}
+			cells = append(cells, h.Td(h.Class(tdClass.Compile()), h.Input(input...)))
 		}
 		for _, c := range p.Columns {
 			v := ""
@@ -138,6 +150,9 @@ func TableWithSlots(p molecules.TableProps, slots TableSlots) g.Node {
 				cell = cell.Merge(clTableTdStrong)
 			}
 			td := []g.Node{h.Class(cell.Compile())}
+			if slots.CellAttrs != nil {
+				td = append(td, slots.CellAttrs(r, c)...)
+			}
 			switch c.Align {
 			case "center":
 				td = append(td, g.Attr("style", "text-align:center"))

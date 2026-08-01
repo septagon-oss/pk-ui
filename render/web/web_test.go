@@ -467,6 +467,40 @@ func TestTableWithSlotsOwnsRichCellsAndServerSorting(t *testing.T) {
 	}
 }
 
+func TestTableWithSlotsCarriesTrustedRowAndCellProjection(t *testing.T) {
+	var rendered strings.Builder
+	err := TableWithSlots(molecules.TableProps{
+		Selectable: true,
+		Sortable:   true,
+		Columns:    []molecules.TableColumn{{Key: "name", Label: "Name", Sortable: true}},
+		Rows:       []molecules.TableRow{{ID: "row-1", Cells: map[string]any{"name": "Ada"}}},
+	}, TableSlots{
+		RowAttrs: func(molecules.TableRow) []g.Node {
+			return []g.Node{g.Attr("data-state", "selected")}
+		},
+		CellAttrs: func(_ molecules.TableRow, column molecules.TableColumn) []g.Node {
+			return []g.Node{g.Attr("data-label", column.Label)}
+		},
+		SortButtonAttrs: func(molecules.TableColumn) []g.Node {
+			return []g.Node{g.Attr("hx-include", "[name='search']")}
+		},
+		SelectRowChecked: func(molecules.TableRow) bool { return true },
+	}).Render(&rendered)
+	if err != nil {
+		t.Fatalf("render table slots: %v", err)
+	}
+	for _, fragment := range []string{
+		`data-state="selected"`,
+		`data-label="Name"`,
+		`hx-include="[name=&#39;search&#39;]"`,
+		`checked`,
+	} {
+		if !strings.Contains(rendered.String(), fragment) {
+			t.Errorf("TableWithSlots output is missing %q: %s", fragment, rendered.String())
+		}
+	}
+}
+
 func renderAll(t *testing.T) string {
 	t.Helper()
 	var b strings.Builder
