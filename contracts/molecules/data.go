@@ -43,12 +43,17 @@ type CardProps struct {
 	contracts.ComponentProps
 	contracts.HTMXProps
 
-	Title       string `json:"title,omitempty"`
-	Description string `json:"description,omitempty"`
-	Image       string `json:"image,omitempty"`
-	Variant     string `json:"variant,omitempty"` // default, elevated, outlined
-	Clickable   bool   `json:"clickable,omitempty"`
-	Href        string `json:"href,omitempty"`
+	Title         string `json:"title,omitempty"`
+	Description   string `json:"description,omitempty"`
+	Image         string `json:"image,omitempty"`
+	ImageAlt      string `json:"imageAlt,omitempty"`
+	ImagePosition string `json:"imagePosition,omitempty"` // top, bottom, left, right
+	Variant       string `json:"variant,omitempty"`       // default, elevated, outlined, plain
+	Padding       string `json:"padding,omitempty"`       // none, small, medium, large
+	Shadow        string `json:"shadow,omitempty"`        // none, small, medium, large
+	Clickable     bool   `json:"clickable,omitempty"`
+	Hoverable     bool   `json:"hoverable,omitempty"`
+	Href          string `json:"href,omitempty"`
 }
 
 // ToMap converts CardProps to map[string]any for unified Component construction.

@@ -110,12 +110,17 @@ func cardDeliveryDefinition() DeliveryDefinition {
 		stableDeliveryID(componentType),
 		"Composable content surface with optional navigation behavior.",
 		map[string]PropertyContract{
-			"title":       contentProperty("Optional card heading."),
-			"description": contentProperty("Optional supporting copy."),
-			"image":       contentProperty("Optional media source."),
-			"variant":     variantProperty([]string{"default", "elevated", "outlined"}, "default", "Surface treatment."),
-			"clickable":   stateProperty("Whether the whole card is interactive."),
-			"href":        contentProperty("Navigation target for clickable cards."),
+			"title":         contentProperty("Optional card heading."),
+			"description":   contentProperty("Optional supporting copy."),
+			"image":         contentProperty("Optional media source."),
+			"imageAlt":      contentProperty("Alternative text for card media."),
+			"imagePosition": variantProperty([]string{"top", "bottom", "left", "right"}, "top", "Media placement."),
+			"variant":       variantProperty([]string{"default", "elevated", "outlined", "plain"}, "default", "Surface treatment."),
+			"padding":       variantProperty([]string{"none", "small", "medium", "large"}, "medium", "Content spacing."),
+			"shadow":        variantProperty([]string{"none", "small", "medium", "large"}, "small", "Surface elevation."),
+			"clickable":     stateProperty("Whether the whole card is interactive."),
+			"hoverable":     stateProperty("Whether the card lifts on hover."),
+			"href":          contentProperty("Navigation target for clickable cards."),
 		},
 		[]designcomponent.Slot{{
 			Name:         "children",
@@ -372,36 +377,110 @@ func tabsDeliveryDefinition() DeliveryDefinition {
 	componentType := "Tabs"
 	root := deliveryFrame(
 		componentType,
-		clTabList.Compile(),
-		deliveryText("Overview", clTab.Merge(clTabActive).Compile(), "Overview"),
-		deliveryText("Activity", clTab.Merge(clTabIdle).Compile(), "Activity"),
-		deliveryText("Settings", clTab.Merge(clTabIdle).Compile(), "Settings"),
+		clTabsRoot.Merge(clTabsRootHorizontal).Compile(),
+		deliveryFrame(
+			"TabList",
+			clTabsListBase.Merge(clTabsListHorizontal).Merge(clTabsListUnderlineHorizontal).Compile(),
+			deliveryText("Overview", clTabsButtonBase.Merge(clTabsButtonUnderlineHorizontal).Merge(clTabsUnderlineActive).Compile(), "Overview"),
+			deliveryText("Activity", clTabsButtonBase.Merge(clTabsButtonUnderlineHorizontal).Merge(clTabsUnderlineIdle).Compile(), "Activity"),
+		),
+		deliverySlot(
+			"Panel",
+			"tab",
+			clTabsPanels.Compile(),
+			deliveryInstance("OverviewBody", "Text", "body", ""),
+		),
 	)
-	return newDeliveryDefinition(
+	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
 		stableDeliveryID(componentType),
-		"Accessible tab navigation whose panels remain page-owned.",
+		"Accessible tab navigation and controller-backed panel composition.",
 		map[string]PropertyContract{
-			"items":       contentProperty("Ordered tabs."),
-			"activeTab":   stateProperty("Active tab key."),
-			"orientation": variantProperty([]string{"horizontal", "vertical"}, "horizontal", "Tab direction."),
-			"variant":     variantProperty([]string{"underline", "pills"}, "underline", "Visual treatment."),
+			"items":        contentProperty("Ordered navigation-only tabs."),
+			"activeTab":    stateProperty("Active tab key."),
+			"orientation":  variantProperty([]string{"horizontal", "vertical"}, "horizontal", "Tab direction."),
+			"variant":      variantProperty([]string{"underline", "pills"}, "underline", "Visual treatment."),
+			"hxGet":        contentProperty("Default lazy-panel endpoint."),
+			"loadingLabel": contentProperty("Localized lazy-panel loading label."),
 		},
-		nil,
+		[]designcomponent.Slot{{
+			Name:         "tab",
+			Required:     true,
+			Description:  "Ordered tab panels with per-tab navigation metadata.",
+			AllowedTypes: deliveryMoleculeContentTypes(),
+			Cardinality:  designcomponent.SlotMany,
+			Attrs:        tabsDeliverySlotAttrs(),
+		}},
 		deliveryDesign("underline", "03 Molecules", "Navigation", root),
 		[]DeliveryExample{
-			canonicalDeliveryExample(componentType, "underline", map[string]any{
-				"activeTab": "overview", "orientation": "horizontal", "variant": "underline",
-				"items": []map[string]any{
-					{"key": "overview", "label": "Overview", "url": "/overview"},
-					{"key": "activity", "label": "Activity", "url": "/activity"},
-					{"key": "settings", "label": "Settings", "url": "/settings"},
-				},
-			}),
+			withDeliveryExampleSlots(
+				canonicalDeliveryExample(componentType, "underline", map[string]any{
+					"activeTab": "overview", "orientation": "horizontal", "variant": "underline",
+				}),
+				deliveryExampleSlot("tab",
+					tabsDeliveryExampleComponent("overview", "Overview", "Current workspace summary."),
+					tabsDeliveryExampleComponent("activity", "Activity", "Recent workspace activity."),
+					tabsDeliveryExampleComponent("settings", "Settings", "Workspace preferences."),
+				),
+			),
+			withDeliveryExampleSlots(
+				deliveryExample(componentType, "vertical-pills", map[string]any{
+					"activeTab": "profile", "orientation": "vertical", "variant": "pills",
+				}),
+				deliveryExampleSlot("tab",
+					tabsDeliveryExampleComponent("profile", "Profile", "Update profile information."),
+					tabsDeliveryExampleComponent("security", "Security", "Review security settings."),
+				),
+			),
 		},
-		Tabs,
+		func(props molecules.TabsProps, slots DeliverySlotChildren) g.Node {
+			tabs := make([]TabSlot, 0, len(slots["tab"]))
+			for _, instance := range slots["tab"] {
+				tabs = append(tabs, TabSlot{
+					ID:       deliveryString(instance.Attrs, "id"),
+					Label:    deliveryString(instance.Attrs, "label"),
+					Icon:     deliveryString(instance.Attrs, "icon"),
+					Badge:    deliveryString(instance.Attrs, "badge"),
+					Disabled: deliveryBool(instance.Attrs, "disabled"),
+					HxGet:    deliveryString(instance.Attrs, "hxGet"),
+					Content:  instance.Children,
+				})
+			}
+			return TabsWithPanels(props, tabs...)
+		},
 	)
+}
+
+func tabsDeliverySlotAttrs() []designcomponent.Prop {
+	return []designcomponent.Prop{
+		{Name: "id", Type: designcomponent.PropString, Role: designcomponent.PropRoleContent, Required: true, Description: "Stable tab identity."},
+		{Name: "label", Type: designcomponent.PropString, Role: designcomponent.PropRoleContent, Required: true, Description: "Visible tab label."},
+		{Name: "icon", Type: designcomponent.PropString, Role: designcomponent.PropRoleContent, Description: "Optional OSS icon name."},
+		{Name: "badge", Type: designcomponent.PropString, Role: designcomponent.PropRoleContent, Description: "Optional status or count badge."},
+		{Name: "disabled", Type: designcomponent.PropBoolean, Role: designcomponent.PropRoleState, Default: "false", Description: "Whether the tab cannot be activated."},
+		{Name: "hxGet", Type: designcomponent.PropString, Role: designcomponent.PropRoleContent, Description: "Optional lazy-panel endpoint."},
+	}
+}
+
+func tabsDeliveryExampleComponent(id, label, content string) DeliveryExampleComponent {
+	component := deliveryExampleComponent(
+		id+"-body",
+		"Text",
+		map[string]any{"content": content, "size": "sm", "color": "muted"},
+	)
+	component.SlotAttrs = map[string]any{"id": id, "label": label}
+	return component
+}
+
+func deliveryString(attrs map[string]any, name string) string {
+	value, _ := attrs[name].(string)
+	return value
+}
+
+func deliveryBool(attrs map[string]any, name string) bool {
+	value, _ := attrs[name].(bool)
+	return value
 }
 
 func dataGridDeliveryDefinition() DeliveryDefinition {

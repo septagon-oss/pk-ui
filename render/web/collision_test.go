@@ -44,14 +44,19 @@ func composedLists(t *testing.T) map[string]tw.ClassList {
 	}
 	out["input/normal"] = clInput.Merge(clInputNormal).Merge(clInputSize["md"])
 	out["input/error"] = clInput.Merge(clInputError).Merge(clInputSize["md"])
+	out["textarea/manual"] = clInput.Merge(clInputNormal).Merge(clInputSize["md"]).Merge(clTextareaManual)
+	out["textarea/autoresize"] = clInput.Merge(clInputNormal).Merge(clInputSize["md"]).Merge(clTextareaAuto)
+	out["textarea/error"] = clInput.Merge(clInputError).Merge(clInputSize["md"]).Merge(clTextareaManual)
 	out["tag/idle"] = TagClasses(false)
 	out["tag/selected"] = TagClasses(true)
 	out["empty/default"] = clEmpty.Merge(clEmptyPad)
 	out["empty/compact"] = clEmpty.Merge(clEmptyCompact)
 	out["empty/default-bordered"] = clEmpty.Merge(clEmptyPad).Merge(clEmptyBordered)
 	out["empty/compact-bordered"] = clEmpty.Merge(clEmptyCompact).Merge(clEmptyBordered)
-	out["tab/idle"] = clTab.Merge(clTabIdle)
-	out["tab/active"] = clTab.Merge(clTabActive)
+	out["tab/underline-idle"] = clTabsButtonBase.Merge(clTabsButtonUnderlineHorizontal).Merge(clTabsUnderlineIdle)
+	out["tab/underline-active"] = clTabsButtonBase.Merge(clTabsButtonUnderlineHorizontal).Merge(clTabsUnderlineActive)
+	out["tab/pills-idle"] = clTabsButtonBase.Merge(clTabsButtonPills).Merge(clTabsPillsIdle)
+	out["tab/pills-active"] = clTabsButtonBase.Merge(clTabsButtonPills).Merge(clTabsPillsActive)
 	out["page/idle"] = PaginationClasses().Button
 	out["page/current"] = PaginationClasses().Current
 	out["table/th-sort"] = TableClasses().ThSort

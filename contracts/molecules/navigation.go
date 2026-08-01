@@ -9,10 +9,12 @@ import "github.com/septagon-oss/pk-ui/contracts"
 type TabsProps struct {
 	contracts.ComponentProps
 
-	Items       []TabItem `json:"items"`
-	ActiveTab   string    `json:"activeTab,omitempty"`
-	Orientation string    `json:"orientation,omitempty"` // horizontal, vertical
-	Variant     string    `json:"variant,omitempty"`     // underline, pills
+	Items        []TabItem `json:"items,omitempty"`
+	ActiveTab    string    `json:"activeTab,omitempty"`
+	Orientation  string    `json:"orientation,omitempty"` // horizontal, vertical
+	Variant      string    `json:"variant,omitempty"`     // underline, pills
+	HxGet        string    `json:"hxGet,omitempty"`       // default lazy-panel endpoint
+	LoadingLabel string    `json:"loadingLabel,omitempty"`
 }
 
 // ToMap converts TabsProps to map[string]any for unified Component construction.
@@ -20,11 +22,14 @@ func (p TabsProps) ToMap() map[string]any { return propsToMap(p) }
 
 // TabItem represents a tab.
 type TabItem struct {
-	Key     string `json:"key"`
-	Label   string `json:"label"`
-	Icon    string `json:"icon,omitempty"`
-	Content string `json:"content,omitempty"` // for static content
-	URL     string `json:"url,omitempty"`     // for lazy-loaded content (hx-get)
+	Key      string `json:"key"`
+	Label    string `json:"label"`
+	Icon     string `json:"icon,omitempty"`
+	Badge    string `json:"badge,omitempty"`
+	Disabled bool   `json:"disabled,omitempty"`
+	Content  string `json:"content,omitempty"` // static panel content for direct rendering
+	URL      string `json:"url,omitempty"`     // navigation target in item mode
+	HxGet    string `json:"hxGet,omitempty"`   // lazy-panel endpoint in panel mode
 }
 
 // AccordionProps defines properties for an accordion.
@@ -48,6 +53,7 @@ type AccordionItem struct {
 // BreadcrumbProps defines properties for breadcrumb navigation.
 type BreadcrumbProps struct {
 	contracts.ComponentProps
+	contracts.HTMXProps
 
 	Items     []BreadcrumbItem `json:"items"`
 	Separator string           `json:"separator,omitempty"` // default "/"

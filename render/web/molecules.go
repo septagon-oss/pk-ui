@@ -196,31 +196,190 @@ func TableWithSlots(p molecules.TableProps, slots TableSlots) g.Node {
 	return h.Div(wrap...)
 }
 
-// Card renders molecules.CardProps; a clickable card with an Href becomes a
-// block anchor so the whole surface is one focusable target.
+// CardSlots is the trusted Go composition seam for the three structural card
+// regions. Portable title/description/media data remains in CardProps.
+type CardSlots struct {
+	Header  []g.Node
+	Content []g.Node
+	Footer  []g.Node
+}
+
+// Card renders free-form card children. Call CardWithSlots when header,
+// content, and footer need the canonical section treatment.
 func Card(p molecules.CardProps, children ...g.Node) g.Node {
-	cl := clCard
-	if p.Clickable {
-		cl = cl.Merge(clCardClickable)
-	}
+	return cardNode(p, CardSlots{}, children)
+}
+
+// CardWithSlots renders canonical header/content/footer regions without a
+// downstream wrapper or style implementation.
+func CardWithSlots(p molecules.CardProps, slots CardSlots) g.Node {
+	return cardNode(p, slots, nil)
+}
+
+func cardNode(p molecules.CardProps, slots CardSlots, children []g.Node) g.Node {
+	sectioned := len(slots.Header)+len(slots.Content)+len(slots.Footer) > 0
+	rootClass := cardRootClasses(p, sectioned)
 	nodes := baseAttrs(p.ComponentProps, htmxAttrs(p.HTMXProps)...)
-	nodes = append(nodes, classes(cl.Compile(), p.Class))
+	nodes = append(nodes,
+		classes(rootClass, p.Class),
+		g.Attr("data-component", "card"),
+	)
+
+	body := make([]g.Node, 0, 5)
+	if p.Image != "" && normalizedCardImagePosition(p.ImagePosition) == "top" {
+		body = append(body, cardImage(p, false))
+	}
+	if sectioned {
+		padding := cardPaddingClasses(p.Padding, true)
+		header := slots.Header
+		if len(header) == 0 && (p.Title != "" || p.Description != "") {
+			header = cardTextHeader(p)
+		}
+		if len(header) > 0 {
+			body = append(body, h.Div(
+				h.Class(strings.TrimSpace(padding+" "+clCardHeader.Compile())),
+				g.Group(header),
+			))
+		}
+		if len(slots.Content) > 0 {
+			body = append(body, h.Div(h.Class(padding), g.Group(slots.Content)))
+		}
+		if len(slots.Footer) > 0 {
+			body = append(body, h.Div(
+				h.Class(strings.TrimSpace(padding+" "+clCardFooter.Compile())),
+				g.Group(slots.Footer),
+			))
+		}
+	} else {
+		body = append(body, cardTextHeader(p)...)
+		body = append(body, children...)
+	}
+	if p.Image != "" && normalizedCardImagePosition(p.ImagePosition) == "bottom" {
+		body = append(body, cardImage(p, false))
+	}
+
+	position := normalizedCardImagePosition(p.ImagePosition)
+	if p.Image != "" && (position == "left" || position == "right") {
+		content := h.Div(h.Class(clCardVertical.Compile()), g.Group(body))
+		image := cardImage(p, true)
+		if position == "left" {
+			body = []g.Node{h.Div(h.Class(clCardHorizontal.Compile()), image, content)}
+		} else {
+			body = []g.Node{h.Div(h.Class(clCardHorizontal.Compile()), content, image)}
+		}
+	}
+
+	nodes = append(nodes, body...)
+	if p.Clickable && p.Href != "" {
+		return h.A(append(nodes, h.Href(p.Href))...)
+	}
+	return h.Article(nodes...)
+}
+
+func cardTextHeader(p molecules.CardProps) []g.Node {
+	var nodes []g.Node
 	if p.Title != "" {
 		nodes = append(nodes, h.P(h.Class(clCardTitle.Compile()), g.Text(p.Title)))
 	}
 	if p.Description != "" {
 		nodes = append(nodes, h.P(h.Class(clCardDesc.Compile()), g.Text(p.Description)))
 	}
-	nodes = append(nodes, children...)
-	if p.Clickable && p.Href != "" {
-		return h.A(append(nodes, h.Href(p.Href))...)
+	return nodes
+}
+
+func cardImage(p molecules.CardProps, horizontal bool) g.Node {
+	className := clCardImageVertical.Compile()
+	if horizontal {
+		className = clCardImageHorizontal.Compile()
 	}
-	return h.Div(nodes...)
+	return h.Img(h.Src(p.Image), h.Alt(p.ImageAlt), h.Class(className))
+}
+
+func normalizedCardImagePosition(position string) string {
+	switch strings.ToLower(strings.TrimSpace(position)) {
+	case "bottom", "left", "right":
+		return strings.ToLower(strings.TrimSpace(position))
+	default:
+		return "top"
+	}
+}
+
+func cardPaddingClasses(padding string, sectioned bool) string {
+	switch strings.ToLower(strings.TrimSpace(padding)) {
+	case "none":
+		return clCardPadNone.Compile()
+	case "small":
+		return clCardPadSmall.Compile()
+	case "large":
+		return clCardPadLarge.Compile()
+	case "medium":
+		return clCardPadMedium.Compile()
+	default:
+		if sectioned {
+			return clCardPadMedium.Compile()
+		}
+		return clCardPadDefault.Compile()
+	}
+}
+
+func cardRootClasses(p molecules.CardProps, sectioned bool) string {
+	cl := clCardFrame
+	if sectioned {
+		cl = cl.Merge(clCardSectioned)
+	} else {
+		switch strings.ToLower(strings.TrimSpace(p.Padding)) {
+		case "none":
+			cl = cl.Merge(clCardPadNone)
+		case "small":
+			cl = cl.Merge(clCardPadSmall)
+		case "medium":
+			cl = cl.Merge(clCardPadMedium)
+		case "large":
+			cl = cl.Merge(clCardPadLarge)
+		default:
+			cl = cl.Merge(clCardPadDefault)
+		}
+	}
+
+	variant := strings.ToLower(strings.TrimSpace(p.Variant))
+	if variant != "elevated" && variant != "plain" {
+		cl = cl.Merge(clCardBorder)
+	}
+	shadow := strings.ToLower(strings.TrimSpace(p.Shadow))
+	if shadow == "" {
+		switch variant {
+		case "outlined", "plain":
+			shadow = "none"
+		case "elevated":
+			shadow = "medium"
+		default:
+			shadow = "small"
+		}
+	}
+	switch shadow {
+	case "medium":
+		cl = cl.Merge(clCardShadowMedium)
+	case "large":
+		cl = cl.Merge(clCardShadowLarge)
+	case "none":
+	default:
+		cl = cl.Merge(clCardShadowSmall)
+	}
+	if p.Hoverable {
+		cl = cl.Merge(clCardHoverable)
+	}
+	if p.Clickable {
+		cl = cl.Merge(clCardClickable)
+	}
+	return cl.Compile()
 }
 
 // Breadcrumb renders molecules.BreadcrumbProps as an aria-labelled trail; the
 // current page is text, not a link, and carries aria-current.
 func Breadcrumb(p molecules.BreadcrumbProps) g.Node {
+	if len(p.Items) == 0 {
+		return nil
+	}
 	sep := p.Separator
 	if sep == "" {
 		sep = "/"
@@ -264,7 +423,15 @@ func Breadcrumb(p molecules.BreadcrumbProps) g.Node {
 		)))
 	}
 	nav := baseAttrs(p.ComponentProps)
-	nav = append(nav, g.Attr("aria-label", "Breadcrumb"), h.Ol(items...))
+	if p.Class != "" {
+		nav = append(nav, h.Class(p.Class))
+	}
+	nav = append(nav, htmxAttrs(p.HTMXProps)...)
+	nav = append(nav,
+		g.Attr("data-component", "breadcrumb"),
+		g.Attr("aria-label", "Breadcrumb"),
+		h.Ol(items...),
+	)
 	return h.Nav(nav...)
 }
 
@@ -647,34 +814,268 @@ func SearchBar(p molecules.SearchBarProps) g.Node {
 	return h.Label(append(root, children...)...)
 }
 
-// Tabs renders molecules.TabsProps as link-style tabs. Items with a URL
-// navigate (or hx-get when the app enhances); static Content is not rendered
-// here — the page owns the panel.
+// TabSlot is one trusted Go tab-panel composition. Portable navigation-only
+// tabs remain available through TabsProps.Items; rich panel bodies use this
+// slot rather than a second component implementation.
+type TabSlot struct {
+	ID       string
+	Label    string
+	Icon     string
+	Badge    string
+	Disabled bool
+	HxGet    string
+	Content  []g.Node
+}
+
+// TabsSlots carries the ordered tab panels projected into TabsWithSlots.
+type TabsSlots struct {
+	Tabs []TabSlot
+}
+
+type tabsStyle struct {
+	root, list, button, active, inactive string
+}
+
+// Tabs renders portable navigation tabs. Use TabsWithPanels when each tab owns
+// a panel body on the current page.
 func Tabs(p molecules.TabsProps) g.Node {
-	items := []g.Node{h.Class(clTabList.Compile()), h.Role("tablist")}
+	style := resolveTabsStyle(p)
+	active := activeItemKey(p.Items, p.ActiveTab)
+	if p.Disabled {
+		active = ""
+	}
+	items := []g.Node{
+		h.Class(style.list),
+		h.Role("tablist"),
+		g.Attr("aria-orientation", tabsOrientation(p.Orientation)),
+	}
 	for _, it := range p.Items {
-		active := it.Key == p.ActiveTab
-		cl := clTab.Merge(clTabIdle)
-		if active {
-			cl = clTab.Merge(clTabActive)
+		disabled := it.Disabled || p.Disabled
+		isActive := it.Key == active && !disabled
+		stateClass := style.inactive
+		if isActive {
+			stateClass = style.active
 		}
-		node := []g.Node{h.Class(cl.Compile()), h.Role("tab")}
-		if active {
-			node = append(node, g.Attr("aria-selected", "true"))
-		} else {
-			node = append(node, g.Attr("aria-selected", "false"))
+		className := strings.TrimSpace(style.button + " " + stateClass)
+		if disabled {
+			className += " " + clTabsDisabled.Compile()
+		}
+		node := []g.Node{
+			h.Class(className),
+			h.Role("tab"),
+			g.Attr("aria-selected", boolText(isActive)),
+			g.Attr("aria-disabled", boolText(disabled)),
 		}
 		if it.Icon != "" {
-			node = append(node, icon(it.Icon))
+			node = append(node, h.Span(h.Class(clTabsIcon.Compile()), icon(it.Icon)))
 		}
 		node = append(node, g.Text(it.Label))
-		if it.URL != "" {
+		if it.Badge != "" {
+			node = append(node, h.Span(h.Class(clTabsBadge.Compile()), g.Text(it.Badge)))
+		}
+		if it.URL != "" && !disabled {
 			items = append(items, h.A(append(node, h.Href(it.URL))...))
 			continue
 		}
-		items = append(items, h.Button(append(node, h.Type("button"))...))
+		button := append(node, h.Type("button"))
+		if disabled {
+			button = append(button, h.Disabled())
+		}
+		items = append(items, h.Button(button...))
 	}
-	nav := baseAttrs(p.ComponentProps)
+	rootProps := p.ComponentProps
+	rootProps.Disabled = false
+	nav := baseAttrs(rootProps)
+	nav = append(nav, classes(style.root, p.Class), g.Attr("data-component", "tabs"))
 	nav = append(nav, items...)
 	return h.Nav(nav...)
+}
+
+// TabsWithPanels is the concise application API for controller-backed tabs.
+func TabsWithPanels(p molecules.TabsProps, tabs ...TabSlot) g.Node {
+	return TabsWithSlots(p, TabsSlots{Tabs: tabs})
+}
+
+// TabsWithSlots renders tabs and their panels from one canonical contract.
+func TabsWithSlots(p molecules.TabsProps, slots TabsSlots) g.Node {
+	if len(slots.Tabs) == 0 {
+		return nil
+	}
+
+	style := resolveTabsStyle(p)
+	active := activeSlotID(slots.Tabs, p.ActiveTab)
+	if p.Disabled {
+		active = ""
+	}
+	rootID := p.ID
+	if rootID == "" {
+		rootID = "tabs"
+		if active != "" {
+			rootID += "-" + active
+		}
+	}
+
+	tabList := []g.Node{
+		h.Class(style.list),
+		h.Role("tablist"),
+		g.Attr("aria-orientation", tabsOrientation(p.Orientation)),
+	}
+	panels := []g.Node{h.Class(clTabsPanels.Compile())}
+	for _, tab := range slots.Tabs {
+		disabled := tab.Disabled || p.Disabled
+		isActive := tab.ID == active && !disabled
+		panelID := rootID + "-panel-" + tab.ID
+		tabID := rootID + "-tab-" + tab.ID
+		stateClass := style.inactive
+		if isActive {
+			stateClass = style.active
+		}
+		buttonClass := strings.TrimSpace(style.button + " " + stateClass)
+		if disabled {
+			buttonClass += " " + clTabsDisabled.Compile()
+		}
+		button := []g.Node{
+			h.Class(buttonClass), h.Type("button"), h.Role("tab"), h.ID(tabID),
+			g.Attr("aria-controls", panelID),
+			g.Attr("aria-selected", boolText(isActive)),
+			g.Attr("aria-disabled", boolText(disabled)),
+			g.Attr("tabindex", activeTabIndex(isActive)),
+			g.Attr("data-tabs-tab", tab.ID),
+			g.Attr("data-tabs-active-classes", style.active),
+			g.Attr("data-tabs-inactive-classes", style.inactive),
+			g.Attr("data-action", "click->tabs#activate"),
+		}
+		if disabled {
+			button = append(button, h.Disabled())
+		}
+		if tab.Icon != "" {
+			button = append(button, h.Span(h.Class(clTabsIcon.Compile()), icon(tab.Icon)))
+		}
+		button = append(button, h.Span(g.Text(tab.Label)))
+		if tab.Badge != "" {
+			button = append(button, h.Span(h.Class(clTabsBadge.Compile()), g.Text(tab.Badge)))
+		}
+		tabList = append(tabList, h.Button(button...))
+
+		panel := []g.Node{
+			h.Class(clTabsPanel.Compile()), h.ID(panelID), h.Role("tabpanel"),
+			g.Attr("aria-labelledby", tabID),
+			g.Attr("aria-hidden", boolText(!isActive)),
+			g.Attr("data-tabs-panel", tab.ID),
+			g.Attr("data-state", tabState(isActive)),
+		}
+		if !isActive {
+			panel = append(panel, g.Attr("hidden"))
+		}
+		hxGet := tab.HxGet
+		if hxGet == "" {
+			hxGet = p.HxGet
+		}
+		if hxGet != "" {
+			panel = append(panel,
+				g.Attr("data-tabs-lazy", "true"),
+				g.Attr("hx-get", hxGet),
+				g.Attr("hx-trigger", "tabs:activate from:this once"),
+				g.Attr("hx-swap", "innerHTML"),
+				h.Div(h.Class(clTabsLazy.Compile()),
+					h.Span(h.Class(clTabsLazyLabel.Compile()), g.Text(fallbackText(p.LoadingLabel, "Loading...")))),
+			)
+		} else {
+			panel = append(panel, tab.Content...)
+		}
+		panels = append(panels, h.Div(panel...))
+	}
+
+	rootProps := p.ComponentProps
+	rootProps.Disabled = false
+	root := baseAttrs(rootProps)
+	root = append(root,
+		classes(style.root, p.Class),
+		g.Attr("data-component", "tabs"),
+		g.Attr("data-controller", "tabs"),
+		g.Attr("data-tabs-contract", "1"),
+		g.Attr("data-tabs-active-tab-value", active),
+		h.Div(tabList...),
+		h.Div(panels...),
+	)
+	return h.Div(root...)
+}
+
+func resolveTabsStyle(p molecules.TabsProps) tabsStyle {
+	orientation := tabsOrientation(p.Orientation)
+	root := clTabsRoot.Merge(clTabsRootHorizontal)
+	list := clTabsListBase.Merge(clTabsListHorizontal)
+	button := clTabsButtonBase
+	if orientation == "vertical" {
+		root = clTabsRoot.Merge(clTabsRootVertical)
+		list = clTabsListBase.Merge(clTabsListVertical)
+	}
+	if p.Variant == "pills" {
+		button = button.Merge(clTabsButtonPills)
+		return tabsStyle{root.Compile(), list.Compile(), button.Compile(), clTabsPillsActive.Compile(), clTabsPillsIdle.Compile()}
+	}
+	if orientation == "vertical" {
+		list = list.Merge(clTabsListUnderlineVertical)
+		button = button.Merge(clTabsButtonUnderlineVertical)
+	} else {
+		list = list.Merge(clTabsListUnderlineHorizontal)
+		button = button.Merge(clTabsButtonUnderlineHorizontal)
+	}
+	return tabsStyle{root.Compile(), list.Compile(), button.Compile(), clTabsUnderlineActive.Compile(), clTabsUnderlineIdle.Compile()}
+}
+
+func tabsOrientation(value string) string {
+	if value == "vertical" {
+		return value
+	}
+	return "horizontal"
+}
+
+func activeItemKey(items []molecules.TabItem, requested string) string {
+	for _, item := range items {
+		if item.Key == requested && !item.Disabled {
+			return item.Key
+		}
+	}
+	for _, item := range items {
+		if !item.Disabled {
+			return item.Key
+		}
+	}
+	return ""
+}
+
+func activeSlotID(tabs []TabSlot, requested string) string {
+	for _, tab := range tabs {
+		if tab.ID == requested && !tab.Disabled {
+			return tab.ID
+		}
+	}
+	for _, tab := range tabs {
+		if !tab.Disabled {
+			return tab.ID
+		}
+	}
+	return ""
+}
+
+func boolText(value bool) string {
+	if value {
+		return "true"
+	}
+	return "false"
+}
+
+func activeTabIndex(active bool) string {
+	if active {
+		return "0"
+	}
+	return "-1"
+}
+
+func tabState(active bool) string {
+	if active {
+		return "active"
+	}
+	return "inactive"
 }

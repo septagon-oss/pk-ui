@@ -773,6 +773,15 @@ func deliveryAtomicContentTypes() []string {
 	}
 }
 
+func deliveryMoleculeContentTypes() []string {
+	return []string{
+		"Alert", "Badge", "Breadcrumb", "Button", "Card", "Checkbox",
+		"Divider", "EmptyState", "Heading", "Input", "Kbd", "Label", "Link",
+		"Pagination", "SearchBar", "Select", "Spinner", "Table", "Tabs", "Tag",
+		"Text", "Textarea",
+	}
+}
+
 func deliveryTemplateContentTypes() []string {
 	return []string{
 		"Alert", "Badge", "Breadcrumb", "Button", "Card", "Checkbox",

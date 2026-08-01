@@ -11,9 +11,7 @@ package web
 // always backed by a rule. TestRenderedClassesAreDeclared closes the loop
 // from the other side.
 
-import (
-	"github.com/septagon-oss/tw"
-)
+import "github.com/septagon-oss/tw"
 
 // hoverBg returns a hover-state background modifier.
 func hoverBg(c tw.Color) func(tw.ClassList) tw.ClassList {
@@ -38,6 +36,68 @@ var (
 		"warning": tw.New().TextColor(tw.FgWarning),
 		"danger":  tw.New().TextColor(tw.FgDanger),
 		"info":    tw.New().TextColor(tw.FgInfo),
+	}
+
+	clAvatarBase = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).
+			Justify(tw.JustifyCenter).Position(tw.PositionRelative).
+			Overflow(tw.OverflowHidden).FlexShrink0()
+	clAvatarSize = map[string]tw.ClassList{
+		"xs":  tw.New().Width(tw.S6).Height(tw.S6),
+		"sm":  tw.New().Width(tw.S8).Height(tw.S8),
+		"md":  tw.New().Width(tw.S10).Height(tw.S10),
+		"lg":  tw.New().Width(tw.S12).Height(tw.S12),
+		"xl":  tw.New().Width(tw.S14).Height(tw.S14),
+		"2xl": tw.New().Width(tw.S16).Height(tw.S16),
+	}
+	clAvatarShape = map[string]tw.ClassList{
+		"circle":  tw.New().Rounded(tw.RadiusFull),
+		"rounded": tw.New().Rounded(tw.RadiusMD),
+		"square":  tw.New().Rounded(tw.RadiusNone),
+		"pill":    tw.New().Rounded(tw.RadiusFull),
+	}
+	clAvatarTone = map[string]tw.ClassList{
+		"neutral": tw.New().Bg(tw.SurfaceTertiary).TextColor(tw.FgPrimary),
+		"brand":   tw.New().Bg(tw.SurfaceBrand).TextColor(tw.FgOnBrand),
+		"success": tw.New().Bg(tw.SurfaceSuccess).TextColor(tw.FgOnBrand),
+		"warning": tw.New().Bg(tw.SurfaceWarning).TextColor(tw.FgOnBrand),
+		"danger":  tw.New().Bg(tw.SurfaceDanger).TextColor(tw.FgOnBrand),
+		"info":    tw.New().Bg(tw.SurfaceInfo).TextColor(tw.FgOnBrand),
+	}
+	clAvatarInitials     = tw.New().FontWeight(tw.FontMedium)
+	clAvatarInitialsSize = map[string]tw.ClassList{
+		"xs":  tw.New().FontSize(tw.TextXS),
+		"sm":  tw.New().FontSize(tw.TextSM),
+		"md":  tw.New().FontSize(tw.TextBase),
+		"lg":  tw.New().FontSize(tw.TextLG),
+		"xl":  tw.New().FontSize(tw.TextXL),
+		"2xl": tw.New().FontSize(tw.Text2XL),
+	}
+	clAvatarImage  = tw.New().Width(tw.SFull).Height(tw.SFull).ObjectCover()
+	clAvatarStatus = tw.New().Position(tw.PositionAbsolute).Display(tw.DisplayBlock).
+			Rounded(tw.RadiusFull).Ring(tw.Ring2).RingColor(tw.SurfacePrimary)
+	clAvatarStatusTone = map[string]tw.ClassList{
+		"online":  tw.New().Bg(tw.SurfaceSuccess),
+		"offline": tw.New().Bg(tw.FgPlaceholder),
+		"busy":    tw.New().Bg(tw.SurfaceDanger),
+		"away":    tw.New().Bg(tw.SurfaceWarning),
+	}
+	clAvatarStatusSize = map[string]tw.ClassList{
+		"xs":  tw.New().Width(tw.S2).Height(tw.S2),
+		"sm":  tw.New().Width(tw.S2_5).Height(tw.S2_5),
+		"md":  tw.New().Width(tw.S3).Height(tw.S3),
+		"lg":  tw.New().Width(tw.S3).Height(tw.S3),
+		"xl":  tw.New().Width(tw.S4).Height(tw.S4),
+		"2xl": tw.New().Width(tw.S4).Height(tw.S4),
+	}
+	clAvatarStatusPosition = map[string]tw.ClassList{
+		"top-right": tw.New().Top(tw.S0).Right(tw.S0).
+			TranslateX(tw.TranslateHalf).TranslateY(tw.TranslateNegHalf),
+		"top-left": tw.New().Top(tw.S0).Left(tw.S0).
+			TranslateX(tw.TranslateNegHalf).TranslateY(tw.TranslateNegHalf),
+		"bottom-left": tw.New().Bottom(tw.S0).Left(tw.S0).
+			TranslateX(tw.TranslateNegHalf).TranslateY(tw.TranslateHalf),
+		"bottom-right": tw.New().Bottom(tw.S0).Right(tw.S0).
+			TranslateX(tw.TranslateHalf).TranslateY(tw.TranslateHalf),
 	}
 
 	clFocusRing = tw.New().
@@ -125,12 +185,30 @@ var (
 		"2xl": tw.New().PaddingX(tw.S4).PaddingY(tw.S1).FontSize(tw.TextBase),
 	}
 
-	clBadgeDot = tw.New().Width(tw.S1_5).Height(tw.S1_5).Rounded(tw.RadiusFull).Bg(tw.FgBrand)
+	clBadgeDot     = tw.New().Width(tw.S1_5).Height(tw.S1_5).Rounded(tw.RadiusFull)
+	clBadgeDotTone = map[string]tw.ClassList{
+		"neutral": tw.New().Bg(tw.FgSecondary),
+		"brand":   tw.New().Bg(tw.FgBrand),
+		"success": tw.New().Bg(tw.FgSuccess),
+		"warning": tw.New().Bg(tw.FgWarning),
+		"danger":  tw.New().Bg(tw.FgDanger),
+		"info":    tw.New().Bg(tw.FgInfo),
+	}
+	clBadgeCount  = tw.New().MarginLeft(tw.S1).FontWeight(tw.FontSemibold).TabularNums()
+	clBadgeRemove = tw.New().MarginLeft(tw.S1).Display(tw.DisplayInlineFlex).
+			Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
+			Bg(tw.ColorTransparent).Border(tw.Border0).Padding(tw.S0).
+			Rounded(tw.RadiusFull).Cursor(tw.CursorPointer).
+			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Opacity(tw.Opacity75) }).
+			Merge(clFocusRing)
 
 	// Alert.
 	clAlertBase = tw.New().
-			Display(tw.DisplayFlex).Gap(tw.S3).Rounded(tw.RadiusLG).Padding(tw.S4).
+			Display(tw.DisplayFlex).Items(tw.ItemsStart).Gap(tw.S3).Rounded(tw.RadiusLG).
 			Border(tw.Border1)
+	clAlertRegular  = tw.New().Padding(tw.S4)
+	clAlertCompact  = tw.New().PaddingX(tw.S3).PaddingY(tw.S2)
+	clAlertBordered = tw.New().BorderLeft(tw.Border4)
 
 	clAlertVariant = map[string]tw.ClassList{
 		"success": tw.New().NoUnderline().Bg(tw.SurfaceSuccessSoft).TextColor(tw.FgSuccess).BorderColor(tw.BorderSuccess),
@@ -143,13 +221,23 @@ var (
 	clAlertTitle   = tw.New().FontWeight(tw.FontSemibold).FontSize(tw.TextSM)
 	clAlertMessage = tw.New().FontSize(tw.TextSM)
 	clAlertBody    = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1).Flex1()
+	clAlertIcon    = tw.New().
+			MarginTop(tw.S0_5).Display(tw.DisplayFlex).Height(tw.S9).Width(tw.S9).
+			FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter).Rounded(tw.RadiusFull)
+	clAlertActions = tw.New().MarginTop(tw.S3).Display(tw.DisplayFlex).FlexWrap().
+			Items(tw.ItemsCenter).Gap(tw.S3).FontSize(tw.TextSM)
+	clAlertClose = tw.New().MarginLeft(tw.SAuto).Display(tw.DisplayInlineFlex).
+			FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
+			Rounded(tw.RadiusMD).Padding(tw.S1_5).Cursor(tw.CursorPointer).
+			Transition(tw.TransitionColors).Merge(clFocusRing)
 
 	// Inputs.
-	clFieldWrap = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1_5)
-	clLabel     = tw.New().FontSize(tw.TextSM).FontWeight(tw.FontMedium).TextColor(tw.FgPrimary)
-	clHelp      = tw.New().FontSize(tw.TextXS).TextColor(tw.FgMuted)
-	clFieldErr  = tw.New().FontSize(tw.TextXS).TextColor(tw.FgDanger)
-	clRequired  = tw.New().TextColor(tw.FgDanger)
+	clFieldWrap     = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1_5)
+	clFieldWrapFull = tw.New().Width(tw.SFull)
+	clLabel         = tw.New().FontSize(tw.TextSM).FontWeight(tw.FontMedium).TextColor(tw.FgPrimary)
+	clHelp          = tw.New().FontSize(tw.TextXS).TextColor(tw.FgMuted)
+	clFieldErr      = tw.New().FontSize(tw.TextXS).TextColor(tw.FgDanger)
+	clRequired      = tw.New().TextColor(tw.FgDanger)
 
 	clInput = tw.New().
 		Display(tw.DisplayBlock).Width(tw.SFull).
@@ -168,8 +256,15 @@ var (
 		"md": tw.New().PaddingX(tw.S3).PaddingY(tw.S2).FontSize(tw.TextSM),
 		"lg": tw.New().PaddingX(tw.S4).PaddingY(tw.S2_5).FontSize(tw.TextBase),
 	}
-	clInputIconWrap  = tw.New().Position(tw.PositionRelative)
-	clInputIconStart = tw.New().
+	clTextareaManual = tw.New().ResizeY()
+	clTextareaAuto   = tw.New().ResizeNone().Overflow(tw.OverflowHidden)
+	clTextareaFull   = tw.New().Width(tw.SFull)
+	clTextareaMeta   = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsStart).
+				Justify(tw.JustifyBetween).Gap(tw.S2)
+	clTextareaSupporting = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1)
+	clTextareaCounter    = tw.New().FontSize(tw.TextXS).TextColor(tw.FgMuted).TabularNums().FlexShrink0()
+	clInputIconWrap      = tw.New().Position(tw.PositionRelative)
+	clInputIconStart     = tw.New().
 				Position(tw.PositionAbsolute).InsetY(tw.S0).Left(tw.S0).
 				Display(tw.DisplayFlex).Items(tw.ItemsCenter).
 				PaddingLeft(tw.S3).PointerEvents(tw.PointerNone)
@@ -185,7 +280,95 @@ var (
 			Border(tw.Border1).BorderColor(tw.BorderPrimary).
 			Cursor(tw.CursorPointer).Merge(clFocusRing)
 
-	clCheckRow = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).Gap(tw.S2)
+	clCheckRow     = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).Gap(tw.S2)
+	clCheckboxRoot = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsStart).
+			Gap(tw.S3).Cursor(tw.CursorPointer)
+	clCheckboxRootDisabled = tw.New().Cursor(tw.CursorNotAllowed).Opacity(tw.Opacity50)
+	clCheckboxInput        = tw.New().Position(tw.PositionAbsolute).
+				Height(tw.SPX).Width(tw.SPX).MinHeight(tw.S0).MinWidth(tw.S0).
+				AppearanceNone().Opacity(tw.Opacity0).PointerEvents(tw.PointerNone)
+	clCheckboxIndicator = tw.New().MarginTop(tw.S0_5).Display(tw.DisplayFlex).
+				Height(tw.S5).Width(tw.S5).FlexShrink0().Items(tw.ItemsCenter).
+				Justify(tw.JustifyCenter).Rounded(tw.RadiusMD).Border(tw.Border1).
+				Transition(tw.TransitionColors)
+	clCheckboxIndicatorIdle = tw.New().BorderColor(tw.BorderPrimary).
+				Bg(tw.SurfacePrimary).TextColor(tw.ColorTransparent)
+	clCheckboxIndicatorActive = tw.New().BorderColor(tw.BorderBrand).
+					Bg(tw.SurfaceBrand).TextColor(tw.FgOnBrand)
+	clCheckboxCheckmark = tw.New().Height(tw.S3).Width(tw.S3)
+	clCheckboxBar       = tw.New().Height(tw.S0_5).Width(tw.S2_5).
+				Rounded(tw.RadiusFull).Bg(tw.SurfacePrimary)
+	clCheckboxLabel = tw.New().Truncate().PaddingTop(tw.S0_5).
+			FontSize(tw.TextSM).TextColor(tw.FgPrimary)
+
+	// Radio uses the native control so browser group selection updates its
+	// checked projection without a JavaScript controller. The design system
+	// still owns size, semantic accent, focus, disabled, and label treatment.
+	clRadioRoot = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).
+			Gap(tw.S3).Cursor(tw.CursorPointer).UserSelect(tw.SelectNone)
+	clRadioRootDisabled = tw.New().Cursor(tw.CursorNotAllowed).Opacity(tw.Opacity50)
+	clRadioInput        = tw.New().Height(tw.S5).Width(tw.S5).FlexShrink0().
+				Rounded(tw.RadiusFull).Border(tw.Border1).BorderColor(tw.BorderPrimary).
+				Accent(tw.FgBrand).Cursor(tw.CursorPointer).Merge(clFocusRing)
+	clRadioInputDisabled = tw.New().Cursor(tw.CursorNotAllowed)
+	clRadioLabel         = tw.New().Truncate().FontSize(tw.TextSM).TextColor(tw.FgPrimary)
+	clRadioDot           = tw.New().Height(tw.S2).Width(tw.S2).Rounded(tw.RadiusFull).Bg(tw.SurfaceBrand)
+
+	clSliderRoot = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S3).
+			Width(tw.SFull).MaxWScaled(tw.MaxWXS)
+	clSliderLabel = tw.New().FontSize(tw.TextSM).FontWeight(tw.FontMedium).
+			TextColor(tw.FgPrimary)
+	clSliderRow   = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S3)
+	clSliderInput = tw.New().Flex1().Height(tw.S2).Bg(tw.SurfaceTertiary).
+			Rounded(tw.RadiusFull).AppearanceNone().Cursor(tw.CursorPointer).Merge(clFocusRing)
+	clSliderInputDisabled = tw.New().Cursor(tw.CursorNotAllowed).Opacity(tw.Opacity50)
+	clSliderValue         = tw.New().FontSize(tw.TextSM).FontWeight(tw.FontMedium).
+				TextColor(tw.FgSecondary).TabularNums().MinWidth(tw.S8).TextAlign(tw.TextRight)
+	clSliderTone = map[string]tw.ClassList{
+		"brand":   tw.New().Accent(tw.SurfaceBrand),
+		"success": tw.New().Accent(tw.SurfaceSuccess),
+		"warning": tw.New().Accent(tw.SurfaceWarning),
+		"danger":  tw.New().Accent(tw.SurfaceDanger),
+		"info":    tw.New().Accent(tw.SurfaceInfo),
+	}
+
+	clToggleRoot         = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter)
+	clToggleRootDisabled = tw.New().Opacity(tw.Opacity50)
+	clToggleControl      = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).Gap(tw.S3).
+				Bg(tw.ColorTransparent).Border(tw.Border0).Padding(tw.S0).Cursor(tw.CursorPointer).
+				On(tw.StateDisabled, func(cl tw.ClassList) tw.ClassList {
+			return cl.Cursor(tw.CursorNotAllowed)
+		})
+	clToggleInput = tw.New().SrOnly().MinHeight(tw.S0).MinWidth(tw.S0)
+	clToggleTrack = tw.New().Relative().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).
+			FlexShrink0().Overflow(tw.OverflowHidden).Rounded(tw.RadiusFull).
+			Border(tw.Border1).PaddingX(tw.S0_5).Shadow(tw.ShadowSM).
+			Transition(tw.TransitionColors).Duration(tw.Duration200)
+	clToggleTrackSize = map[string]tw.ClassList{
+		"sm": tw.New().Height(tw.S5).Width(tw.S9),
+		"md": tw.New().Height(tw.S6).Width(tw.S11),
+		"lg": tw.New().Height(tw.S8).Width(tw.S14),
+	}
+	clToggleTrackState = map[string]tw.ClassList{
+		"checked":   tw.New().Bg(tw.SurfaceBrand).BorderColor(tw.SurfaceBrand),
+		"unchecked": tw.New().Bg(tw.SurfaceTertiary).BorderColor(tw.BorderPrimary),
+	}
+	clToggleKnob = tw.New().PointerEvents(tw.PointerNone).Display(tw.DisplayInlineBlock).
+			Rounded(tw.RadiusFull).Bg(tw.SurfacePrimary).Shadow(tw.ShadowSM).
+			Ring(tw.Ring1).RingColor(tw.BorderPrimary).Transition(tw.TransitionAll).
+			Duration(tw.Duration200).Transform()
+	clToggleKnobSize = map[string]tw.ClassList{
+		"sm": tw.New().Height(tw.S4).Width(tw.S4),
+		"md": tw.New().Height(tw.S5).Width(tw.S5),
+		"lg": tw.New().Height(tw.S7).Width(tw.S7),
+	}
+	clToggleKnobChecked = map[string]tw.ClassList{
+		"sm": tw.New().TranslateXStep(tw.S4),
+		"md": tw.New().TranslateXStep(tw.S5),
+		"lg": tw.New().TranslateXStep(tw.S6),
+	}
+	clToggleKnobUnchecked = tw.New().TranslateXStep(tw.S0)
+	clToggleLabel         = tw.New().Truncate().FontSize(tw.TextSM).FontWeight(tw.FontMedium).TextColor(tw.FgSecondary)
 
 	// Search bar: a bordered wrapper that reads as one field, hosting a
 	// borderless input so the glyph and the text share the control.
@@ -249,6 +432,76 @@ var (
 		"warning": tw.New().BorderTopColor(tw.FgWarning),
 		"danger":  tw.New().BorderTopColor(tw.FgDanger),
 		"info":    tw.New().BorderTopColor(tw.FgInfo),
+	}
+
+	// Progress. Determinate fill widths are owned by the renderer stylesheet's
+	// bounded data-progress-percent rules, keeping delivery standalone without
+	// inline styles or host-private CSS.
+	clProgressRoot = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).
+			Width(tw.SFull).Gap(tw.S2)
+	clProgressHeader = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).
+				Justify(tw.JustifyBetween).Gap(tw.S3)
+	clProgressLabel = tw.New().FontSize(tw.TextSM).FontWeight(tw.FontMedium).
+			Tracking(tw.TrackingTight).TextColor(tw.FgPrimary)
+	clProgressValue = tw.New().FontSize(tw.TextSM).TextColor(tw.FgSecondary).
+			TabularNums()
+	clProgressTrack = tw.New().Width(tw.SFull).Overflow(tw.OverflowHidden).
+			Rounded(tw.RadiusFull).Bg(tw.SurfaceTertiary)
+	clProgressTrackSize = map[string]tw.ClassList{
+		"sm": tw.New().Height(tw.S1_5),
+		"md": tw.New().Height(tw.S2_5),
+		"lg": tw.New().Height(tw.S3_5),
+	}
+	clProgressFill = tw.New().Height(tw.SFull).Rounded(tw.RadiusFull).
+			Transition(tw.TransitionAll).Duration(tw.Duration300).Easing(tw.EaseOut)
+	clProgressTone = map[string]tw.ClassList{
+		"brand":   tw.New().Bg(tw.SurfaceBrand),
+		"success": tw.New().Bg(tw.SurfaceSuccess),
+		"warning": tw.New().Bg(tw.SurfaceWarning),
+		"danger":  tw.New().Bg(tw.SurfaceDanger),
+		"info":    tw.New().Bg(tw.SurfaceInfo),
+	}
+	clProgressIndeterminate = tw.New().Width(tw.SFull).AnimatePulse()
+
+	// Tooltip. The controller only toggles the popup's hidden attribute and
+	// aria-hidden state; geometry and visual treatment remain renderer-owned.
+	clTooltipContainer = tw.New().
+				Position(tw.PositionRelative).
+				Display(tw.DisplayInlineBlock)
+	clTooltipTrigger = tw.New().Display(tw.DisplayContents)
+	clTooltipPopup   = tw.New().
+				Position(tw.PositionAbsolute).
+				ZLayer(tw.ZTooltip).
+				PaddingX(tw.S2).
+				PaddingY(tw.S1).
+				FontSize(tw.TextSM).
+				TextColor(tw.FgOnBrand).
+				Bg(tw.SurfaceInverse).
+				Rounded(tw.RadiusBase).
+				Shadow(tw.ShadowLG).
+				WhitespaceNowrap().
+				PointerEvents(tw.PointerNone)
+	clTooltipPosition = map[string]tw.ClassList{
+		"top": tw.New().
+			Bottom(tw.SFull).
+			LeftOffset(tw.PositionHalf).
+			TranslateX(tw.TranslateNegHalf).
+			MarginBottom(tw.S2),
+		"bottom": tw.New().
+			Top(tw.SFull).
+			LeftOffset(tw.PositionHalf).
+			TranslateX(tw.TranslateNegHalf).
+			MarginTop(tw.S2),
+		"left": tw.New().
+			Right(tw.SFull).
+			TopOffset(tw.PositionHalf).
+			TranslateY(tw.TranslateNegHalf).
+			MarginRight(tw.S2),
+		"right": tw.New().
+			Left(tw.SFull).
+			TopOffset(tw.PositionHalf).
+			TranslateY(tw.TranslateNegHalf).
+			MarginLeft(tw.S2),
 	}
 
 	// Skeleton — pulsing placeholder that holds the geometry of content that
@@ -364,16 +617,36 @@ var (
 	clTableActions  = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S2).Justify(tw.JustifyEnd)
 	clTableCellNote = tw.New().TextColor(tw.FgMuted).FontSize(tw.TextXS)
 
-	// Card.
-	clCard = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S2).
-		Rounded(tw.RadiusLG).Border(tw.Border1).BorderColor(tw.BorderPrimary).
-		Bg(tw.SurfacePrimary).Padding(tw.S5).Shadow(tw.ShadowSM)
-	clCardClickable = tw.New().Cursor(tw.CursorPointer).Transition(tw.TransitionShadow).
-			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Shadow(tw.ShadowMD) }).
-			Merge(clFocusRing)
+	// Card. clCard remains the compiled default frame used by delivery and
+	// skeleton projections; the smaller fragments let CardWithSlots own
+	// section padding and variants without a private downstream style stack.
+	clCardFrame = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S2).
+			Rounded(tw.RadiusLG).Bg(tw.SurfacePrimary).Overflow(tw.OverflowHidden)
+	clCardSectioned    = tw.New().Gap(tw.S0)
+	clCardBorder       = tw.New().Border(tw.Border1).BorderColor(tw.BorderPrimary)
+	clCardPadNone      = tw.New().Padding(tw.S0)
+	clCardPadSmall     = tw.New().Padding(tw.S3)
+	clCardPadDefault   = tw.New().Padding(tw.S5)
+	clCardPadMedium    = tw.New().Padding(tw.S6)
+	clCardPadLarge     = tw.New().Padding(tw.S8)
+	clCardShadowSmall  = tw.New().Shadow(tw.ShadowSM)
+	clCardShadowMedium = tw.New().Shadow(tw.ShadowBase)
+	clCardShadowLarge  = tw.New().Shadow(tw.ShadowLG)
+	clCard             = clCardFrame.Merge(clCardBorder).Merge(clCardPadDefault).Merge(clCardShadowSmall)
+	clCardClickable    = tw.New().Cursor(tw.CursorPointer).Transition(tw.TransitionShadow).
+				On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Shadow(tw.ShadowMD) }).
+				Merge(clFocusRing)
+	clCardHoverable = tw.New().Transition(tw.TransitionShadow).
+			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Shadow(tw.ShadowLG) })
 	clCardTitle = tw.New().FontFamily(tw.FontSerif).FontSize(tw.TextLG).
 			FontWeight(tw.FontSemibold).TextColor(tw.FgPrimary)
-	clCardDesc = tw.New().FontSize(tw.TextSM).TextColor(tw.FgMuted)
+	clCardDesc            = tw.New().FontSize(tw.TextSM).TextColor(tw.FgMuted)
+	clCardHeader          = tw.New().BorderBottom(tw.Border1).BorderColor(tw.BorderPrimary)
+	clCardFooter          = tw.New().BorderTop(tw.Border1).BorderColor(tw.BorderPrimary).Bg(tw.SurfaceSecondary)
+	clCardImageVertical   = tw.New().Width(tw.SFull).ObjectCover()
+	clCardImageHorizontal = tw.New().Width(tw.S48).ObjectCover()
+	clCardHorizontal      = tw.New().Display(tw.DisplayFlex)
+	clCardVertical        = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Flex1()
 
 	// Breadcrumb.
 	clBreadcrumb = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S2).FontSize(tw.TextSM).
@@ -424,15 +697,43 @@ var (
 	clPageLabel = tw.New().FontSize(tw.TextSM).TextColor(tw.FgMuted).PaddingX(tw.S2)
 
 	// Tabs.
-	clTabList = tw.New().Display(tw.DisplayFlex).Gap(tw.S1).
-			BorderBottom(tw.Border1).BorderColor(tw.BorderPrimary)
-	clTab = tw.New().PaddingX(tw.S4).PaddingY(tw.S2).FontSize(tw.TextSM).
-		FontWeight(tw.FontMedium).
-		BorderBottom(tw.Border2).
-		Merge(clFocusRing)
-	clTabIdle = tw.New().TextColor(tw.FgMuted).BorderColor(tw.ColorTransparent).
-			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgPrimary) })
-	clTabActive = tw.New().TextColor(tw.FgBrand).BorderColor(tw.BorderBrand)
+	clTabsRoot                    = tw.New().Display(tw.DisplayFlex).Width(tw.SFull).Gap(tw.S4)
+	clTabsRootHorizontal          = tw.New().FlexDir(tw.FlexCol)
+	clTabsRootVertical            = tw.New().FlexDir(tw.FlexRow)
+	clTabsListBase                = tw.New().Display(tw.DisplayFlex).Gap(tw.S1)
+	clTabsListHorizontal          = tw.New().FlexDir(tw.FlexRow)
+	clTabsListVertical            = tw.New().FlexDir(tw.FlexCol)
+	clTabsListUnderlineHorizontal = tw.New().BorderBottom(tw.Border1).
+					BorderColor(tw.BorderPrimary)
+	clTabsListUnderlineVertical = tw.New().BorderRight(tw.Border1).
+					BorderColor(tw.BorderPrimary).PaddingRight(tw.S4)
+	clTabsButtonBase = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).
+				PaddingX(tw.S3).PaddingY(tw.S2).FontSize(tw.TextSM).
+				FontWeight(tw.FontMedium).Transition(tw.TransitionColors).Merge(clFocusRing)
+	clTabsButtonPills               = tw.New().Rounded(tw.RadiusMD)
+	clTabsButtonUnderlineHorizontal = tw.New().BorderBottom(tw.Border2).NegMargin("b", tw.SPX)
+	clTabsButtonUnderlineVertical   = tw.New().BorderRight(tw.Border2).NegMargin("r", tw.SPX)
+	clTabsPillsActive               = tw.New().Bg(tw.SurfaceBrand).TextColor(tw.FgOnBrand)
+	clTabsPillsIdle                 = tw.New().TextColor(tw.FgSecondary).
+					On(tw.StateHover, func(c tw.ClassList) tw.ClassList {
+			return c.TextColor(tw.FgPrimary).Bg(tw.SurfaceSecondary)
+		})
+	clTabsUnderlineActive = tw.New().BorderColor(tw.BorderBrand).TextColor(tw.FgBrand)
+	clTabsUnderlineIdle   = tw.New().BorderColor(tw.ColorTransparent).TextColor(tw.FgSecondary).
+				On(tw.StateHover, func(c tw.ClassList) tw.ClassList {
+			return c.TextColor(tw.FgPrimary).BorderColor(tw.BorderSecondary)
+		})
+	clTabsDisabled = tw.New().Opacity(tw.Opacity50).Cursor(tw.CursorNotAllowed)
+	clTabsIcon     = tw.New().MarginRight(tw.S2)
+	clTabsBadge    = tw.New().MarginLeft(tw.S2).Display(tw.DisplayInlineFlex).
+			Items(tw.ItemsCenter).Rounded(tw.RadiusFull).Bg(tw.SurfaceTertiary).
+			PaddingX(tw.S2).PaddingY(tw.S0_5).FontSize(tw.TextXS).
+			FontWeight(tw.FontMedium).TextColor(tw.FgSecondary)
+	clTabsPanels = tw.New().MinWidth(tw.S0).Flex1()
+	clTabsPanel  = tw.New().MinWidth(tw.S0)
+	clTabsLazy   = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).
+			Justify(tw.JustifyCenter).PaddingY(tw.S8)
+	clTabsLazyLabel = tw.New().TextColor(tw.FgSecondary)
 )
 
 // ClassLists returns every ClassList the renderers compose, base and variant
@@ -441,36 +742,63 @@ var (
 //	sheet, err := emission.For(web.ClassLists()...)
 func ClassLists() []tw.ClassList {
 	out := []tw.ClassList{
-		clIcon, clFocusRing, clButtonBase, clButtonFull, clButtonIconOnly,
-		clBadgeBase, clBadgeDot,
-		clAlertBase, clAlertTitle, clAlertMessage, clAlertBody,
-		clFieldWrap, clLabel, clHelp, clFieldErr, clRequired,
+		clIcon, clAvatarBase, clAvatarInitials, clAvatarImage, clAvatarStatus,
+		clFocusRing, clButtonBase, clButtonFull, clButtonIconOnly,
+		clBadgeBase, clBadgeDot, clBadgeCount, clBadgeRemove,
+		clAlertBase, clAlertRegular, clAlertCompact, clAlertBordered,
+		clAlertTitle, clAlertMessage, clAlertBody, clAlertIcon, clAlertActions, clAlertClose,
+		clFieldWrap, clFieldWrapFull, clLabel, clHelp, clFieldErr, clRequired,
 		clInput, clInputNormal, clInputError,
 		clInputIconWrap, clInputIconStart, clInputIconEnd, clInputPadStart, clInputPadEnd,
-		clCheckbox, clCheckRow,
+		clTextareaManual, clTextareaAuto, clTextareaFull, clTextareaMeta,
+		clTextareaSupporting, clTextareaCounter,
+		clCheckbox, clCheckRow, clCheckboxRoot, clCheckboxRootDisabled,
+		clCheckboxInput, clCheckboxIndicator, clCheckboxIndicatorIdle,
+		clCheckboxIndicatorActive, clCheckboxCheckmark, clCheckboxBar, clCheckboxLabel,
+		clRadioRoot, clRadioRootDisabled, clRadioInput, clRadioInputDisabled, clRadioLabel, clRadioDot,
+		clSliderRoot, clSliderLabel, clSliderRow, clSliderInput, clSliderInputDisabled, clSliderValue,
+		clToggleRoot, clToggleRootDisabled, clToggleControl, clToggleInput, clToggleTrack,
+		clToggleKnob, clToggleKnobUnchecked, clToggleLabel,
 		clSearchWrap, clSearchInput, clSrOnly,
 		clTruncate, clHeadingBase,
 		clDividerH, clDividerV, clDividerText, clDividerTextLine, clDividerTextLabel,
-		clSpinner, clEmpty, clEmptyPad, clEmptyBordered, clEmptyCompact, clEmptyTitle, clEmptyDesc,
+		clSpinner, clProgressRoot, clProgressHeader, clProgressLabel, clProgressValue,
+		clProgressTrack, clProgressFill, clProgressIndeterminate,
+		clTooltipContainer, clTooltipTrigger, clTooltipPopup,
+		clEmpty, clEmptyPad, clEmptyBordered, clEmptyCompact, clEmptyTitle, clEmptyDesc,
 		clSkeleton, clSkeletonText, clSkeletonLine, clSkeletonLineLast,
 		clKbd, clLink, clTagBase, clTagIdle, clTagSelected,
 		clStack, clFlex, clGrid, clContainer, clDataManagementPage,
 		clTableWrap, clTable, clTableHead, clTableThBase, clTableTh, clTableTd, clTableRow, clTableTdC,
 		clTableThSort, clTableSortBtn, clTableRowAlt, clTableTdStrong, clTableActions, clTableCellNote,
-		clCard, clCardClickable, clCardTitle, clCardDesc,
+		clCard, clCardFrame, clCardSectioned, clCardBorder,
+		clCardPadNone, clCardPadSmall, clCardPadDefault, clCardPadMedium, clCardPadLarge,
+		clCardShadowSmall, clCardShadowMedium, clCardShadowLarge,
+		clCardClickable, clCardHoverable, clCardTitle, clCardDesc,
+		clCardHeader, clCardFooter, clCardImageVertical, clCardImageHorizontal,
+		clCardHorizontal, clCardVertical,
 		clBreadcrumb, clBreadcrumbSep, clBreadcrumbCur,
 		clGridSection, clGridToolbar, clGridActions,
 		clWindow, clWindowItems, clWindowState, clWindowLoading, clWindowEmpty,
 		clWindowError, clWindowTitle, clWindowDescription, clWindowRetry,
 		clWindowFooter, clWindowNavigationError,
 		clPagination, clPageBtn, clPageIdle, clPageCur, clPageLabel,
-		clTabList, clTab, clTabIdle, clTabActive,
+		clTabsRoot, clTabsRootHorizontal, clTabsRootVertical,
+		clTabsListBase, clTabsListHorizontal, clTabsListVertical,
+		clTabsListUnderlineHorizontal, clTabsListUnderlineVertical,
+		clTabsButtonBase, clTabsButtonPills, clTabsButtonUnderlineHorizontal,
+		clTabsButtonUnderlineVertical, clTabsPillsActive, clTabsPillsIdle,
+		clTabsUnderlineActive, clTabsUnderlineIdle, clTabsDisabled, clTabsIcon,
+		clTabsBadge, clTabsPanels, clTabsPanel, clTabsLazy, clTabsLazyLabel,
 	}
 	for _, m := range []map[string]tw.ClassList{
 		clButtonVariant, clButtonTone, clButtonSize,
-		clBadgeVariant, clBadgeTone, clBadgeSize, clAlertVariant,
-		clIconSize, clIconTone,
-		clInputSize, clSpinnerSize, clSpinnerTone, clKbdSize, clTagTone,
+		clBadgeVariant, clBadgeTone, clBadgeSize, clBadgeDotTone, clAlertVariant,
+		clIconSize, clIconTone, clAvatarSize, clAvatarShape, clAvatarTone,
+		clAvatarInitialsSize, clAvatarStatusTone, clAvatarStatusSize, clAvatarStatusPosition,
+		clInputSize, clSliderTone, clToggleTrackSize, clToggleTrackState, clToggleKnobSize, clToggleKnobChecked,
+		clSpinnerSize, clSpinnerTone, clProgressTrackSize, clProgressTone,
+		clTooltipPosition, clKbdSize, clTagTone,
 		clSkeletonBlockSize, clSkeletonLineSize, clSkeletonCircleSize,
 	} {
 		for _, cl := range m {
