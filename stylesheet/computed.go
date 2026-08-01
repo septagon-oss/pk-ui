@@ -74,7 +74,166 @@ func Normalize(property, value string, vars map[string]string) map[string]string
 	if longhand, ok := colorShorthand(property, value); ok {
 		return map[string]string{longhand: value}
 	}
+	if expanded := expandShorthand(property, value); expanded != nil {
+		return expanded
+	}
 	return map[string]string{property: value}
+}
+
+// boxSides are the shorthands whose one-to-four values map onto top, right,
+// bottom and left in that order.
+var boxSides = map[string][4]string{
+	"padding": {"padding-top", "padding-right", "padding-bottom", "padding-left"},
+	"margin":  {"margin-top", "margin-right", "margin-bottom", "margin-left"},
+	"inset":   {"top", "right", "bottom", "left"},
+}
+
+// expandShorthand rewrites a shorthand as the longhands it sets, so that a
+// contract stating "padding-left: 8px" and a component writing
+// "padding: 18px 18px 16px 8px" agree about the left padding.
+//
+// Only shorthands whose parts can be assigned without guessing are expanded.
+// The box shorthands are positional and fully determined; border is
+// unordered but its three parts are distinguishable by what they are. A
+// shorthand that cannot be decomposed with certainty is left as written,
+// because a wrong split claims a component paints something it does not.
+func expandShorthand(property, value string) map[string]string {
+	parts := splitTopLevel(value)
+	if property == "border" {
+		// border is expanded even with a reference in it; see expandBorder.
+		return expandBorder(parts)
+	}
+	if strings.Contains(value, "var(") {
+		// In a positional shorthand an unresolved reference could stand for
+		// any number of values, which moves every part after it. Where the
+		// pieces land cannot be known, so nothing is claimed.
+		return nil
+	}
+	if sides, ok := boxSides[property]; ok {
+		return expandBox(sides, parts)
+	}
+	if property == "gap" {
+		switch len(parts) {
+		case 1:
+			return map[string]string{"row-gap": parts[0], "column-gap": parts[0]}
+		case 2:
+			return map[string]string{"row-gap": parts[0], "column-gap": parts[1]}
+		}
+		return nil
+	}
+	return nil
+}
+
+// expandBox applies the one-to-four value rule.
+func expandBox(sides [4]string, parts []string) map[string]string {
+	var top, right, bottom, left string
+	switch len(parts) {
+	case 1:
+		top, right, bottom, left = parts[0], parts[0], parts[0], parts[0]
+	case 2:
+		top, right, bottom, left = parts[0], parts[1], parts[0], parts[1]
+	case 3:
+		top, right, bottom, left = parts[0], parts[1], parts[2], parts[1]
+	case 4:
+		top, right, bottom, left = parts[0], parts[1], parts[2], parts[3]
+	default:
+		return nil
+	}
+	return map[string]string{
+		sides[0]: top, sides[1]: right, sides[2]: bottom, sides[3]: left,
+	}
+}
+
+// borderStyles is the closed set of line styles, which is what makes the
+// border shorthand decomposable despite being unordered.
+var borderStyles = map[string]bool{
+	"none": true, "hidden": true, "dotted": true, "dashed": true, "solid": true,
+	"double": true, "groove": true, "ridge": true, "inset": true, "outset": true,
+}
+
+// borderWidths are the named widths, alongside any length.
+var borderWidths = map[string]bool{"thin": true, "medium": true, "thick": true}
+
+// expandBorder assigns each part of a border shorthand by what it is: a style
+// from the closed keyword set, a width if it is a length or a named width, and
+// a colour otherwise.
+//
+// Unlike the positional shorthands, this survives an unresolved reference.
+// border is unordered and takes at most one value per slot, so in
+// "1px solid var(--sm-border)" the width and the style are certain whatever
+// the variable holds — if it held a width there would be two, which is not a
+// valid shorthand. The reference itself is placed only when exactly one slot
+// is left for it; with more than one open slot it could be either, so nothing
+// is claimed for it.
+//
+// This matters because the shipped stylesheet writes borders exactly that way,
+// and refusing to expand them reported a 1px hairline as missing from a
+// component that draws one.
+func expandBorder(parts []string) map[string]string {
+	out := map[string]string{}
+	var references []string
+	for _, part := range parts {
+		var slot string
+		switch {
+		case borderStyles[part]:
+			slot = "border-style"
+		case borderWidths[part] || numeric.MatchString(part):
+			slot = "border-width"
+		case strings.Contains(part, "var("):
+			references = append(references, part)
+			continue
+		case isColorToken(part):
+			slot = "border-color"
+		default:
+			return nil
+		}
+		if _, taken := out[slot]; taken {
+			// Two values for one slot is not a border shorthand; whatever this
+			// is, it is not safe to decompose.
+			return nil
+		}
+		out[slot] = part
+	}
+
+	var open []string
+	for _, slot := range []string{"border-width", "border-style", "border-color"} {
+		if _, taken := out[slot]; !taken {
+			open = append(open, slot)
+		}
+	}
+	if len(references) == 1 && len(open) == 1 {
+		out[open[0]] = references[0]
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// splitTopLevel splits a value on spaces that are not inside brackets, so a
+// function call stays one part.
+func splitTopLevel(value string) []string {
+	var parts []string
+	depth, start := 0, 0
+	for index := range len(value) {
+		switch value[index] {
+		case '(':
+			depth++
+		case ')':
+			depth--
+		case ' ':
+			if depth == 0 {
+				if start < index {
+					parts = append(parts, value[start:index])
+				}
+				start = index + 1
+			}
+		}
+	}
+	if start < len(value) {
+		parts = append(parts, value[start:])
+	}
+	return parts
 }
 
 // colorShorthand reports the longhand a shorthand sets when its value can only
@@ -97,22 +256,27 @@ func colorShorthand(property, value string) (string, bool) {
 // It must be the whole value: "#2a9d5b url(x.png) no-repeat" begins with a
 // colour but also sets an image and a repeat, and calling that background-color
 // would claim the component paints something it does not.
+func isColor(value string) bool {
+	parts := splitTopLevel(value)
+	return len(parts) == 1 && isColorToken(parts[0])
+}
+
+// isColorToken reports whether one value token is a colour. The caller has
+// already established that it is a single token, so spaces inside a function
+// call are not a reason to reject it.
 //
 // A single unresolved reference counts. "background: var(--sm-orange)" cannot
 // be evaluated here, but whatever the variable holds, a one-token background
 // that is not an image sets the background colour — and treating it as an
 // unrelated property would report a colour difference between two components
 // that may well paint the same one.
-func isColor(value string) bool {
-	if strings.ContainsAny(value, " \t") {
-		return false
-	}
+func isColorToken(token string) bool {
 	for _, notAColor := range []string{"url(", "linear-gradient(", "radial-gradient(", "conic-gradient(", "image-set("} {
-		if strings.HasPrefix(value, notAColor) {
+		if strings.HasPrefix(token, notAColor) {
 			return false
 		}
 	}
-	return value != "" && value != "none"
+	return token != "" && token != "none"
 }
 
 // ResolveVars substitutes custom properties into a value.

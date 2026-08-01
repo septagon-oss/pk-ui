@@ -156,3 +156,101 @@ func TestNormalizeTreatsAOneTokenBackgroundAsAColour(t *testing.T) {
 		t.Errorf("a background image was reported as a colour: %v", got)
 	}
 }
+
+// TestExpandsShorthandsIntoLonghands pins the decomposition. A design contract
+// states a single side where a component writes the box shorthand, and calling
+// those different reports a padding difference that is not there.
+func TestExpandsShorthandsIntoLonghands(t *testing.T) {
+	t.Parallel()
+
+	for _, testCase := range []struct {
+		property, value string
+		want            map[string]string
+	}{
+		{"padding", "20px", map[string]string{
+			"padding-top": "20px", "padding-right": "20px",
+			"padding-bottom": "20px", "padding-left": "20px",
+		}},
+		{"padding", "18px 24px", map[string]string{
+			"padding-top": "18px", "padding-right": "24px",
+			"padding-bottom": "18px", "padding-left": "24px",
+		}},
+		{"margin", "7px 0 9px", map[string]string{
+			"margin-top": "7px", "margin-right": "0",
+			"margin-bottom": "9px", "margin-left": "0",
+		}},
+		{"inset", "0", map[string]string{
+			"top": "0", "right": "0", "bottom": "0", "left": "0",
+		}},
+		{"gap", "8px", map[string]string{"row-gap": "8px", "column-gap": "8px"}},
+		{"gap", "8px 16px", map[string]string{"row-gap": "8px", "column-gap": "16px"}},
+		// border is unordered, so each part is placed by what it is.
+		{"border", "1px solid #2a9d5b", map[string]string{
+			"border-width": "1px", "border-style": "solid", "border-color": "#2a9d5b",
+		}},
+		{"border", "solid 2px", map[string]string{
+			"border-style": "solid", "border-width": "2px",
+		}},
+	} {
+		got := stylesheet.Normalize(testCase.property, testCase.value, nil)
+		if !maps.Equal(got, testCase.want) {
+			t.Errorf("Normalize(%q, %q) = %v, want %v",
+				testCase.property, testCase.value, got, testCase.want)
+		}
+	}
+}
+
+// TestLeavesUndecomposableShorthandsAlone is the boundary. A shorthand holding
+// an unresolved reference could put any number of parts anywhere, so splitting
+// it would be a guess — and a wrong split claims a component paints something
+// it does not.
+func TestLeavesUndecomposableShorthandsAlone(t *testing.T) {
+	t.Parallel()
+
+	got := stylesheet.Normalize("padding", "var(--pad)", nil)
+	if want := map[string]string{"padding": "var(--pad)"}; !maps.Equal(got, want) {
+		t.Errorf("Normalize with an unresolved reference = %v, want %v", got, want)
+	}
+	// A function call is one part, not several: the spaces inside it are not
+	// value separators.
+	got = stylesheet.Normalize("border", "1px solid rgb(0 0 0 / 0.2)", nil)
+	if got["border-color"] != "rgb(0 0 0 / 0.2)" {
+		t.Errorf("a function-valued colour was split apart: %v", got)
+	}
+}
+
+// TestBorderExpandsThroughAnUnresolvedColour pins the case the shipped
+// stylesheet actually writes. border is unordered and takes one value per
+// slot, so the width and style are certain whatever the variable holds; the
+// reference lands in the one slot left for it.
+func TestBorderExpandsThroughAnUnresolvedColour(t *testing.T) {
+	t.Parallel()
+
+	got := stylesheet.Normalize("border", "1px solid var(--sm-border)", nil)
+	want := map[string]string{
+		"border-width": "1px", "border-style": "solid",
+		"border-color": "var(--sm-border)",
+	}
+	if !maps.Equal(got, want) {
+		t.Errorf("Normalize = %v, want %v", got, want)
+	}
+
+	// With two slots open the reference could be either, so nothing is claimed
+	// for it — but the width it sits beside is still certain.
+	got = stylesheet.Normalize("border", "1px var(--rest)", nil)
+	if want := map[string]string{"border-width": "1px"}; !maps.Equal(got, want) {
+		t.Errorf("Normalize with an ambiguous reference = %v, want %v", got, want)
+	}
+}
+
+// TestBorderRefusesTwoValuesForOneSlot is the safety boundary: two widths is
+// not a border shorthand, and guessing at whatever it is would be worse than
+// leaving it whole.
+func TestBorderRefusesTwoValuesForOneSlot(t *testing.T) {
+	t.Parallel()
+
+	got := stylesheet.Normalize("border", "1px 2px", nil)
+	if want := map[string]string{"border": "1px 2px"}; !maps.Equal(got, want) {
+		t.Errorf("Normalize = %v, want it left whole (%v)", got, want)
+	}
+}
