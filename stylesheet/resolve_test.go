@@ -193,3 +193,66 @@ func TestMissingContextNamesWhatTheMarkupLacks(t *testing.T) {
 		t.Error("a satisfied rule was counted as missing its own subject")
 	}
 }
+
+// TestSubjectStylesAttributeDeclarationsToTheElementTheyLandOn pins the
+// difference between what a document paints and what each element paints. A
+// design contract's nodes are elements, so it needs the second.
+func TestSubjectStylesAttributeDeclarationsToTheElementTheyLandOn(t *testing.T) {
+	t.Parallel()
+
+	index := newIndex(t, `
+.pack-3d .pack-front { width: 256px; }
+.pack-face.pack-front { background: white; }
+.pack-title { font-size: 34px; }
+.book img { width: 100%; }
+.other-page .pack-front { width: 999px; }
+`)
+
+	styles := index.SubjectStyles("pack-3d", "pack-face", "pack-front", "pack-title")
+
+	find := func(requires ...string) map[string]string {
+		for _, style := range styles {
+			if maps.Equal(setFrom(style.Requires), setFrom(requires)) {
+				return style.Declarations
+			}
+		}
+		return nil
+	}
+
+	// The contextual rule lands on the node carrying pack-front, because the
+	// document carries pack-3d.
+	if got := find("pack-front"); got["width"] != "256px" {
+		t.Errorf("pack-front resolved to %v; the contextual width did not land", got)
+	}
+	// A compound subject requires the whole compound: attributing white to
+	// pack-face alone would paint the back face with the front's fill.
+	if got := find("pack-face", "pack-front"); got["background"] != "white" {
+		t.Errorf("the compound subject resolved to %v", got)
+	}
+	// A sole-class rule is the degenerate case of the same mechanism.
+	if got := find("pack-title"); got["font-size"] != "34px" {
+		t.Errorf("pack-title resolved to %v", got)
+	}
+	// A rule needing context the document lacks contributes nothing.
+	for _, style := range styles {
+		for property, value := range style.Declarations {
+			if property == "width" && value == "999px" {
+				t.Error("a rule whose context is absent was attributed anyway")
+			}
+		}
+	}
+	// ".book img" lands on an element no class identifies.
+	for _, style := range styles {
+		if maps.Equal(setFrom(style.Requires), setFrom([]string{"book"})) {
+			t.Error("an element-subject rule was attributed to a class")
+		}
+	}
+}
+
+func setFrom(values []string) map[string]string {
+	out := map[string]string{}
+	for _, v := range values {
+		out[v] = ""
+	}
+	return out
+}

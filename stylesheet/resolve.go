@@ -54,6 +54,10 @@ type contextualRule struct {
 	// requires is the set of classes named anywhere in the selector. A rule
 	// whose subject is an element (".book img") requires only the classes.
 	requires []string
+	// subject is the classes of the selector's last compound — the element
+	// the declarations actually land on. Nil when the subject is not a class
+	// compound (".book img" lands on the img, which no class identifies).
+	subject []string
 }
 
 // NewIndex parses a stylesheet and indexes what it declares.
@@ -87,10 +91,11 @@ func NewIndex(css []byte) (*Index, error) {
 			}
 			index.declarations[class] = append(index.declarations[class], declaration)
 		}
-		for _, requires := range selectorRequirements(declaration.Selector) {
+		for _, requirement := range selectorRequirements(declaration.Selector) {
 			index.contextual = append(index.contextual, contextualRule{
 				declaration: declaration,
-				requires:    requires,
+				requires:    requirement.requires,
+				subject:     requirement.subject,
 			})
 		}
 	}
@@ -137,21 +142,29 @@ func soleClass(subject string) (string, bool) {
 	return class, class != ""
 }
 
+// subjectRequirement is what one selector-list part asks of a document, and
+// where its declarations land.
+type subjectRequirement struct {
+	requires []string
+	subject  []string
+}
+
 // selectorRequirements reports, for each subject in a selector list, the
-// classes a document must contain for that rule to apply.
+// classes a document must contain for that rule to apply, and the classes of
+// the compound the declarations land on.
 //
 // State and structural pseudo-selectors are excluded entirely: ":hover" and
 // ":nth-child(2)" describe a moment or a position, and a document containing
 // the classes does not mean the rule is in effect.
-func selectorRequirements(selector string) [][]string {
-	var out [][]string
-	for _, subject := range strings.Split(selector, ",") {
-		subject = strings.TrimSpace(subject)
-		if subject == "" || strings.ContainsAny(subject, ":[") {
+func selectorRequirements(selector string) []subjectRequirement {
+	var out []subjectRequirement
+	for _, part := range strings.Split(selector, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" || strings.ContainsAny(part, ":[") {
 			continue
 		}
 		var requires []string
-		for _, match := range classToken.FindAllStringSubmatch(subject, -1) {
+		for _, match := range classToken.FindAllStringSubmatch(part, -1) {
 			if !slices.Contains(requires, match[1]) {
 				requires = append(requires, match[1])
 			}
@@ -161,7 +174,29 @@ func selectorRequirements(selector string) [][]string {
 			// document, which says nothing about any component.
 			continue
 		}
-		out = append(out, requires)
+		out = append(out, subjectRequirement{
+			requires: requires,
+			subject:  lastCompoundClasses(part),
+		})
+	}
+	return out
+}
+
+// lastCompoundClasses returns the classes of a selector part's final compound
+// — the element its declarations land on. Nil when that compound carries no
+// class, because then no class identifies the element being styled.
+func lastCompoundClasses(part string) []string {
+	compounds := strings.FieldsFunc(part, func(r rune) bool {
+		return r == ' ' || r == '\t' || r == '>' || r == '+' || r == '~'
+	})
+	if len(compounds) == 0 {
+		return nil
+	}
+	var out []string
+	for _, match := range classToken.FindAllStringSubmatch(compounds[len(compounds)-1], -1) {
+		if !slices.Contains(out, match[1]) {
+			out = append(out, match[1])
+		}
 	}
 	return out
 }
@@ -238,6 +273,81 @@ func (i *Index) Mentions(class string) bool {
 		}
 	}
 	return false
+}
+
+// SubjectStyle is what a document's stylesheet declares for the elements
+// carrying one compound of classes.
+type SubjectStyle struct {
+	// Requires is the set of classes an element must carry for these
+	// declarations to land on it — the selector's subject compound.
+	// ".pack-face.pack-front" requires both; a node carrying only pack-face
+	// is a different face and must not receive the front's styling.
+	Requires []string
+	// Declarations is what lands there, later rules overriding earlier ones
+	// as the cascade does at equal footing. Specificity is not modelled; the
+	// same stated approximation as Declarations.
+	Declarations map[string]string
+}
+
+// SubjectStyles resolves everything a document carrying these classes
+// declares, attributed to the elements it lands on.
+//
+// This is the difference between knowing what a document paints and knowing
+// what each of its elements paints. Reachable answers the first; a design
+// contract needs the second, because its nodes are elements. A stylesheet
+// that writes ".pack-3d .pack-front { width: 256px }" is styling the node
+// carrying pack-front — but only in a tree that also carries pack-3d, which
+// is why the whole document's classes are the parameter and the subject
+// compound is the result.
+//
+// Rules whose subject no class identifies (".book img") are excluded: their
+// declarations land on an element the contract has no way to name.
+func (i *Index) SubjectStyles(classes ...string) []SubjectStyle {
+	present := make(map[string]struct{}, len(classes))
+	for _, class := range classes {
+		present[class] = struct{}{}
+	}
+
+	merged := map[string]map[string]string{}
+	subjects := map[string][]string{}
+	var order []string
+	for _, rule := range i.contextual {
+		if len(rule.subject) == 0 {
+			continue
+		}
+		satisfied := true
+		for _, required := range rule.requires {
+			if _, ok := present[required]; !ok {
+				satisfied = false
+				break
+			}
+		}
+		if !satisfied {
+			continue
+		}
+		key := strings.Join(sortedCopy(rule.subject), " ")
+		if merged[key] == nil {
+			merged[key] = map[string]string{}
+			subjects[key] = rule.subject
+			order = append(order, key)
+		}
+		merged[key][rule.declaration.Property] = rule.declaration.Value
+	}
+
+	out := make([]SubjectStyle, 0, len(order))
+	for _, key := range order {
+		out = append(out, SubjectStyle{
+			Requires:     subjects[key],
+			Declarations: merged[key],
+		})
+	}
+	return out
+}
+
+func sortedCopy(values []string) []string {
+	out := slices.Clone(values)
+	sort.Strings(out)
+	return out
 }
 
 // MissingContext reports the classes a document would have to gain for rules
