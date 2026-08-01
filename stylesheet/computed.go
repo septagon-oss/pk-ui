@@ -63,11 +63,24 @@ func ParseInline(style string) map[string]string {
 // nothing on its own, and its effect is already accounted for wherever it is
 // used.
 func Normalize(property, value string, vars map[string]string) map[string]string {
+	return ExpandDeclaration(property, ResolveVars(value, vars))
+}
+
+// ExpandDeclaration is Normalize without the variable substitution: it reduces
+// one declaration to longhand properties and comparable values, leaving every
+// reference exactly as written.
+//
+// It is separate because resolving references and canonicalising a declaration
+// are wanted independently. A caller deriving a design contract has already
+// expanded the product's own tokens and needs the platform's left standing, so
+// running the browser's resolution over the result would undo the distinction
+// it just made.
+func ExpandDeclaration(property, value string) map[string]string {
 	property = strings.ToLower(strings.TrimSpace(property))
 	if strings.HasPrefix(property, "--") {
 		return nil
 	}
-	value = NormalizeValue(ResolveVars(value, vars))
+	value = NormalizeValue(value)
 	if value == "" {
 		return nil
 	}
@@ -277,6 +290,62 @@ func isColorToken(token string) bool {
 		}
 	}
 	return token != "" && token != "none"
+}
+
+// ExpandDefined substitutes only the custom properties this stylesheet
+// defines, leaving any other reference exactly as written.
+//
+// The difference from ResolveVars is the whole point: ResolveVars answers
+// "what does this paint", taking a fallback when a variable is unknown, which
+// is what a browser does. This answers "what does this refer to", and an
+// unknown variable is the interesting part of the answer.
+//
+// A product composing on a design system declares its own tokens against the
+// system's: "--sm-green: rgb(var(--surface-success, 69 159 80))". The product
+// defines --sm-green and does not define --surface-success, because the theme
+// does. Expanding only what the product defines turns var(--sm-green) into a
+// value that still names the platform role, which is what a design target has
+// to bind against. Resolving it the browser's way would collapse it to the
+// literal standing by for an unthemed page, and the token would be lost.
+func ExpandDefined(value string, vars map[string]string) string {
+	for range 8 {
+		expanded, changed := expandOnce(value, vars)
+		if !changed {
+			return expanded
+		}
+		value = expanded
+	}
+	return value
+}
+
+// expandOnce replaces every reference to a defined variable, reporting whether
+// it replaced any.
+func expandOnce(value string, vars map[string]string) (string, bool) {
+	var b strings.Builder
+	var changed bool
+	for {
+		start := strings.Index(value, "var(")
+		if start < 0 {
+			b.WriteString(value)
+			return b.String(), changed
+		}
+		end := matchingParen(value, start+len("var(")-1)
+		if end < 0 {
+			b.WriteString(value)
+			return b.String(), changed
+		}
+		name, _ := splitVarArgs(value[start+len("var(") : end])
+		replacement, defined := vars[name]
+		b.WriteString(value[:start])
+		if defined {
+			b.WriteString(replacement)
+			changed = true
+		} else {
+			// Left whole, fallback included: the reference is the answer.
+			b.WriteString(value[start : end+1])
+		}
+		value = value[end+1:]
+	}
 }
 
 // ResolveVars substitutes custom properties into a value.

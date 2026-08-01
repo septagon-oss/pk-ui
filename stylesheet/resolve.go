@@ -24,6 +24,7 @@ package stylesheet
 // Resolution stays with what a class declares unconditionally.
 
 import (
+	"maps"
 	"regexp"
 	"slices"
 	"sort"
@@ -42,6 +43,8 @@ type Index struct {
 	// contextual holds every unconditional rule with the classes its selector
 	// requires, for reachability.
 	contextual []contextualRule
+	// variables holds every custom property the stylesheet declares.
+	variables map[string]string
 }
 
 // contextualRule is one declaration together with what a document must contain
@@ -62,8 +65,16 @@ func NewIndex(css []byte) (*Index, error) {
 	index := &Index{
 		declarations: map[string][]Declaration{},
 		order:        map[string]int{},
+		variables:    map[string]string{},
 	}
 	for position, declaration := range all {
+		if strings.HasPrefix(declaration.Property, "--") {
+			// A custom property is collected wherever it is declared, not only
+			// on the classes it happens to sit beside: it is defined once, on
+			// :root or a theme selector, and read from everywhere.
+			index.variables[declaration.Property] = declaration.Value
+			continue
+		}
 		if declaration.AtRule != "" {
 			// A media query states what the class looks like at some width.
 			// The unconditional declarations are what both targets can be
@@ -191,6 +202,25 @@ func (i *Index) Reachable(classes ...string) []Declaration {
 			out = append(out, rule.declaration)
 		}
 	}
+	return out
+}
+
+// Variables returns every custom property the stylesheet declares.
+//
+// These are what make a product's classes readable as design tokens rather
+// than as raw paint. Collect declares "--sm-green: rgb(var(--surface-success,
+// 69 159 80))", so a class that fills with var(--sm-green) is not stating a
+// colour at all — it is naming the platform's success surface, one level
+// removed. Following that chain is how a class resolves back to the token a
+// design tool should bind to.
+//
+// A property declared more than once resolves to the last, as the cascade
+// does. That is a real approximation: a stylesheet that redefines its tokens
+// per colour scheme declares each twice, and this keeps whichever comes last
+// in the file rather than knowing which scheme is in force.
+func (i *Index) Variables() map[string]string {
+	out := make(map[string]string, len(i.variables))
+	maps.Copy(out, i.variables)
 	return out
 }
 
