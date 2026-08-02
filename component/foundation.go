@@ -44,6 +44,7 @@ const (
 	TypeSearchInput        = "SearchInput"
 	TypePagination         = "Pagination"
 	TypeWindowedCollection = "WindowedCollection"
+	TypeDashboardWidget    = "DashboardWidget"
 	TypeActionBar          = "ActionBar"
 	TypeFormActions        = "FormActions"
 	TypeDetailField        = "DetailField"
@@ -93,6 +94,7 @@ var foundationCatalog = []Descriptor{
 	foundation(TypeSearchInput, TierOrganism),
 	foundation(TypePagination, TierOrganism),
 	foundation(TypeWindowedCollection, TierOrganism),
+	foundation(TypeDashboardWidget, TierOrganism),
 	foundation(TypeActionBar, TierOrganism),
 	foundation(TypeFormActions, TierOrganism),
 	foundation(TypeDetailField, TierOrganism),

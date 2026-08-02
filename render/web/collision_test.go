@@ -42,6 +42,9 @@ func composedLists(t *testing.T) map[string]tw.ClassList {
 	for v := range clAlertVariant {
 		out["alert/"+v] = clAlertBase.Merge(clAlertVariant[v])
 	}
+	for v := range clToastTone {
+		out["toast/"+v] = clToastBase.Merge(clToastTone[v])
+	}
 	out["input/normal"] = clInput.Merge(clInputNormal).Merge(clInputSize["md"])
 	out["input/error"] = clInput.Merge(clInputError).Merge(clInputSize["md"])
 	out["textarea/manual"] = clInput.Merge(clInputNormal).Merge(clInputSize["md"]).Merge(clTextareaManual)

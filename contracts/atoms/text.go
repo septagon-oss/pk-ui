@@ -9,12 +9,18 @@ import "github.com/septagon-oss/pk-ui/contracts"
 type TextProps struct {
 	contracts.ComponentProps
 
-	Content  string `json:"content"`
-	Size     string `json:"size,omitempty"`     // xs, small, medium, large, xl
-	Weight   string `json:"weight,omitempty"`   // normal, medium, semibold, bold
-	Color    string `json:"color,omitempty"`    // primary, secondary, tertiary, success, warning, error, muted
-	Truncate bool   `json:"truncate,omitempty"` // truncate with ellipsis
-	Lines    int    `json:"lines,omitempty"`    // line clamp
+	Content   string `json:"content"`
+	Element   string `json:"element,omitempty"`   // p, span, div, strong, em, small, mark, del, ins, sub, sup, blockquote, code, pre, kbd, samp, var
+	Size      string `json:"size,omitempty"`      // xs, sm, base, lg, xl, 2xl, 3xl, 4xl, 5xl
+	Align     string `json:"align,omitempty"`     // left, center, right, justify
+	Weight    string `json:"weight,omitempty"`    // thin, extralight, light, normal, medium, semibold, bold, extrabold, black
+	Color     string `json:"color,omitempty"`     // primary, secondary, tertiary, muted, brand, success, warning, danger, info
+	Transform string `json:"transform,omitempty"` // none, uppercase, lowercase, capitalize
+	Truncate  bool   `json:"truncate,omitempty"`  // truncate with ellipsis
+	NoWrap    bool   `json:"nowrap,omitempty"`
+	Italic    bool   `json:"italic,omitempty"`
+	Underline bool   `json:"underline,omitempty"`
+	Lines     int    `json:"lines,omitempty"` // line clamp, 1-6
 }
 
 // ToMap converts TextProps to map[string]any for unified Component construction.

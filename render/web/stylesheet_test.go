@@ -25,6 +25,9 @@ func TestDefaultStylesheetOwnsTokensRolesAndRenderableCatalogRules(t *testing.T)
 		".bg-surface-primary",
 		".text-fg-primary",
 		".rounded-lg",
+		`[data-component=progress][data-progress-percent="0"] [data-progress-fill=true]{width:0%}`,
+		`[data-component=progress][data-progress-percent="50"] [data-progress-fill=true]{width:50%}`,
+		`[data-component=progress][data-progress-percent="100"] [data-progress-fill=true]{width:100%}`,
 	} {
 		if !strings.Contains(css, required) {
 			t.Errorf("complete OSS stylesheet missing %q", required)

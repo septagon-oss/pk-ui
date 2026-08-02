@@ -155,8 +155,12 @@ var (
 		"2xl": tw.New().FontSize(tw.TextXL).PaddingX(tw.S8).PaddingY(tw.S4),
 	}
 
-	clButtonFull     = tw.New().Width(tw.SFull)
-	clButtonIconOnly = tw.New().MinWidth(tw.S11).MinHeight(tw.S11)
+	clButtonFull         = tw.New().Width(tw.SFull)
+	clButtonIconOnly     = tw.New().MinWidth(tw.S11).MinHeight(tw.S11)
+	clButtonDisabledLink = tw.New().
+				Cursor(tw.CursorNotAllowed).
+				Opacity(tw.Opacity50).
+				PointerEvents(tw.PointerNone)
 
 	// Badge / Tag.
 	clBadgeBase = tw.New().
@@ -185,12 +189,30 @@ var (
 		"2xl": tw.New().PaddingX(tw.S4).PaddingY(tw.S1).FontSize(tw.TextBase),
 	}
 
-	clBadgeDot = tw.New().Width(tw.S1_5).Height(tw.S1_5).Rounded(tw.RadiusFull).Bg(tw.FgBrand)
+	clBadgeDot     = tw.New().Width(tw.S1_5).Height(tw.S1_5).Rounded(tw.RadiusFull)
+	clBadgeDotTone = map[string]tw.ClassList{
+		"neutral": tw.New().Bg(tw.FgSecondary),
+		"brand":   tw.New().Bg(tw.FgBrand),
+		"success": tw.New().Bg(tw.FgSuccess),
+		"warning": tw.New().Bg(tw.FgWarning),
+		"danger":  tw.New().Bg(tw.FgDanger),
+		"info":    tw.New().Bg(tw.FgInfo),
+	}
+	clBadgeCount  = tw.New().MarginLeft(tw.S1).FontWeight(tw.FontSemibold).TabularNums()
+	clBadgeRemove = tw.New().MarginLeft(tw.S1).Display(tw.DisplayInlineFlex).
+			Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
+			Bg(tw.ColorTransparent).Border(tw.Border0).Padding(tw.S0).
+			Rounded(tw.RadiusFull).Cursor(tw.CursorPointer).
+			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Opacity(tw.Opacity75) }).
+			Merge(clFocusRing)
 
 	// Alert.
 	clAlertBase = tw.New().
-			Display(tw.DisplayFlex).Gap(tw.S3).Rounded(tw.RadiusLG).Padding(tw.S4).
+			Display(tw.DisplayFlex).Items(tw.ItemsStart).Gap(tw.S3).Rounded(tw.RadiusLG).
 			Border(tw.Border1)
+	clAlertRegular  = tw.New().Padding(tw.S4)
+	clAlertCompact  = tw.New().PaddingX(tw.S3).PaddingY(tw.S2)
+	clAlertBordered = tw.New().BorderLeft(tw.Border4)
 
 	clAlertVariant = map[string]tw.ClassList{
 		"success": tw.New().NoUnderline().Bg(tw.SurfaceSuccessSoft).TextColor(tw.FgSuccess).BorderColor(tw.BorderSuccess),
@@ -203,6 +225,37 @@ var (
 	clAlertTitle   = tw.New().FontWeight(tw.FontSemibold).FontSize(tw.TextSM)
 	clAlertMessage = tw.New().FontSize(tw.TextSM)
 	clAlertBody    = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1).Flex1()
+	clAlertIcon    = tw.New().
+			MarginTop(tw.S0_5).Display(tw.DisplayFlex).Height(tw.S9).Width(tw.S9).
+			FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter).Rounded(tw.RadiusFull)
+	clAlertActions = tw.New().MarginTop(tw.S3).Display(tw.DisplayFlex).FlexWrap().
+			Items(tw.ItemsCenter).Gap(tw.S3).FontSize(tw.TextSM)
+	clAlertClose = tw.New().MarginLeft(tw.SAuto).Display(tw.DisplayInlineFlex).
+			FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
+			Rounded(tw.RadiusMD).Padding(tw.S1_5).Cursor(tw.CursorPointer).
+			Transition(tw.TransitionColors).Merge(clFocusRing)
+
+	// Toast.
+	clToastBase = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsStart).Gap(tw.S3).
+			MaxW("sm").Width(tw.SFull).Rounded(tw.RadiusLG).Border(tw.Border1).
+			Shadow(tw.ShadowLG).PointerEvents(tw.PointerAuto).Overflow(tw.OverflowHidden).
+			Padding(tw.S4)
+	clToastTone = map[string]tw.ClassList{
+		"success": clAlertVariant["success"].Merge(tw.New().BorderLeft(tw.Border4)),
+		"warning": clAlertVariant["warning"].Merge(tw.New().BorderLeft(tw.Border4)),
+		"danger":  clAlertVariant["danger"].Merge(tw.New().BorderLeft(tw.Border4)),
+		"info":    clAlertVariant["info"].Merge(tw.New().BorderLeft(tw.Border4)),
+	}
+	clToastIcon = tw.New().MarginTop(tw.S0_5).Display(tw.DisplayFlex).FlexShrink0()
+	clToastBody = tw.New().MinWidth(tw.S0).Flex1().Display(tw.DisplayFlex).
+			FlexDir(tw.FlexCol).Gap(tw.S1)
+	clToastTitle   = tw.New().FontSize(tw.TextSM).FontWeight(tw.FontSemibold).TextColor(tw.FgPrimary)
+	clToastMessage = tw.New().FontSize(tw.TextSM).TextColor(tw.FgSecondary)
+	clToastLead    = tw.New().FontWeight(tw.FontMedium).TextColor(tw.FgPrimary)
+	clToastClose   = tw.New().MarginLeft(tw.SAuto).Display(tw.DisplayInlineFlex).
+			FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
+			Rounded(tw.RadiusMD).Padding(tw.S1_5).Cursor(tw.CursorPointer).
+			Transition(tw.TransitionColors).Merge(clFocusRing)
 
 	// Inputs.
 	clFieldWrap     = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1_5)
@@ -222,9 +275,17 @@ var (
 		}).
 		Merge(clFocusRing)
 
-	clInputNormal = tw.New().BorderColor(tw.BorderPrimary)
-	clInputError  = tw.New().BorderColor(tw.BorderDanger)
-	clInputSize   = map[string]tw.ClassList{
+	clInputNormal   = tw.New().BorderColor(tw.BorderPrimary)
+	clInputError    = tw.New().BorderColor(tw.BorderDanger)
+	clInputReadOnly = tw.New().Bg(tw.SurfaceSecondary).TextColor(tw.FgSecondary).
+			Shadow(tw.ShadowNone).Cursor(tw.CursorDefault)
+	clInputTone = map[string]tw.ClassList{
+		"neutral": tw.New().BorderColor(tw.BorderPrimary),
+		"success": tw.New().BorderColor(tw.BorderSuccess),
+		"warning": tw.New().BorderColor(tw.BorderWarning),
+		"danger":  tw.New().BorderColor(tw.BorderDanger),
+	}
+	clInputSize = map[string]tw.ClassList{
 		"sm": tw.New().PaddingX(tw.S3).PaddingY(tw.S1_5).FontSize(tw.TextSM),
 		"md": tw.New().PaddingX(tw.S3).PaddingY(tw.S2).FontSize(tw.TextSM),
 		"lg": tw.New().PaddingX(tw.S4).PaddingY(tw.S2_5).FontSize(tw.TextBase),
@@ -247,6 +308,284 @@ var (
 			PaddingRight(tw.S3).PointerEvents(tw.PointerNone)
 	clInputPadStart = tw.New().PaddingLeft(tw.S10)
 	clInputPadEnd   = tw.New().PaddingRight(tw.S10)
+
+	// Autocomplete extends the input family with an APG combobox listbox.
+	clAutocompleteControl = tw.New().Position(tw.PositionRelative).Width(tw.SFull)
+	clAutocompletePanel   = tw.New().Position(tw.PositionAbsolute).ZIndex(tw.ZDropdown).
+				MarginTop(tw.S1).Width(tw.SFull).
+				Overflow(tw.OverflowAuto).Rounded(tw.RadiusMD).Border(tw.Border1).
+				BorderColor(tw.BorderPrimary).Bg(tw.SurfacePrimary).Shadow(tw.ShadowXL)
+	clAutocompleteList   = tw.New().PaddingY(tw.S1)
+	clAutocompleteOption = tw.New().Display(tw.DisplayFlex).Width(tw.SFull).
+				Cursor(tw.CursorPointer).Items(tw.ItemsCenter).PaddingX(tw.S3).
+				PaddingY(tw.S2).TextAlign(tw.TextLeft).FontSize(tw.TextSM).
+				TextColor(tw.FgPrimary).
+				On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Bg(tw.SurfaceSecondary) })
+	clAutocompleteOptionActive = tw.New().Bg(tw.SurfaceBrandSoft).TextColor(tw.FgBrand)
+	clAutocompleteIndicator    = tw.New().Position(tw.PositionAbsolute).InsetY(tw.S0).
+					Right(tw.S0).Display(tw.DisplayFlex).Items(tw.ItemsCenter).
+					PaddingRight(tw.S3).PointerEvents(tw.PointerNone)
+	clAutocompleteSpinner = tw.New().AnimateSpin().Height(tw.S4).Width(tw.S4).
+				Rounded(tw.RadiusFull).Border(tw.Border2).BorderColor(tw.BorderBrand).
+				BorderTop(tw.Border2).BorderStyle(tw.BorderSolid)
+
+	// FileUpload owns one progressively enhanced DOM contract for native form
+	// submission and provider-backed remote uploads. Dynamic list nodes use the
+	// same declared class lists, so stylesheet emission never depends on a JS
+	// source scan.
+	clFileUploadRoot = tw.New().Display(tw.DisplayFlex).Width(tw.SFull).
+				FlexDir(tw.FlexCol).Gap(tw.S2)
+	clFileUploadDropZone = tw.New().Position(tw.PositionRelative).Width(tw.SFull).
+				Border(tw.Border2).BorderStyle(tw.BorderStyle("dashed")).
+				BorderColor(tw.BorderSecondary).Rounded(tw.RadiusLG).
+				Cursor(tw.CursorPointer).Transition(tw.TransitionColors).
+				On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.BorderColor(tw.BorderPrimary) }).
+				On(tw.StateFocusWithin, func(c tw.ClassList) tw.ClassList {
+			return c.Ring(tw.Ring2).RingColor(tw.RingFocus).RingOffset(tw.RingOffset1)
+		})
+	clFileUploadDropZoneDisabled = tw.New().PointerEvents(tw.PointerNone).
+					Cursor(tw.CursorNotAllowed).Opacity(tw.Opacity60)
+	clFileUploadDropZoneInner = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).
+					Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
+					PaddingX(tw.S4).PaddingY(tw.S8).TextAlign(tw.TextCenter)
+	clFileUploadInputHidden = tw.New().SrOnly().MinHeight(tw.S0).MinWidth(tw.S0)
+	clFileUploadInput       = clInput.Merge(clInputNormal).Merge(clInputSize["md"]).Width(tw.SFull)
+	clFileUploadIcon        = tw.New().Height(tw.S10).Width(tw.S10).
+				TextColor(tw.FgTertiary).MarginBottom(tw.S3)
+	clFileUploadPrompt = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).
+				Items(tw.ItemsCenter).Justify(tw.JustifyCenter)
+	clFileUploadPromptText   = tw.New().FontSize(tw.TextSM).TextColor(tw.FgSecondary)
+	clFileUploadPromptAction = tw.New().FontWeight(tw.FontMedium).
+					TextColor(tw.FgBrand)
+	clFileUploadHint = tw.New().MarginTop(tw.S1).FontSize(tw.TextXS).
+				TextColor(tw.FgTertiary)
+	clFileUploadLoading = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).
+				Items(tw.ItemsCenter).Justify(tw.JustifyCenter)
+	clFileUploadLoadingIcon = tw.New().AnimateSpin().Height(tw.S8).Width(tw.S8).
+				TextColor(tw.FgMuted).MarginBottom(tw.S2)
+	clFileUploadList  = tw.New().MarginTop(tw.S1).SpaceY(tw.S2)
+	clFileUploadError = tw.New().FontSize(tw.TextSM).TextColor(tw.FgDanger)
+	clFileUploadItem  = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).
+				Justify(tw.JustifyBetween).PaddingX(tw.S3).PaddingY(tw.S2).
+				Bg(tw.SurfaceSecondary).Rounded(tw.RadiusMD)
+	clFileUploadItemMeta = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).
+				Gap(tw.S3).MinWidth(tw.S0)
+	clFileUploadPreview = tw.New().Height(tw.S10).Width(tw.S10).
+				Rounded(tw.RadiusBase).ObjectCover().FlexShrink0()
+	clFileUploadPreviewLarge = tw.New().Height(tw.S16).Width(tw.S16).
+					Rounded(tw.RadiusBase).ObjectCover().FlexShrink0()
+	clFileUploadItemCopy = tw.New().MinWidth(tw.S0)
+	clFileUploadItemName = tw.New().FontSize(tw.TextSM).FontWeight(tw.FontMedium).
+				TextColor(tw.FgPrimary).Truncate()
+	clFileUploadItemSize = tw.New().FontSize(tw.TextXS).TextColor(tw.FgTertiary)
+	clFileUploadRemove   = tw.New().FlexShrink0().MarginLeft(tw.S2).Padding(tw.S1).
+				TextColor(tw.FgTertiary).Rounded(tw.RadiusBase).
+				Transition(tw.TransitionColors).
+				On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgDanger) })
+	clFileUploadDragActive = tw.New().BorderColor(tw.BorderBrand).Bg(tw.SurfaceBrandSoft)
+	clFileUploadDragIdle   = tw.New().BorderColor(tw.BorderSecondary)
+
+	// Dropdown is the canonical select-only listbox shell. The controller owns
+	// open state, filtering, selection, hidden-input synchronization, and focus.
+	clDropdownRoot = tw.New().Position(tw.PositionRelative).Display(tw.DisplayFlex).
+			Width(tw.SFull).FlexDir(tw.FlexCol)
+	clDropdownTrigger = tw.New().Display(tw.DisplayFlex).Width(tw.SFull).
+				Items(tw.ItemsCenter).Overflow(tw.OverflowHidden).Rounded(tw.RadiusMD).
+				Border(tw.Border1).BorderColor(tw.BorderPrimary).Bg(tw.SurfacePrimary).
+				TextColor(tw.FgPrimary).Shadow(tw.ShadowSM).
+				On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Bg(tw.SurfaceSecondary) }).
+				On(tw.StateFocusWithin, func(c tw.ClassList) tw.ClassList {
+			return c.Outline(tw.OutlineNone).Ring(tw.Ring2).RingColor(tw.RingFocus).RingOffset(tw.RingOffset1)
+		})
+	clDropdownTriggerSize = map[string]tw.ClassList{
+		"sm": tw.New().MinHeight(tw.S9).FontSize(tw.TextSM),
+		"md": tw.New().MinHeight(tw.S11).FontSize(tw.TextSM),
+		"lg": tw.New().MinHeight(tw.S12).FontSize(tw.TextBase),
+	}
+	clDropdownButton = tw.New().Display(tw.DisplayFlex).MinWidth(tw.S0).Flex1().
+				Items(tw.ItemsCenter).TextAlign(tw.TextLeft).Outline(tw.OutlineNone).
+				On(tw.StateDisabled, func(c tw.ClassList) tw.ClassList {
+			return c.Cursor(tw.CursorNotAllowed).Opacity(tw.Opacity50)
+		})
+	clDropdownButtonSize = map[string]tw.ClassList{
+		"sm": tw.New().MinHeight(tw.S9).PaddingX(tw.S2).PaddingY(tw.S1_5),
+		"md": tw.New().MinHeight(tw.S11).PaddingX(tw.S3).PaddingY(tw.S2),
+		"lg": tw.New().MinHeight(tw.S12).PaddingX(tw.S4).PaddingY(tw.S2_5),
+	}
+	clDropdownTriggerLabel   = tw.New().MinWidth(tw.S0).Flex1().Truncate()
+	clDropdownTriggerActions = tw.New().Display(tw.DisplayFlex).FlexShrink0().
+					Items(tw.ItemsCenter).Gap(tw.S1).PaddingRight(tw.S2)
+	clDropdownIconButton = tw.New().Display(tw.DisplayInlineFlex).Height(tw.S8).Width(tw.S8).
+				FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
+				Rounded(tw.RadiusMD).TextColor(tw.FgTertiary).
+				On(tw.StateHover, func(c tw.ClassList) tw.ClassList {
+			return c.Bg(tw.SurfaceSecondary).TextColor(tw.FgPrimary)
+		})
+	clDropdownChevron = tw.New().Display(tw.DisplayInlineFlex).Height(tw.S8).Width(tw.S8).
+				FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
+				TextColor(tw.FgTertiary).Transition(tw.TransitionTransform)
+	clDropdownPanel = tw.New().Position(tw.PositionAbsolute).ZIndex(tw.ZDropdown).
+			MarginTop(tw.S1).Width(tw.SFull).Overflow(tw.OverflowHidden).
+			Rounded(tw.Radius2XL).Border(tw.Border1).BorderColor(tw.BorderPrimary).
+			Bg(tw.SurfacePrimary).Shadow(tw.ShadowXL)
+	clDropdownSearchWrap = tw.New().BorderBottom(tw.Border1).BorderColor(tw.BorderPrimary).
+				Padding(tw.S2)
+	clDropdownSearch = tw.New().MinHeight(tw.S10).Width(tw.SFull).Rounded(tw.RadiusLG).
+				Border(tw.Border1).BorderColor(tw.BorderSecondary).Bg(tw.SurfacePrimary).
+				PaddingX(tw.S3).PaddingY(tw.S2).FontSize(tw.TextSM).TextColor(tw.FgPrimary).
+				On(tw.StatePlaceholder, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgTertiary) }).
+				On(tw.StateFocus, func(c tw.ClassList) tw.ClassList {
+			return c.Outline(tw.OutlineNone).Ring(tw.Ring2).RingColor(tw.RingFocus).RingOffset(tw.RingOffset1)
+		})
+	clDropdownOptions = tw.New().MaxHeight(tw.S60).OverflowY(tw.OverflowAuto).PaddingY(tw.S1)
+	clDropdownOption  = tw.New().Display(tw.DisplayFlex).Width(tw.SFull).Items(tw.ItemsCenter).
+				Gap(tw.S2).PaddingX(tw.S3).PaddingY(tw.S2).TextAlign(tw.TextLeft).
+				FontSize(tw.TextSM).TextColor(tw.FgPrimary).Cursor(tw.CursorPointer).
+				On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Bg(tw.SurfaceSecondary) })
+	clDropdownOptionSelected = tw.New().Bg(tw.SurfaceSecondary)
+	clDropdownOptionDisabled = tw.New().Opacity(tw.Opacity50).Cursor(tw.CursorNotAllowed)
+	clDropdownOptionMark     = tw.New().Display(tw.DisplayFlex).Height(tw.S4).Width(tw.S4).
+					FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter)
+	clDropdownOptionSpacer = tw.New().Height(tw.S4).Width(tw.S4).FlexShrink0()
+	clDropdownOptionIcon   = tw.New().Display(tw.DisplayFlex).Height(tw.S4).Width(tw.S4).
+				FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter).TextColor(tw.FgTertiary)
+	clDropdownOptionLabel = tw.New().MinWidth(tw.S0).Flex1().Truncate()
+	clDropdownGroupLabel  = tw.New().PaddingX(tw.S3).PaddingY(tw.S1_5).
+				FontSize(tw.TextXS).FontWeight(tw.FontMedium).TextColor(tw.FgTertiary)
+
+	// ActionMenu implements the APG menu-button visual contract. Alignment
+	// and width are governed presets; callers never pass raw utility classes.
+	clActionMenuRoot = tw.New().Position(tw.PositionRelative).Display(tw.DisplayInlineBlock).
+				TextAlign(tw.TextLeft)
+	clActionMenuTrigger = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).
+				Justify(tw.JustifyCenter).Gap(tw.S1_5).Rounded(tw.RadiusLG).
+				Border(tw.Border1).BorderColor(tw.BorderPrimary).Bg(tw.SurfacePrimary).
+				PaddingX(tw.S3).PaddingY(tw.S2).FontSize(tw.TextSM).
+				FontWeight(tw.FontMedium).TextColor(tw.FgPrimary).Shadow(tw.ShadowSM).
+				Transition(tw.TransitionColors).
+				On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Bg(tw.SurfaceSecondary) }).
+				Merge(clFocusRing)
+	clActionMenuPanel = tw.New().Position(tw.PositionAbsolute).ZIndex(tw.ZDropdown).
+				MarginTop(tw.S1).Rounded(tw.RadiusLG).Border(tw.Border1).
+				BorderColor(tw.BorderPrimary).Bg(tw.SurfacePrimary).Shadow(tw.ShadowLG).
+				Ring(tw.Ring1).RingColor(tw.BorderPrimary).
+				On(tw.StateFocus, func(c tw.ClassList) tw.ClassList { return c.Outline(tw.OutlineNone) })
+	clActionMenuAlign = map[string]tw.ClassList{
+		"start": tw.New().Left(tw.S0),
+		"end":   tw.New().Right(tw.S0),
+	}
+	clActionMenuWidth = map[string]tw.ClassList{
+		"sm": tw.New().Width(tw.S48),
+		"md": tw.New().Width(tw.S56),
+		"lg": tw.New().Width(tw.S64),
+	}
+	clActionMenuPanelInner = tw.New().PaddingY(tw.S1)
+	clActionMenuSeparator  = tw.New().MarginY(tw.S1).BorderTop(tw.Border1).
+				BorderColor(tw.BorderPrimary)
+	clActionMenuSectionLabel = tw.New().PaddingX(tw.S3).PaddingY(tw.S1_5).
+					FontSize(tw.TextXS).FontWeight(tw.FontSemibold).Uppercase().
+					Tracking(tw.TrackingWider).TextColor(tw.FgMuted)
+	clActionMenuItem = tw.New().Display(tw.DisplayFlex).Width(tw.SFull).
+				Items(tw.ItemsCenter).Gap(tw.S2).PaddingX(tw.S3).PaddingY(tw.S2).
+				FontSize(tw.TextSM).Transition(tw.TransitionColors).TextAlign(tw.TextLeft)
+	clActionMenuItemTone = map[string]tw.ClassList{
+		"neutral": tw.New().TextColor(tw.FgPrimary).
+			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Bg(tw.SurfaceSecondary) }),
+		"danger": tw.New().TextColor(tw.FgDanger).
+			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Bg(tw.SurfaceDangerSoft) }),
+	}
+	clActionMenuItemDisabled = tw.New().TextColor(tw.FgMuted).
+					Cursor(tw.CursorNotAllowed).Opacity(tw.Opacity50)
+	clActionMenuItemIcon  = tw.New().Display(tw.DisplayFlex).FlexShrink0()
+	clActionMenuItemLabel = tw.New().Flex1().Truncate()
+
+	// Drawer is the governed modal edge panel used by mobile navigation,
+	// filters, and server-loaded details.
+	clDrawerRoot    = tw.New().Position(tw.PositionFixed).Inset(tw.S0).ZIndex(tw.ZOverlay)
+	clDrawerOverlay = tw.New().Position(tw.PositionAbsolute).Inset(tw.S0).
+			BgOpacity(tw.SurfaceOverlay, string(tw.Opacity50)).Transition(tw.TransitionOpacity)
+	clDrawerPanel = tw.New().Position(tw.PositionAbsolute).Display(tw.DisplayFlex).
+			FlexDir(tw.FlexCol).Bg(tw.SurfacePrimary).Shadow(tw.ShadowXL)
+	clDrawerPosition = map[string]tw.ClassList{
+		"left":   tw.New().InsetY(tw.S0).Left(tw.S0),
+		"right":  tw.New().InsetY(tw.S0).Right(tw.S0),
+		"bottom": tw.New().InsetX(tw.S0).Bottom(tw.S0),
+	}
+	clDrawerWidth = map[string]tw.ClassList{
+		"small":  tw.New().Width(tw.S80).MaxWScaled(tw.MaxWFull),
+		"medium": tw.New().Width(tw.S96).MaxWScaled(tw.MaxWFull),
+		"large":  tw.New().Width(tw.SFull).MaxWScaled(tw.MaxWLG),
+		"xl":     tw.New().Width(tw.SFull).MaxWScaled(tw.MaxW2XL),
+		"full":   tw.New().Width(tw.SFull),
+	}
+	clDrawerBottomSize = map[string]tw.ClassList{
+		"small":  tw.New().HeightViewport(tw.VH25).Width(tw.SFull).Rounded(tw.Radius("t-xl")),
+		"medium": tw.New().HeightViewport(tw.VH50).Width(tw.SFull).Rounded(tw.Radius("t-xl")),
+		"large":  tw.New().HeightViewport(tw.VH75).Width(tw.SFull).Rounded(tw.Radius("t-xl")),
+		"xl":     tw.New().HeightViewport(tw.VH85).Width(tw.SFull).Rounded(tw.Radius("t-xl")),
+		"full":   tw.New().Height(tw.SFull).Width(tw.SFull),
+	}
+	clDrawerHeader = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsStart).
+			Justify(tw.JustifyBetween).Gap(tw.S4).PaddingX(tw.S6).PaddingY(tw.S4).
+			BorderBottom(tw.Border1).BorderColor(tw.BorderPrimary).FlexShrink0()
+	clDrawerTitleBlock  = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1).MinWidth(tw.S0)
+	clDrawerTitle       = tw.New().FontSize(tw.TextLG).FontWeight(tw.FontSemibold).TextColor(tw.FgPrimary)
+	clDrawerDescription = tw.New().FontSize(tw.TextSM).TextColor(tw.FgMuted)
+	clDrawerBody        = tw.New().Flex1().OverflowY(tw.OverflowAuto).PaddingX(tw.S6).PaddingY(tw.S4)
+	clDrawerFooter      = tw.New().FlexShrink0().BorderTop(tw.Border1).BorderColor(tw.BorderPrimary).
+				PaddingX(tw.S6).PaddingY(tw.S4)
+	clDrawerClose = tw.New().Display(tw.DisplayInlineFlex).FlexShrink0().Items(tw.ItemsCenter).
+			Justify(tw.JustifyCenter).Rounded(tw.RadiusMD).Padding(tw.S1_5).
+			TextColor(tw.FgMuted).Bg(tw.ColorTransparent).Border(tw.Border0).
+			Cursor(tw.CursorPointer).Transition(tw.TransitionColors).
+			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgPrimary).Bg(tw.SurfaceHover) }).
+			Merge(clFocusRing)
+
+	// Modal is the governed centered-dialog / mobile-sheet overlay. The root
+	// also doubles as the empty HTMX swap target used by server-loaded forms.
+	clModalRoot = tw.New().Position(tw.PositionFixed).Inset(tw.S0).ZIndex(tw.ZModal).
+			Display(tw.DisplayFlex).Justify(tw.JustifyCenter).Padding(tw.S4).
+			OverflowY(tw.OverflowAuto)
+	clModalCentered    = tw.New().Items(tw.ItemsCenter)
+	clModalBottomSheet = tw.New().Items(tw.ItemsEnd).
+				Breakpoint(tw.BreakpointSM, func(c tw.ClassList) tw.ClassList { return c.Items(tw.ItemsCenter) })
+	clModalOverlay = tw.New().Position(tw.PositionAbsolute).Inset(tw.S0).
+			BgOpacity(tw.SurfaceOverlay, string(tw.Opacity50)).Transition(tw.TransitionOpacity)
+	clModalPanel = tw.New().Position(tw.PositionRelative).Display(tw.DisplayFlex).
+			FlexDir(tw.FlexCol).Width(tw.SFull).MaxHeightViewport(tw.VH85).
+			Overflow(tw.OverflowHidden).Rounded(tw.Radius2XL).
+			Border(tw.Border1).BorderColor(tw.BorderPrimary).
+			Bg(tw.SurfacePrimary).Shadow(tw.Shadow2XL).TextAlign(tw.TextLeft)
+	clModalPanelSize = map[string]tw.ClassList{
+		"small":  tw.New().MaxWScaled(tw.MaxWSM),
+		"medium": tw.New().MaxWScaled(tw.MaxWLG),
+		"large":  tw.New().MaxWScaled(tw.MaxW3XL),
+		"xl":     tw.New().MaxWScaled(tw.MaxW5XL),
+		"full":   tw.New().MaxWScaled(tw.MaxWFull),
+	}
+	clModalHeader = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsStart).
+			Justify(tw.JustifyBetween).Gap(tw.S4).PaddingX(tw.S6).PaddingY(tw.S4).
+			BorderBottom(tw.Border1).BorderColor(tw.BorderPrimary).
+			Bg(tw.SurfaceSecondary).FlexShrink0()
+	clModalTitleBlock  = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1).MinWidth(tw.S0)
+	clModalTitle       = tw.New().FontSize(tw.TextLG).FontWeight(tw.FontSemibold).TextColor(tw.FgPrimary)
+	clModalDescription = tw.New().FontSize(tw.TextSM).TextColor(tw.FgMuted)
+	clModalBody        = tw.New().Flex1().OverflowY(tw.OverflowAuto).Padding(tw.S6)
+	clModalFooter      = tw.New().FlexShrink0().BorderTop(tw.Border1).BorderColor(tw.BorderPrimary).
+				Bg(tw.SurfaceSecondary).PaddingX(tw.S6).PaddingY(tw.S4)
+	clModalClose = tw.New().Display(tw.DisplayInlineFlex).FlexShrink0().Items(tw.ItemsCenter).
+			Justify(tw.JustifyCenter).Rounded(tw.RadiusMD).Padding(tw.S1_5).
+			TextColor(tw.FgMuted).Bg(tw.ColorTransparent).Border(tw.Border0).
+			Cursor(tw.CursorPointer).Transition(tw.TransitionColors).
+			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgPrimary).Bg(tw.SurfaceHover) }).
+			Merge(clFocusRing)
+	clModalCancel = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).
+			Justify(tw.JustifyCenter).Rounded(tw.RadiusMD).Border(tw.Border1).
+			BorderColor(tw.BorderPrimary).Bg(tw.SurfacePrimary).PaddingX(tw.S4).PaddingY(tw.S2).
+			FontSize(tw.TextSM).FontWeight(tw.FontMedium).TextColor(tw.FgSecondary).
+			Cursor(tw.CursorPointer).Transition(tw.TransitionColors).
+			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Bg(tw.SurfaceHover) }).
+			Merge(clFocusRing)
 
 	clCheckbox = tw.New().
 			Width(tw.S4).Height(tw.S4).Rounded(tw.RadiusSM).
@@ -286,6 +625,17 @@ var (
 	clRadioInputDisabled = tw.New().Cursor(tw.CursorNotAllowed)
 	clRadioLabel         = tw.New().Truncate().FontSize(tw.TextSM).TextColor(tw.FgPrimary)
 	clRadioDot           = tw.New().Height(tw.S2).Width(tw.S2).Rounded(tw.RadiusFull).Bg(tw.SurfaceBrand)
+
+	// Choice groups compose the canonical Checkbox and Radio atoms inside a
+	// native fieldset. The group owns shared labelling, validation, layout,
+	// and enhancement while each atom retains native control behavior.
+	clChoiceGroupRoot        = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S2)
+	clChoiceGroupLegend      = clLabel
+	clChoiceGroupDescription = clHelp
+	clChoiceGroupOptions     = tw.New().Display(tw.DisplayFlex).Gap(tw.S2)
+	clChoiceGroupVertical    = tw.New().FlexDir(tw.FlexCol)
+	clChoiceGroupHorizontal  = tw.New().FlexDir(tw.FlexRow).FlexWrap().Gap(tw.S4)
+	clChoiceGroupError       = clFieldErr
 
 	clSliderRoot = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S3).
 			Width(tw.SFull).MaxWScaled(tw.MaxWXS)
@@ -356,19 +706,32 @@ var (
 
 	// Text and headings.
 	clTextColor = map[string]tw.Color{
-		"primary": tw.FgPrimary, "secondary": tw.FgSecondary, "muted": tw.FgMuted,
+		"primary": tw.FgPrimary, "secondary": tw.FgSecondary, "tertiary": tw.FgTertiary, "muted": tw.FgMuted,
 		"brand": tw.FgBrand, "success": tw.FgSuccess, "warning": tw.FgWarning,
 		"danger": tw.FgDanger, "error": tw.FgDanger, "info": tw.FgInfo,
 	}
 	clTextSize = map[string]tw.FontSize{
 		"xs": tw.TextXS, "sm": tw.TextSM, "base": tw.TextBase, "md": tw.TextBase,
 		"lg": tw.TextLG, "xl": tw.TextXL, "2xl": tw.Text2XL,
+		"3xl": tw.Text3XL, "4xl": tw.Text4XL, "5xl": tw.Text5XL,
 	}
 	clTextWeight = map[string]tw.FontWeight{
-		"normal": tw.FontNormal, "medium": tw.FontMedium,
-		"semibold": tw.FontSemibold, "bold": tw.FontBold,
+		"thin": tw.FontThin, "extralight": tw.FontExtralight, "light": tw.FontLight,
+		"normal": tw.FontNormal, "medium": tw.FontMedium, "semibold": tw.FontSemibold,
+		"bold": tw.FontBold, "extrabold": tw.FontExtrabold, "black": tw.FontBlack,
 	}
-	clTruncate = tw.New().Truncate()
+	clTextAlign = map[string]tw.TextAlign{
+		"left": tw.TextLeft, "center": tw.TextCenter,
+		"right": tw.TextRight, "justify": tw.TextJustify,
+	}
+	clTextTransform = map[string]tw.ClassList{
+		"none": {}, "uppercase": tw.New().Uppercase(),
+		"lowercase": tw.New().Lowercase(), "capitalize": tw.New().Capitalize(),
+	}
+	clTextItalic    = tw.New().Italic()
+	clTextUnderline = tw.New().Underline()
+	clTextNoWrap    = tw.New().WhitespaceNowrap()
+	clTruncate      = tw.New().Truncate()
 
 	clHeadingBase  = tw.New().FontFamily(tw.FontSerif).TextColor(tw.FgPrimary).FontWeight(tw.FontSemibold)
 	clHeadingLevel = map[int]tw.ClassList{
@@ -627,6 +990,153 @@ var (
 	clBreadcrumbSep = tw.New().TextColor(tw.FgTertiary)
 	clBreadcrumbCur = tw.New().TextColor(tw.FgPrimary).FontWeight(tw.FontMedium)
 
+	// Accordion.
+	clAccordionRoot     = tw.New().Width(tw.SFull).Overflow(tw.OverflowHidden)
+	clAccordionBordered = tw.New().Border(tw.Border1).BorderColor(tw.BorderPrimary).
+				Rounded(tw.RadiusLG).Bg(tw.SurfacePrimary)
+	clAccordionUnbordered = tw.New().Rounded(tw.RadiusLG).Bg(tw.SurfacePrimary)
+	clAccordionSeparator  = tw.New().BorderTop(tw.Border1).BorderColor(tw.BorderPrimary)
+	clAccordionTrigger    = tw.New().Display(tw.DisplayFlex).Width(tw.SFull).
+				Items(tw.ItemsCenter).Justify(tw.JustifyBetween).Gap(tw.S3).
+				PaddingX(tw.S4).PaddingY(tw.S3).TextAlign(tw.TextLeft).
+				Transition(tw.TransitionColors).
+				On(tw.StateHover, hoverBg(tw.SurfaceSecondary)).Merge(clFocusRing)
+	clAccordionTriggerDisabled = tw.New().Opacity(tw.Opacity50).Cursor(tw.CursorNotAllowed)
+	clAccordionLead            = tw.New().Display(tw.DisplayFlex).MinWidth(tw.S0).Flex1().Items(tw.ItemsStart).Gap(tw.S3)
+	clAccordionItemIcon        = tw.New().MarginTop(tw.S0_5).Display(tw.DisplayFlex).Height(tw.S5).Width(tw.S5).
+					FlexShrink0().Items(tw.ItemsCenter).Justify(tw.JustifyCenter).TextColor(tw.FgTertiary)
+	clAccordionTitleBlock = tw.New().Display(tw.DisplayFlex).MinWidth(tw.S0).Flex1().FlexDir(tw.FlexCol).Gap(tw.S1)
+	clAccordionTitle      = tw.New().FontSize(tw.TextSM).FontWeight(tw.FontMedium).TextColor(tw.FgPrimary)
+	clAccordionSubtitle   = tw.New().FontSize(tw.TextSM).TextColor(tw.FgTertiary)
+	clAccordionChevron    = tw.New().Display(tw.DisplayFlex).FlexShrink0().TextColor(tw.FgTertiary).
+				Transition(tw.TransitionTransform)
+	clAccordionChevronOpen = tw.New().Rotate("180")
+	clAccordionPanel       = tw.New().PaddingX(tw.S4).PaddingBottom(tw.S4).FontSize(tw.TextSM).TextColor(tw.FgSecondary)
+
+	// Stepper.
+	clStepperListHorizontal = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter)
+	clStepperListVertical   = tw.New().SpaceY(tw.S4)
+	clStepperItemHorizontal = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Flex1()
+	clStepperItemLast       = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter)
+	clStepperRowHorizontal  = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter)
+	clStepperRowVertical    = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsStart)
+	clStepperVerticalItem   = tw.New().Position(tw.PositionRelative)
+	clStepperVerticalIcons  = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Items(tw.ItemsCenter)
+	clStepperVerticalText   = tw.New().MarginLeft(tw.S4).MinWidth(tw.S0)
+	clStepperIndicator      = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).
+				Justify(tw.JustifyCenter).Rounded(tw.RadiusFull).FlexShrink0().
+				Transition(tw.TransitionColors)
+	clStepperIndicatorRegular = tw.New().Height(tw.S8).Width(tw.S8)
+	clStepperIndicatorCompact = tw.New().Height(tw.S6).Width(tw.S6)
+	clStepperClickable        = tw.New().Cursor(tw.CursorPointer).
+					On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Opacity(tw.Opacity80) }).
+					Merge(clFocusRing)
+	clStepperDisabled = tw.New().Opacity(tw.Opacity50).Cursor(tw.CursorNotAllowed)
+	clStepperGlyph    = tw.New().FontSize(tw.TextXS).FontWeight(tw.FontMedium)
+	clStepperLabel    = tw.New().MarginLeft(tw.S3).FontSize(tw.TextSM).
+				FontWeight(tw.FontMedium).WhitespaceNowrap()
+	clStepperLabelCompact = tw.New().MarginLeft(tw.S2).FontSize(tw.TextXS).
+				FontWeight(tw.FontMedium).WhitespaceNowrap()
+	clStepperLabelBlock          = tw.New().Display(tw.DisplayBlock)
+	clStepperDescription         = tw.New().FontSize(tw.TextXS).FontWeight(tw.FontNormal)
+	clStepperConnectorHorizontal = tw.New().Flex1().MarginX(tw.S4).Height(tw.S0_5).
+					Transition(tw.TransitionColors)
+	clStepperConnectorVertical = tw.New().Width(tw.S0_5).Height(tw.S8).MarginTop(tw.S2).
+					Transition(tw.TransitionColors)
+	clStepperIndicatorState = map[string]tw.ClassList{
+		"completed": tw.New().Bg(tw.SurfaceBrand).TextColor(tw.FgOnBrand),
+		"active": tw.New().Border(tw.Border2).BorderColor(tw.BorderBrand).
+			Bg(tw.SurfacePrimary).TextColor(tw.FgBrand),
+		"error": tw.New().Bg(tw.SurfaceDanger).TextColor(tw.FgOnBrand),
+		"pending": tw.New().Border(tw.Border2).BorderColor(tw.BorderSecondary).
+			Bg(tw.SurfacePrimary).TextColor(tw.FgTertiary),
+	}
+	clStepperLabelState = map[string]tw.ClassList{
+		"completed": tw.New().TextColor(tw.FgBrand),
+		"active":    tw.New().TextColor(tw.FgBrand),
+		"error":     tw.New().TextColor(tw.FgDanger),
+		"pending":   tw.New().TextColor(tw.FgTertiary),
+	}
+	clStepperDescriptionState = map[string]tw.ClassList{
+		"completed": tw.New().TextColor(tw.FgTertiary),
+		"active":    tw.New().TextColor(tw.FgSecondary),
+		"error":     tw.New().TextColor(tw.FgDanger),
+		"pending":   tw.New().TextColor(tw.FgTertiary),
+	}
+	clStepperConnectorState = map[string]tw.ClassList{
+		"completed": tw.New().Bg(tw.SurfaceBrand),
+		"pending":   tw.New().Bg(tw.BorderSecondary),
+	}
+
+	// Sidebar.
+	clSidebarRootAdmin = tw.New().Display(tw.DisplayHidden).
+				Breakpoint(tw.BreakpointLG, func(c tw.ClassList) tw.ClassList {
+			return c.Display(tw.DisplayFlex).FlexShrink0()
+		}).Transition(tw.TransitionAll)
+	clSidebarRootContent = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).
+				Transition(tw.TransitionAll)
+	clSidebarWidthCollapsed = tw.New().Breakpoint(tw.BreakpointLG, func(c tw.ClassList) tw.ClassList {
+		return c.Width(tw.S16)
+	})
+	clSidebarWidthExpanded = tw.New().Breakpoint(tw.BreakpointLG, func(c tw.ClassList) tw.ClassList {
+		return c.Width(tw.S64)
+	})
+	clSidebarDisabled    = tw.New().Opacity(tw.Opacity50)
+	clSidebarInner       = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Height(tw.SFull)
+	clSidebarColumnAdmin = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Flex1().
+				Bg(tw.SurfaceInverse).PaddingTop(tw.S5).PaddingBottom(tw.S4).OverflowY(tw.OverflowAuto)
+	clSidebarColumnContent = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Flex1().
+				Bg(tw.SurfacePrimary).OverflowY(tw.OverflowVisible)
+	clSidebarBrandAdmin = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).FlexShrink0().
+				PaddingX(tw.S4).MarginBottom(tw.S8)
+	clSidebarBrandContent = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S3).
+				FlexShrink0().MarginBottom(tw.S4)
+	clSidebarBrandLink      = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Merge(clFocusRing)
+	clSidebarBrandText      = tw.New().FontSize(tw.TextXL).FontWeight(tw.FontBold).TextColor(tw.FgOnInverse)
+	clSidebarNavWrapAdmin   = tw.New().MarginTop(tw.S5).Flex1().Display(tw.DisplayFlex).FlexDir(tw.FlexCol)
+	clSidebarNavWrapContent = tw.New().Flex1().Display(tw.DisplayFlex).FlexDir(tw.FlexCol)
+	clSidebarNavAdmin       = tw.New().Flex1().PaddingX(tw.S2).SpaceY(tw.S1)
+	clSidebarNavContent     = tw.New().Flex1().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S4)
+	clSidebarLinkAdmin      = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S3).
+				FontSize(tw.TextSM).FontWeight(tw.FontMedium).Rounded(tw.RadiusMD).
+				Transition(tw.TransitionColors).Merge(clFocusRing)
+	clSidebarLinkContent = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsStart).Gap(tw.S2).
+				FontSize(tw.TextSM).FontWeight(tw.FontMedium).Rounded(tw.RadiusMD).
+				Transition(tw.TransitionColors).Merge(clFocusRing)
+	clSidebarLinkPadExpanded  = tw.New().PaddingX(tw.S2).PaddingY(tw.S2)
+	clSidebarLinkPadCollapsed = tw.New().PaddingX(tw.S2).PaddingY(tw.S2).
+					Justify(tw.JustifyCenter)
+	clSidebarLinkActiveAdmin = tw.New().Bg(tw.SurfaceOverlay).TextColor(tw.FgOnInverse)
+	clSidebarLinkIdleAdmin   = tw.New().TextColor(tw.FgOnInverse).
+					On(tw.StateHover, func(c tw.ClassList) tw.ClassList {
+			return c.Bg(tw.SurfaceOverlay).TextColor(tw.FgOnInverse)
+		})
+	clSidebarLinkActiveContent = tw.New().Bg(tw.SurfaceBrandSoft).TextColor(tw.FgBrand)
+	clSidebarLinkIdleContent   = tw.New().TextColor(tw.FgSecondary).
+					On(tw.StateHover, func(c tw.ClassList) tw.ClassList {
+			return c.Bg(tw.SurfaceSecondary).TextColor(tw.FgPrimary)
+		})
+	clSidebarItemDisabled = tw.New().Opacity(tw.Opacity50).PointerEvents(tw.PointerNone).
+				Cursor(tw.CursorNotAllowed)
+	clSidebarSection       = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S2)
+	clSidebarSectionHeader = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S2).
+				PaddingX(tw.S2).PaddingBottom(tw.S2).BorderBottom(tw.Border1).
+				BorderColor(tw.BorderPrimary).FontSize(tw.TextXS).FontWeight(tw.FontBold).
+				TextColor(tw.FgTertiary)
+	clSidebarSectionGlyph = tw.New().TextColor(tw.FgBrand)
+	clSidebarSectionList  = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S0_5)
+	clSidebarPrefixAdmin  = tw.New().MinWidth(tw.S10).FontSize(tw.TextXS).
+				FontWeight(tw.FontSemibold).TextColor(tw.FgTertiary)
+	clSidebarPrefixContent = tw.New().MinWidth(tw.S10).FontSize(tw.TextXS).
+				FontWeight(tw.FontSemibold).TextColor(tw.FgSecondary)
+	clSidebarLabelVisible  = tw.New().MinWidth(tw.S0).Flex1()
+	clSidebarLabelHidden   = tw.New().MinWidth(tw.S0).Flex1().Display(tw.DisplayHidden)
+	clSidebarLabelContent  = tw.New().MinWidth(tw.S0).Flex1().BreakWords()
+	clSidebarNestedGroup   = tw.New().SpaceY(tw.S1)
+	clSidebarNestedIndent  = tw.New().MarginLeft(tw.S4).SpaceY(tw.S1)
+	clSidebarFooterAdmin   = tw.New().MarginTop(tw.SAuto).PaddingX(tw.S4).PaddingTop(tw.S4)
+	clSidebarFooterContent = tw.New().MarginTop(tw.S4)
+
 	// DataGrid organism: arrangement only — every part inside is a
 	// molecule or atom carrying its own component classes.
 	clGridSection = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S4)
@@ -707,6 +1217,40 @@ var (
 	clTabsLazy   = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).
 			Justify(tw.JustifyCenter).PaddingY(tw.S8)
 	clTabsLazyLabel = tw.New().TextColor(tw.FgSecondary)
+
+	clDashboardWidget = tw.New().Bg(tw.SurfacePrimary).Rounded(tw.RadiusLG).
+				Border(tw.Border1).BorderColor(tw.BorderPrimary).Shadow(tw.ShadowSM).
+				Overflow(tw.OverflowHidden)
+	clDashboardWidgetSpan = map[string]tw.ClassList{
+		"1": tw.New().ColSpan(1),
+		"2": tw.New().ColSpan(2),
+		"3": tw.New().ColSpan(3),
+		"4": tw.New().ColSpan(4),
+	}
+	clDashboardWidgetHeader = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).
+				Gap(tw.S3).PaddingX(tw.S4).PaddingTop(tw.S4).PaddingBottom(tw.S2)
+	clDashboardWidgetIcon = tw.New().Display(tw.DisplayFlex).FlexShrink0().Padding(tw.S2).
+				Bg(tw.SurfaceBrandSoft).Rounded(tw.RadiusLG)
+	clDashboardWidgetCopy  = tw.New().MinWidth(tw.S0).Flex1()
+	clDashboardWidgetTitle = tw.New().FontSize(tw.TextSM).FontWeight(tw.FontMedium).
+				TextColor(tw.FgPrimary).Truncate()
+	clDashboardWidgetSubtitle = tw.New().FontSize(tw.TextXS).
+					TextColor(tw.FgSecondary).MarginTop(tw.S0_5)
+	clDashboardWidgetBody  = tw.New().PaddingX(tw.S4).PaddingBottom(tw.S4)
+	clDashboardWidgetValue = tw.New().FontSize(tw.Text2XL).FontWeight(tw.FontBold).
+				TextColor(tw.FgPrimary)
+	clDashboardWidgetTrend = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).
+				Gap(tw.S1).MarginTop(tw.S1)
+	clDashboardWidgetChange    = tw.New().FontSize(tw.TextSM).FontWeight(tw.FontMedium)
+	clDashboardWidgetTrendTone = map[string]tw.ClassList{
+		"up":   tw.New().TextColor(tw.FgSuccess),
+		"down": tw.New().TextColor(tw.FgDanger),
+		"flat": tw.New().TextColor(tw.FgTertiary),
+	}
+	clDashboardWidgetPrevious = tw.New().FontSize(tw.TextXS).TextColor(tw.FgSecondary)
+	clDashboardWidgetFooter   = tw.New().PaddingX(tw.S4).PaddingY(tw.S3).
+					Bg(tw.SurfaceSecondary).BorderTop(tw.Border1).BorderColor(tw.BorderPrimary).
+					FontSize(tw.TextSM).TextColor(tw.FgTertiary)
 )
 
 // ClassLists returns every ClassList the renderers compose, base and variant
@@ -716,18 +1260,48 @@ var (
 func ClassLists() []tw.ClassList {
 	out := []tw.ClassList{
 		clIcon, clAvatarBase, clAvatarInitials, clAvatarImage, clAvatarStatus,
-		clFocusRing, clButtonBase, clButtonFull, clButtonIconOnly,
-		clBadgeBase, clBadgeDot,
-		clAlertBase, clAlertTitle, clAlertMessage, clAlertBody,
+		clFocusRing, clButtonBase, clButtonFull, clButtonIconOnly, clButtonDisabledLink,
+		clBadgeBase, clBadgeDot, clBadgeCount, clBadgeRemove,
+		clAlertBase, clAlertRegular, clAlertCompact, clAlertBordered,
+		clAlertTitle, clAlertMessage, clAlertBody, clAlertIcon, clAlertActions, clAlertClose,
+		clToastBase, clToastIcon, clToastBody, clToastTitle, clToastMessage, clToastLead, clToastClose,
 		clFieldWrap, clFieldWrapFull, clLabel, clHelp, clFieldErr, clRequired,
-		clInput, clInputNormal, clInputError,
+		clInput, clInputNormal, clInputError, clInputReadOnly,
 		clInputIconWrap, clInputIconStart, clInputIconEnd, clInputPadStart, clInputPadEnd,
+		clAutocompleteControl, clAutocompletePanel, clAutocompleteList,
+		clAutocompleteOption, clAutocompleteOptionActive, clAutocompleteIndicator, clAutocompleteSpinner,
+		clFileUploadRoot, clFileUploadDropZone, clFileUploadDropZoneDisabled,
+		clFileUploadDropZoneInner, clFileUploadInputHidden, clFileUploadInput,
+		clFileUploadIcon, clFileUploadPrompt, clFileUploadPromptText,
+		clFileUploadPromptAction, clFileUploadHint, clFileUploadLoading,
+		clFileUploadLoadingIcon, clFileUploadList, clFileUploadError,
+		clFileUploadItem, clFileUploadItemMeta, clFileUploadPreview,
+		clFileUploadPreviewLarge, clFileUploadItemCopy, clFileUploadItemName,
+		clFileUploadItemSize, clFileUploadRemove, clFileUploadDragActive,
+		clFileUploadDragIdle,
+		clDropdownRoot, clDropdownTrigger, clDropdownButton, clDropdownTriggerLabel,
+		clDropdownTriggerActions, clDropdownIconButton, clDropdownChevron,
+		clDropdownPanel, clDropdownSearchWrap, clDropdownSearch, clDropdownOptions,
+		clDropdownOption, clDropdownOptionSelected, clDropdownOptionDisabled,
+		clDropdownOptionMark, clDropdownOptionSpacer, clDropdownOptionIcon,
+		clDropdownOptionLabel, clDropdownGroupLabel,
+		clActionMenuRoot, clActionMenuTrigger, clActionMenuPanel, clActionMenuPanelInner,
+		clActionMenuSeparator, clActionMenuSectionLabel, clActionMenuItem,
+		clActionMenuItemDisabled, clActionMenuItemIcon, clActionMenuItemLabel,
+		clDrawerRoot, clDrawerOverlay, clDrawerPanel, clDrawerHeader,
+		clDrawerTitleBlock, clDrawerTitle, clDrawerDescription, clDrawerBody,
+		clDrawerFooter, clDrawerClose,
+		clModalRoot, clModalCentered, clModalBottomSheet, clModalOverlay,
+		clModalPanel, clModalHeader, clModalTitleBlock, clModalTitle,
+		clModalDescription, clModalBody, clModalFooter, clModalClose, clModalCancel,
 		clTextareaManual, clTextareaAuto, clTextareaFull, clTextareaMeta,
 		clTextareaSupporting, clTextareaCounter,
 		clCheckbox, clCheckRow, clCheckboxRoot, clCheckboxRootDisabled,
 		clCheckboxInput, clCheckboxIndicator, clCheckboxIndicatorIdle,
 		clCheckboxIndicatorActive, clCheckboxCheckmark, clCheckboxBar, clCheckboxLabel,
 		clRadioRoot, clRadioRootDisabled, clRadioInput, clRadioInputDisabled, clRadioLabel, clRadioDot,
+		clChoiceGroupRoot, clChoiceGroupLegend, clChoiceGroupDescription,
+		clChoiceGroupOptions, clChoiceGroupVertical, clChoiceGroupHorizontal, clChoiceGroupError,
 		clSliderRoot, clSliderLabel, clSliderRow, clSliderInput, clSliderInputDisabled, clSliderValue,
 		clToggleRoot, clToggleRootDisabled, clToggleControl, clToggleInput, clToggleTrack,
 		clToggleKnob, clToggleKnobUnchecked, clToggleLabel,
@@ -740,6 +1314,7 @@ func ClassLists() []tw.ClassList {
 		clEmpty, clEmptyPad, clEmptyBordered, clEmptyCompact, clEmptyTitle, clEmptyDesc,
 		clSkeleton, clSkeletonText, clSkeletonLine, clSkeletonLineLast,
 		clKbd, clLink, clTagBase, clTagIdle, clTagSelected,
+		clTextItalic, clTextUnderline, clTextNoWrap, clTruncate,
 		clStack, clFlex, clGrid, clContainer, clDataManagementPage,
 		clTableWrap, clTable, clTableHead, clTableThBase, clTableTh, clTableTd, clTableRow, clTableTdC,
 		clTableThSort, clTableSortBtn, clTableRowAlt, clTableTdStrong, clTableActions, clTableCellNote,
@@ -750,6 +1325,34 @@ func ClassLists() []tw.ClassList {
 		clCardHeader, clCardFooter, clCardImageVertical, clCardImageHorizontal,
 		clCardHorizontal, clCardVertical,
 		clBreadcrumb, clBreadcrumbSep, clBreadcrumbCur,
+		clAccordionRoot, clAccordionBordered, clAccordionUnbordered,
+		clAccordionSeparator, clAccordionTrigger,
+		clAccordionTriggerDisabled, clAccordionLead, clAccordionItemIcon,
+		clAccordionTitleBlock, clAccordionTitle, clAccordionSubtitle,
+		clAccordionChevron, clAccordionChevronOpen, clAccordionPanel,
+		clStepperListHorizontal, clStepperListVertical,
+		clStepperItemHorizontal, clStepperItemLast,
+		clStepperRowHorizontal, clStepperRowVertical,
+		clStepperVerticalItem, clStepperVerticalIcons, clStepperVerticalText,
+		clStepperIndicator, clStepperIndicatorRegular, clStepperIndicatorCompact,
+		clStepperClickable, clStepperDisabled, clStepperGlyph,
+		clStepperLabel, clStepperLabelCompact, clStepperLabelBlock,
+		clStepperDescription, clStepperConnectorHorizontal, clStepperConnectorVertical,
+		clSidebarRootAdmin, clSidebarRootContent, clSidebarWidthCollapsed,
+		clSidebarWidthExpanded, clSidebarDisabled, clSidebarInner,
+		clSidebarColumnAdmin, clSidebarColumnContent,
+		clSidebarBrandAdmin, clSidebarBrandContent, clSidebarBrandLink, clSidebarBrandText,
+		clSidebarNavWrapAdmin, clSidebarNavWrapContent, clSidebarNavAdmin, clSidebarNavContent,
+		clSidebarLinkAdmin, clSidebarLinkContent,
+		clSidebarLinkPadExpanded, clSidebarLinkPadCollapsed,
+		clSidebarLinkActiveAdmin, clSidebarLinkIdleAdmin,
+		clSidebarLinkActiveContent, clSidebarLinkIdleContent,
+		clSidebarItemDisabled, clSidebarSection, clSidebarSectionHeader,
+		clSidebarSectionGlyph, clSidebarSectionList,
+		clSidebarPrefixAdmin, clSidebarPrefixContent,
+		clSidebarLabelVisible, clSidebarLabelHidden, clSidebarLabelContent,
+		clSidebarNestedGroup, clSidebarNestedIndent,
+		clSidebarFooterAdmin, clSidebarFooterContent,
 		clGridSection, clGridToolbar, clGridActions,
 		clWindow, clWindowItems, clWindowState, clWindowLoading, clWindowEmpty,
 		clWindowError, clWindowTitle, clWindowDescription, clWindowRetry,
@@ -762,16 +1365,27 @@ func ClassLists() []tw.ClassList {
 		clTabsButtonUnderlineVertical, clTabsPillsActive, clTabsPillsIdle,
 		clTabsUnderlineActive, clTabsUnderlineIdle, clTabsDisabled, clTabsIcon,
 		clTabsBadge, clTabsPanels, clTabsPanel, clTabsLazy, clTabsLazyLabel,
+		clDashboardWidget, clDashboardWidgetHeader, clDashboardWidgetIcon,
+		clDashboardWidgetCopy, clDashboardWidgetTitle, clDashboardWidgetSubtitle,
+		clDashboardWidgetBody, clDashboardWidgetValue, clDashboardWidgetTrend,
+		clDashboardWidgetChange, clDashboardWidgetPrevious, clDashboardWidgetFooter,
 	}
 	for _, m := range []map[string]tw.ClassList{
 		clButtonVariant, clButtonTone, clButtonSize,
-		clBadgeVariant, clBadgeTone, clBadgeSize, clAlertVariant,
+		clBadgeVariant, clBadgeTone, clBadgeSize, clBadgeDotTone, clAlertVariant, clToastTone,
 		clIconSize, clIconTone, clAvatarSize, clAvatarShape, clAvatarTone,
 		clAvatarInitialsSize, clAvatarStatusTone, clAvatarStatusSize, clAvatarStatusPosition,
-		clInputSize, clSliderTone, clToggleTrackSize, clToggleTrackState, clToggleKnobSize, clToggleKnobChecked,
+		clInputSize, clInputTone, clDropdownTriggerSize, clDropdownButtonSize,
+		clSliderTone, clToggleTrackSize, clToggleTrackState, clToggleKnobSize, clToggleKnobChecked,
 		clSpinnerSize, clSpinnerTone, clProgressTrackSize, clProgressTone,
 		clTooltipPosition, clKbdSize, clTagTone,
 		clSkeletonBlockSize, clSkeletonLineSize, clSkeletonCircleSize,
+		clTextTransform, clStepperIndicatorState, clStepperLabelState,
+		clStepperDescriptionState, clStepperConnectorState,
+		clActionMenuAlign, clActionMenuWidth, clActionMenuItemTone,
+		clDrawerPosition, clDrawerWidth, clDrawerBottomSize,
+		clModalPanelSize,
+		clDashboardWidgetSpan, clDashboardWidgetTrendTone,
 	} {
 		for _, cl := range m {
 			out = append(out, cl)
@@ -789,6 +1403,12 @@ func ClassLists() []tw.ClassList {
 	}
 	for _, c := range clTextColor {
 		out = append(out, tw.New().TextColor(c))
+	}
+	for _, align := range clTextAlign {
+		out = append(out, tw.New().TextAlign(align))
+	}
+	for lines := 1; lines <= 6; lines++ {
+		out = append(out, tw.New().LineClamp(lines))
 	}
 	for _, s := range clGapScale {
 		out = append(out, tw.New().Gap(s))

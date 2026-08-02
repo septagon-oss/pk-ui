@@ -63,10 +63,26 @@ func (p CardProps) ToMap() map[string]any { return propsToMap(p) }
 type ModalProps struct {
 	contracts.ComponentProps
 
-	Title        string `json:"title,omitempty"`
-	Size         string `json:"size,omitempty"` // small, medium, large, fullscreen
-	Closable     bool   `json:"closable,omitempty"`
-	CloseOnClick bool   `json:"closeOnClick,omitempty"` // close on backdrop click
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+	Body        string `json:"body,omitempty"`
+	Footer      string `json:"footer,omitempty"`
+	AriaLabel   string `json:"ariaLabel,omitempty"`
+	CloseLabel  string `json:"closeLabel,omitempty"`
+	Size        string `json:"size,omitempty"` // small, medium, large, xl, full
+
+	// Pointer booleans preserve the intended default-true behavior while still
+	// allowing portable clients to explicitly disable an affordance.
+	Closable       *bool `json:"closable,omitempty"`
+	CloseOnOverlay *bool `json:"closeOnOverlay,omitempty"`
+	CloseOnEscape  *bool `json:"closeOnEscape,omitempty"`
+	ShowClose      *bool `json:"showClose,omitempty"`
+	ShowOverlay    *bool `json:"showOverlay,omitempty"`
+	Centered       *bool `json:"centered,omitempty"`
+	ClearOnClose   *bool `json:"clearOnClose,omitempty"`
+	Open           bool  `json:"open,omitempty"`
+	OpenOnSwap     bool  `json:"openOnSwap,omitempty"`
+	Deferred       bool  `json:"deferred,omitempty"`
 }
 
 // ToMap converts ModalProps to map[string]any for unified Component construction.
@@ -76,17 +92,41 @@ func (p ModalProps) ToMap() map[string]any { return propsToMap(p) }
 type SidebarProps struct {
 	contracts.ComponentProps
 
-	Items     []SidebarItem `json:"items"`
-	Collapsed bool          `json:"collapsed,omitempty"`
+	Items           []SidebarItem    `json:"items,omitempty"`
+	Sections        []SidebarSection `json:"sections,omitempty"`
+	Current         string           `json:"current,omitempty"`
+	Flavor          string           `json:"flavor,omitempty"` // admin, content
+	Collapsible     bool             `json:"collapsible,omitempty"`
+	Collapsed       bool             `json:"collapsed,omitempty"`
+	NavigationLabel string           `json:"navigationLabel,omitempty"`
+	BrandLabel      string           `json:"brandLabel,omitempty"`
+	BrandHref       string           `json:"brandHref,omitempty"`
 }
 
 // SidebarItem represents a sidebar navigation item.
 type SidebarItem struct {
-	Label    string        `json:"label"`
-	Href     string        `json:"href,omitempty"`
-	Icon     string        `json:"icon,omitempty"`
-	Active   bool          `json:"active,omitempty"`
-	Children []SidebarItem `json:"children,omitempty"`
+	ID           string            `json:"id,omitempty"`
+	Label        string            `json:"label"`
+	Href         string            `json:"href,omitempty"`
+	Icon         string            `json:"icon,omitempty"`
+	Prefix       string            `json:"prefix,omitempty"`
+	Badge        string            `json:"badge,omitempty"`
+	BadgeVariant string            `json:"badgeVariant,omitempty"`
+	Active       bool              `json:"active,omitempty"`
+	Disabled     bool              `json:"disabled,omitempty"`
+	SearchText   string            `json:"searchText,omitempty"`
+	Attrs        map[string]string `json:"-" delivery:"internal"`
+	Children     []SidebarItem     `json:"children,omitempty"`
+}
+
+// SidebarSection groups related sidebar items under an optional heading.
+type SidebarSection struct {
+	ID         string        `json:"id,omitempty"`
+	Label      string        `json:"label,omitempty"`
+	Glyph      string        `json:"glyph,omitempty"`
+	Tone       string        `json:"tone,omitempty"`
+	SearchText string        `json:"searchText,omitempty"`
+	Items      []SidebarItem `json:"items,omitempty"`
 }
 
 // ToMap converts SidebarProps to map[string]any for unified Component construction.

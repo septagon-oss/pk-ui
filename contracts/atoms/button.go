@@ -11,6 +11,7 @@ type ButtonProps struct {
 	contracts.HTMXProps
 
 	Label     string `json:"label"`
+	Href      string `json:"href,omitempty"`    // renders an anchor with button styling when set
 	Variant   string `json:"variant,omitempty"` // primary, secondary, outline, ghost, link
 	Tone      string `json:"tone,omitempty"`    // neutral, brand, success, warning, danger, info
 	Size      string `json:"size,omitempty"`    // xs, sm, md, lg, xl, 2xl

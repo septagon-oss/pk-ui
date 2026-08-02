@@ -36,18 +36,27 @@ var (
 func OSSDeliveryCatalog() []DeliveryDefinition {
 	definitions := []DeliveryDefinition{
 		iconDeliveryDefinition(),
+		avatarDeliveryDefinition(),
 		buttonDeliveryDefinition(),
 		badgeDeliveryDefinition(),
 		alertDeliveryDefinition(),
+		toastDeliveryDefinition(),
 		inputDeliveryDefinition(),
 		selectDeliveryDefinition(),
 		textareaDeliveryDefinition(),
 		checkboxDeliveryDefinition(),
+		radioDeliveryDefinition(),
+		checkboxGroupDeliveryDefinition(),
+		radioGroupDeliveryDefinition(),
+		sliderDeliveryDefinition(),
+		toggleDeliveryDefinition(),
 		labelDeliveryDefinition(),
 		textDeliveryDefinition(),
 		headingDeliveryDefinition(),
 		dividerDeliveryDefinition(),
 		spinnerDeliveryDefinition(),
+		progressDeliveryDefinition(),
+		tooltipDeliveryDefinition(),
 		skeletonDeliveryDefinition(),
 		deferredSlotDeliveryDefinition(),
 		emptyStateDeliveryDefinition(),
@@ -59,11 +68,22 @@ func OSSDeliveryCatalog() []DeliveryDefinition {
 		cardDeliveryDefinition(),
 		cardSkeletonDeliveryDefinition(),
 		breadcrumbDeliveryDefinition(),
+		accordionDeliveryDefinition(),
+		stepperDeliveryDefinition(),
+		sidebarDeliveryDefinition(),
+		datePickerDeliveryDefinition(),
+		fileUploadDeliveryDefinition(),
+		autocompleteDeliveryDefinition(),
+		dropdownDeliveryDefinition(),
+		actionMenuDeliveryDefinition(),
+		drawerDeliveryDefinition(),
+		modalDeliveryDefinition(),
 		paginationDeliveryDefinition(),
 		searchBarDeliveryDefinition(),
 		tabsDeliveryDefinition(),
 		dataGridDeliveryDefinition(),
 		windowedCollectionDeliveryDefinition(),
+		dashboardWidgetDeliveryDefinition(),
 		stackDeliveryDefinition(),
 		flexDeliveryDefinition(),
 		gridDeliveryDefinition(),
@@ -81,6 +101,68 @@ func OSSDeliveryCatalog() []DeliveryDefinition {
 		out[index] = definition.Clone()
 	}
 	return out
+}
+
+func avatarDeliveryDefinition() DeliveryDefinition {
+	componentType := "Avatar"
+	root := deliveryClassBound(
+		deliveryClassBound(
+			deliveryClassBound(
+				deliveryFrame(
+					componentType,
+					clAvatarBase.
+						Merge(clAvatarSize["md"]).
+						Merge(clAvatarShape["circle"]).
+						Merge(clAvatarTone["neutral"]).
+						Compile(),
+					deliveryText("Initials", clAvatarInitials.Compile(), "AL", "initials", "name"),
+				),
+				"size",
+				compileClassMap(clAvatarSize),
+			),
+			"shape",
+			compileClassMap(clAvatarShape),
+		),
+		"tone",
+		compileClassMap(clAvatarTone),
+	)
+	return newDeliveryDefinition(
+		componentType,
+		uicomponent.TierAtom,
+		stableDeliveryID(componentType),
+		"Accessible image, initials, or icon identity mark with governed shape, size, tone, and presence status.",
+		map[string]PropertyContract{
+			"src":            contentProperty("Optional avatar image URL."),
+			"alt":            contentProperty("Accessible image or fallback label."),
+			"name":           contentProperty("Name used to derive initials and accessible identity."),
+			"initials":       contentProperty("Explicit initials override."),
+			"fallbackIcon":   contentProperty("Governed icon name used without an image or initials."),
+			"size":           sizeProperty(controlSizes, "md", "Avatar dimensions."),
+			"shape":          variantProperty([]string{"circle", "rounded", "square", "pill"}, "circle", "Avatar silhouette."),
+			"tone":           toneProperty([]string{"neutral", "brand", "success", "warning", "danger", "info"}, "neutral", "Initials or icon surface tone."),
+			"status":         variantProperty([]string{"none", "online", "offline", "busy", "away"}, "none", "Optional presence indicator."),
+			"statusPosition": variantProperty([]string{"top-right", "bottom-right", "top-left", "bottom-left"}, "bottom-right", "Presence indicator placement."),
+			"statusLabel":    contentProperty("Localized accessible presence label."),
+		},
+		nil,
+		deliveryDesign("initials", "02 Atoms", "Media", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "initials", map[string]any{
+				"name": "Ada Lovelace", "size": "lg", "shape": "circle", "tone": "neutral",
+			}),
+			deliveryExample(componentType, "with-status", map[string]any{
+				"name": "Grace Hopper", "status": "online", "statusLabel": "Status: online",
+				"statusPosition": "bottom-right", "tone": "brand",
+			}),
+			deliveryExample(componentType, "with-image", map[string]any{
+				"src": "https://example.test/avatar.png", "alt": "Profile portrait", "shape": "rounded",
+			}),
+			deliveryExample(componentType, "fallback-icon", map[string]any{
+				"fallbackIcon": "user", "alt": "Account", "size": "sm",
+			}),
+		},
+		Avatar,
+	)
 }
 
 // RenderDeliveryExample renders one authored example through the exact same
@@ -439,6 +521,7 @@ func buttonDeliveryDefinition() DeliveryDefinition {
 		"Accessible action control rendered by the OSS web runtime.",
 		map[string]PropertyContract{
 			"label":     contentProperty("Visible button label."),
+			"href":      contentProperty("Optional navigation target; renders link semantics when set."),
 			"variant":   variantProperty(buttonVariants, "primary", "Visual treatment."),
 			"tone":      toneProperty([]string{"neutral", "brand", "success", "warning", "danger", "info"}, "neutral", "Semantic intent."),
 			"size":      sizeProperty(controlSizes, "md", "Control size."),
@@ -508,11 +591,10 @@ func buttonDeliveryDefinition() DeliveryDefinition {
 			),
 		},
 		func(props atoms.ButtonProps, slots DeliverySlotChildren) g.Node {
-			return buttonWithSlots(
-				props,
-				slots.Nodes("iconStart"),
-				slots.Nodes("iconEnd"),
-			)
+			return ButtonWithSlots(props, ButtonSlots{
+				IconStart: slots.Nodes("iconStart"),
+				IconEnd:   slots.Nodes("iconEnd"),
+			})
 		},
 	)
 }
@@ -526,8 +608,17 @@ func badgeDeliveryDefinition() DeliveryDefinition {
 					componentType,
 					clBadgeBase.Compile(),
 					deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
+					deliveryVisibleWhen(
+						deliveryFrame("StatusDot", clBadgeDot.Merge(clBadgeDotTone["neutral"]).Compile()),
+						map[string]any{"dot": true},
+					),
 					deliveryText("Label", "", "Active", "label"),
+					deliveryText("Count", clBadgeCount.Compile(), "12", "count"),
 					deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
+					deliveryVisibleWhen(
+						deliveryText("Remove", clBadgeRemove.Compile(), "×", "removeLabel"),
+						map[string]any{"removable": true},
+					),
 				),
 				"variant",
 				compileClassMap(clBadgeVariant),
@@ -551,8 +642,12 @@ func badgeDeliveryDefinition() DeliveryDefinition {
 				"neutral",
 				"Semantic intent independent of the visual treatment.",
 			),
-			"size": sizeProperty(controlSizes, "md", "Badge scale."),
-			"dot":  modifierProperty("Shows a leading status dot."),
+			"size":        sizeProperty(controlSizes, "md", "Badge scale."),
+			"dot":         modifierProperty("Shows a leading status dot."),
+			"count":       roleProperty(designcomponent.PropRoleContent, "Positive numeric indicator, visually capped to 99+."),
+			"removable":   modifierProperty("Shows an accessible remove affordance."),
+			"removeLabel": contentProperty("Localized remove-button label."),
+			"live":        stateProperty("Announces dynamic badge content as a polite status."),
 		},
 		[]designcomponent.Slot{
 			{
@@ -579,13 +674,18 @@ func badgeDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "tone-info", map[string]any{
 				"label": "Pending", "variant": "secondary", "tone": "info", "size": "md",
 			}),
+			deliveryExample(componentType, "count", map[string]any{
+				"label": "Messages", "count": 125, "variant": "secondary", "tone": "neutral", "size": "sm",
+			}),
+			deliveryExample(componentType, "removable", map[string]any{
+				"label": "Filter", "removable": true, "removeLabel": "Remove Filter", "tone": "brand", "size": "md",
+			}),
 		},
 		func(props atoms.BadgeProps, slots DeliverySlotChildren) g.Node {
-			return badgeWithSlots(
-				props,
-				slots.Nodes("iconStart"),
-				slots.Nodes("iconEnd"),
-			)
+			return BadgeWithSlots(props, BadgeSlots{
+				IconStart: slots.Nodes("iconStart"),
+				IconEnd:   slots.Nodes("iconEnd"),
+			})
 		},
 	)
 }
@@ -618,7 +718,7 @@ func alertDeliveryDefinition() DeliveryDefinition {
 			"title":       contentProperty("Optional status title."),
 			"tone":        toneProperty([]string{"info", "success", "warning", "danger"}, "info", "Severity."),
 			"dismissible": stateProperty("Whether a dismiss affordance is exposed."),
-			"bordered":    modifierProperty("Whether the message has an outline."),
+			"bordered":    modifierProperty("Whether the message has a leading accent border."),
 			"compact":     modifierProperty("Whether spacing is compact."),
 		},
 		[]designcomponent.Slot{
@@ -658,6 +758,62 @@ func alertDeliveryDefinition() DeliveryDefinition {
 	)
 }
 
+func toastDeliveryDefinition() DeliveryDefinition {
+	componentType := "Toast"
+	root := deliveryClassBound(
+		deliveryFrame(
+			componentType,
+			clToastBase.Compile(),
+			deliverySlot("LeadingIcon", "iconStart", clToastIcon.Compile()),
+			deliveryFrame(
+				"Body",
+				clToastBody.Compile(),
+				deliveryText("Title", clToastTitle.Compile(), "Saved", "title"),
+				deliveryText("Message", clToastMessage.Compile(), "Settings updated", "message"),
+			),
+			deliveryText("Close", clToastClose.Compile(), "×", "closeLabel"),
+		),
+		"tone",
+		compileClassMap(clToastTone),
+	)
+	return newSlottedDeliveryDefinition(
+		componentType,
+		uicomponent.TierAtom,
+		stableDeliveryID(componentType),
+		"Transient accessible feedback with governed urgency, dismissal, and placement metadata.",
+		map[string]PropertyContract{
+			"message": contentProperty("Required notification message."),
+			"title":   contentProperty("Optional notification title."),
+			"tone":    toneProperty([]string{"info", "success", "warning", "danger"}, "info", "Notification severity."),
+			"duration": {
+				Role: designcomponent.PropRoleState, Description: "Auto-dismiss delay in milliseconds.", Default: "5000",
+			},
+			"persistent": stateProperty("Whether the notification remains until explicitly dismissed."),
+			"position":   enumProperty([]string{"top-right", "top-left", "bottom-right", "bottom-left"}, "top-right", "Viewport placement metadata."),
+			"closable": {
+				Role: designcomponent.PropRoleModifier, Description: "Whether an accessible dismiss affordance is shown.", Default: "true",
+			},
+			"closeLabel": contentProperty("Localized label for the dismiss affordance."),
+		},
+		[]designcomponent.Slot{{
+			Name: "iconStart", Description: "Optional leading status glyph.",
+			AllowedTypes: []string{"Icon"}, Cardinality: designcomponent.SlotOne,
+		}},
+		deliveryDesign("success", "02 Atoms", "Feedback", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "success", map[string]any{
+				"title": "Saved", "message": "Settings updated", "tone": "success", "duration": 5000,
+			}),
+			deliveryExample(componentType, "persistent-warning", map[string]any{
+				"message": "Connection interrupted", "tone": "warning", "persistent": true,
+			}),
+		},
+		func(props atoms.ToastProps, slots DeliverySlotChildren) g.Node {
+			return toastWithSlots(props, slots.Nodes("iconStart"))
+		},
+	)
+}
+
 func inputDeliveryDefinition() DeliveryDefinition {
 	componentType := "Input"
 	root := deliverySemantics(
@@ -686,7 +842,7 @@ func inputDeliveryDefinition() DeliveryDefinition {
 		"field",
 		"field",
 	)
-	return newSlottedDeliveryDefinition(
+	definition := newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
 		stableDeliveryID(componentType),
@@ -706,11 +862,14 @@ func inputDeliveryDefinition() DeliveryDefinition {
 			"placeholder": contentProperty("Empty-state prompt."),
 			"label":       contentProperty("Visible field label."),
 			"helpText":    contentProperty("Supporting guidance."),
-			"error":       stateProperty("Validation message; non-empty selects error styling."),
+			"error":       contentProperty("Validation message; non-empty selects error styling."),
+			"invalid":     stateProperty("Whether invalid styling and aria-invalid are active without an inline message."),
 			"required":    stateProperty("Whether a value is required."),
 			"readOnly":    stateProperty("Whether editing is prevented."),
 			"autoFocus":   stateProperty("Whether focus is requested on mount."),
 			"size":        sizeProperty([]string{"sm", "md", "lg"}, "md", "Control size."),
+			"tone":        toneProperty([]string{"neutral", "success", "warning", "danger"}, "neutral", "Semantic validation or review state."),
+			"fullWidth":   modifierProperty("Whether the field fills its available width."),
 		},
 		[]designcomponent.Slot{
 			{
@@ -744,6 +903,14 @@ func inputDeliveryDefinition() DeliveryDefinition {
 				"name": "password", "type": "password", "label": "Password",
 				"value": "correct horse battery staple",
 			}),
+			deliveryExample(componentType, "validated", map[string]any{
+				"name": "email", "type": "email", "label": "Email address",
+				"value": "name@example.com", "tone": "success",
+			}),
+			deliveryExample(componentType, "locked-value", map[string]any{
+				"name": "workspace", "label": "Workspace", "value": "platform",
+				"readOnly": true,
+			}),
 		},
 		func(props atoms.InputProps, slots DeliverySlotChildren) g.Node {
 			return inputWithSlots(
@@ -753,6 +920,23 @@ func inputDeliveryDefinition() DeliveryDefinition {
 			)
 		},
 	)
+	baseRender := definition.Render
+	definition.Render = func(props map[string]any, slots DeliverySlotChildren) (g.Node, error) {
+		if rawType, exists := props["type"]; exists {
+			if typed, ok := rawType.(string); ok {
+				canonical, valid := canonicalInputType(typed)
+				if !valid {
+					return nil, fmt.Errorf("Input props: unsupported type %q", typed)
+				}
+				if canonical != typed {
+					props = cloneDeliveryValueMap(props)
+					props["type"] = canonical
+				}
+			}
+		}
+		return baseRender(props, slots)
+	}
+	return definition
 }
 
 func selectDeliveryDefinition() DeliveryDefinition {
@@ -770,7 +954,7 @@ func selectDeliveryDefinition() DeliveryDefinition {
 	)
 	return newDeliveryDefinition(
 		componentType,
-		uicomponent.TierMolecule,
+		uicomponent.TierAtom,
 		stableDeliveryID(componentType),
 		"Native single- or multiple-value choice control.",
 		map[string]PropertyContract{
@@ -783,6 +967,7 @@ func selectDeliveryDefinition() DeliveryDefinition {
 			"required":    stateProperty("Whether a choice is required."),
 			"multiple":    stateProperty("Whether more than one choice can be selected."),
 			"visibleRows": roleProperty(designcomponent.PropRoleSize, "Visible option rows in multiple mode."),
+			"fullWidth":   modifierProperty("Whether the field fills its available width."),
 			"helpText":    contentProperty("Supporting guidance."),
 			"error":       stateProperty("Validation message."),
 		},
@@ -800,9 +985,9 @@ func selectDeliveryDefinition() DeliveryDefinition {
 				"name": "status", "label": "Status", "multiple": true,
 				"visibleRows": 3, "values": []string{"draft", "published"},
 				"options": []map[string]any{
-					{"label": "Draft", "value": "draft"},
-					{"label": "Published", "value": "published"},
-					{"label": "Archived", "value": "archived"},
+					{"label": "Draft", "value": "draft", "group": "Current"},
+					{"label": "Published", "value": "published", "group": "Current"},
+					{"label": "Archived", "value": "archived", "group": "History"},
 				},
 			}),
 		},
@@ -841,10 +1026,20 @@ func textareaDeliveryDefinition() DeliveryDefinition {
 			"errorMessage": stateProperty("Validation message."),
 			"required":     stateProperty("Whether a value is required."),
 			"readOnly":     stateProperty("Whether editing is prevented."),
-			"rows":         roleProperty(designcomponent.PropRoleSize, "Visible row count."),
-			"minLength":    roleProperty(designcomponent.PropRoleSize, "Minimum accepted character count."),
-			"maxLength":    roleProperty(designcomponent.PropRoleSize, "Maximum accepted character count."),
-			"fullWidth":    modifierProperty("Whether the field fills its container."),
+			"rows": {
+				Role: designcomponent.PropRoleSize, Description: "Visible row count when auto-resize is disabled.", Default: "4",
+			},
+			"minRows": {
+				Role: designcomponent.PropRoleSize, Description: "Minimum auto-resize row count.", Default: "2",
+			},
+			"maxRows": {
+				Role: designcomponent.PropRoleSize, Description: "Maximum auto-resize row count.", Default: "10",
+			},
+			"minLength":  roleProperty(designcomponent.PropRoleSize, "Minimum accepted character count."),
+			"maxLength":  roleProperty(designcomponent.PropRoleSize, "Maximum accepted character count."),
+			"showCount":  modifierProperty("Whether a live character count is shown."),
+			"autoResize": modifierProperty("Whether the control grows between minRows and maxRows."),
+			"fullWidth":  modifierProperty("Whether the field fills its container."),
 		},
 		nil,
 		deliveryDesign("default", "02 Atoms", "Forms", root),
@@ -856,7 +1051,13 @@ func textareaDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "auto-resize", map[string]any{
 				"name": "description", "label": "Description",
 				"placeholder": "Enter a detailed description...",
-				"maxLength":   500, "fullWidth": true,
+				"maxLength":   500, "fullWidth": true, "autoResize": true,
+				"minRows": 3, "maxRows": 15,
+			}),
+			deliveryExample(componentType, "with-error", map[string]any{
+				"name": "notes", "label": "Notes", "value": "too short",
+				"errorMessage": "Must be at least 20 characters.",
+				"helperText":   "Explain enough for another person to act.",
 			}),
 		},
 		Textarea,
@@ -870,9 +1071,16 @@ func checkboxDeliveryDefinition() DeliveryDefinition {
 		clFieldWrap.Compile(),
 		deliveryFrame(
 			"ControlRow",
-			clCheckRow.Compile(),
-			deliveryFrame("Control", clCheckbox.Compile()),
-			deliveryText("Label", clLabel.Compile(), "Include archived items", "label"),
+			clCheckboxRoot.Compile(),
+			deliveryClassBound(
+				deliveryFrame("Indicator", clCheckboxIndicator.Compile()),
+				"checked",
+				map[string]string{
+					"false": clCheckboxIndicatorIdle.Compile(),
+					"true":  clCheckboxIndicatorActive.Compile(),
+				},
+			),
+			deliveryText("Label", clCheckboxLabel.Compile(), "Include archived items", "label"),
 		),
 		deliveryText("Help", clHelp.Compile(), "Archived rows remain read-only.", "helpText"),
 	)
@@ -883,7 +1091,7 @@ func checkboxDeliveryDefinition() DeliveryDefinition {
 		"Accessible labelled checkbox control.",
 		map[string]PropertyContract{
 			"name":          contentProperty("Submitted field name."),
-			"label":         contentProperty("Visible option label."),
+			"label":         contentProperty("Optional visible label; name supplies the accessible label when omitted."),
 			"checked":       stateProperty("Checked state."),
 			"indeterminate": stateProperty("Mixed selection state."),
 			"value":         contentProperty("Submitted value."),
@@ -909,6 +1117,210 @@ func checkboxDeliveryDefinition() DeliveryDefinition {
 		},
 		Checkbox,
 	)
+}
+
+func radioDeliveryDefinition() DeliveryDefinition {
+	componentType := "Radio"
+	root := deliveryClassBound(
+		deliverySemantics(
+			deliveryFrame(
+				componentType,
+				clRadioRoot.Compile(),
+				deliveryFrame(
+					"NativeControl",
+					clRadioInput.Compile(),
+					deliveryVisibleWhen(
+						deliveryFrame("SelectedDot", clRadioDot.Compile()),
+						map[string]any{"checked": true},
+					),
+				),
+				deliveryText("Label", clRadioLabel.Compile(), "Standard plan", "label", "value"),
+			),
+			"radio",
+			"single-selection field",
+		),
+		"disabled",
+		map[string]string{
+			"false": clRadioRoot.Compile(),
+			"true":  clRadioRoot.Merge(clRadioRootDisabled).Compile(),
+		},
+	)
+	definition := newDeliveryDefinition(
+		componentType,
+		uicomponent.TierAtom,
+		stableDeliveryID(componentType),
+		"Native single-selection control with governed labels, states, focus, and semantic accent.",
+		map[string]PropertyContract{
+			"name":     contentProperty("Required field name shared by one radio group."),
+			"label":    contentProperty("Optional visible choice label."),
+			"helpText": contentProperty("Optional supporting guidance for this choice."),
+			"value":    contentProperty("Required submitted choice value."),
+			"checked":  stateProperty("Whether this choice is selected."),
+			"required": stateProperty("Whether the group requires a selection."),
+			"disabled": stateProperty("Whether this choice is unavailable."),
+		},
+		nil,
+		deliveryDesign("basic", "02 Atoms", "Form Controls", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "basic", map[string]any{
+				"name": "plan", "value": "standard", "label": "Standard plan",
+			}),
+			deliveryExample(componentType, "checked", map[string]any{
+				"name": "plan", "value": "pro", "label": "Pro plan", "checked": true,
+			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"name": "plan", "value": "enterprise", "label": "Enterprise", "disabled": true,
+			}),
+		},
+		Radio,
+	)
+	return withDeliveryTags(definition, "form", "radio", "choice", "single-selection")
+}
+
+func sliderDeliveryDefinition() DeliveryDefinition {
+	componentType := "Slider"
+	input := deliveryClassBound(
+		deliveryFrame("NativeRange", clSliderInput.Merge(clSliderTone["brand"]).Compile()),
+		"tone",
+		compileClassMap(clSliderTone),
+	)
+	root := deliverySemantics(
+		deliveryFrame(
+			componentType,
+			clSliderRoot.Compile(),
+			deliveryText("Label", clSliderLabel.Compile(), "Opacity", "label", "name"),
+			deliveryFrame(
+				"ControlRow",
+				clSliderRow.Compile(),
+				input,
+				deliveryVisibleWhen(
+					deliveryText("Value", clSliderValue.Compile(), "75", "value"),
+					map[string]any{"showValue": true},
+				),
+			),
+		),
+		"group",
+		"numeric range field",
+	)
+	definition := newDeliveryDefinition(
+		componentType,
+		uicomponent.TierAtom,
+		stableDeliveryID(componentType),
+		"Native numeric range control with governed bounds, semantic tone, accessible value text, and live value readout.",
+		map[string]PropertyContract{
+			"name":          contentProperty("Required form field name and fallback accessible label."),
+			"label":         contentProperty("Optional visible field label."),
+			"min":           roleProperty(designcomponent.PropRoleDefault, "Required minimum allowed value."),
+			"max":           roleProperty(designcomponent.PropRoleDefault, "Required maximum allowed value."),
+			"step":          roleProperty(designcomponent.PropRoleDefault, "Step increment; non-positive values fall back to one."),
+			"value":         contentProperty("Current numeric value."),
+			"showValue":     modifierProperty("Whether to render a live numeric value mirror."),
+			"tone":          toneProperty([]string{"brand", "success", "warning", "danger", "info"}, "brand", "Semantic accent for the native range control."),
+			"ariaValueText": contentProperty("Optional human-readable value including units."),
+			"disabled":      stateProperty("Whether the range control is unavailable."),
+		},
+		nil,
+		deliveryDesign("with-value", "02 Atoms", "Form Controls", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "with-value", map[string]any{
+				"name": "opacity", "label": "Opacity", "min": 0, "max": 100,
+				"step": 1, "value": 75, "showValue": true, "tone": "brand",
+			}),
+			deliveryExample(componentType, "custom-range", map[string]any{
+				"name": "cpu_limit", "label": "CPU limit", "min": 10, "max": 500,
+				"step": 5, "value": 100, "showValue": true, "tone": "warning",
+				"ariaValueText": "100 millicores",
+			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"name": "volume", "label": "Volume", "min": 0, "max": 100,
+				"step": 1, "value": 40, "disabled": true, "tone": "brand",
+			}),
+		},
+		Slider,
+	)
+	return withDeliveryTags(definition, "range", "slider", "input", "form", "numeric", "selection")
+}
+
+func toggleDeliveryDefinition() DeliveryDefinition {
+	componentType := "Toggle"
+	knob := deliveryClassBound(
+		deliveryClassBound(
+			deliveryFrame("Knob", clToggleKnob.Merge(clToggleKnobSize["md"]).Compile()),
+			"size",
+			compileClassMap(clToggleKnobSize),
+		),
+		"checked",
+		map[string]string{
+			"false": clToggleKnobUnchecked.Compile(),
+			"true":  clToggleKnobChecked["md"].Compile(),
+		},
+	)
+	track := deliveryClassBound(
+		deliveryClassBound(
+			deliveryFrame("Track", clToggleTrack.Merge(clToggleTrackSize["md"]).Compile(), knob),
+			"size",
+			compileClassMap(clToggleTrackSize),
+		),
+		"checked",
+		map[string]string{
+			"false": clToggleTrackState["unchecked"].Compile(),
+			"true":  clToggleTrackState["checked"].Compile(),
+		},
+	)
+	root := deliveryClassBound(
+		deliverySemantics(
+			deliveryFrame(
+				componentType,
+				clToggleRoot.Compile(),
+				track,
+				deliveryVisibleWhen(
+					deliveryText("Label", clToggleLabel.Compile(), "Enable notifications", "label", "name"),
+					map[string]any{"hideLabel": false},
+				),
+			),
+			"switch",
+			"binary on/off field",
+		),
+		"disabled",
+		map[string]string{
+			"false": clToggleRoot.Compile(),
+			"true":  clToggleRoot.Merge(clToggleRootDisabled).Compile(),
+		},
+	)
+	definition := newDeliveryDefinition(
+		componentType,
+		uicomponent.TierAtom,
+		stableDeliveryID(componentType),
+		"Accessible binary switch with one interactive surface, hidden form value, governed sizes, and synchronized track and knob states.",
+		map[string]PropertyContract{
+			"name":      contentProperty("Required form input name."),
+			"label":     contentProperty("Optional visible switch label."),
+			"ariaLabel": contentProperty("Optional accessible-name override."),
+			"hideLabel": modifierProperty("Whether to omit the visible label while retaining its accessible name."),
+			"checked":   stateProperty("Whether the switch starts on."),
+			"size":      sizeProperty([]string{"sm", "md", "lg"}, "md", "Track and knob dimensions."),
+			"disabled":  stateProperty("Whether the switch is unavailable."),
+		},
+		nil,
+		deliveryDesign("default", "02 Atoms", "Form Controls", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "default", map[string]any{
+				"name": "notifications", "label": "Enable notifications", "size": "md",
+			}),
+			deliveryExample(componentType, "checked", map[string]any{
+				"name": "dark_mode", "label": "Dark mode", "checked": true, "size": "lg",
+			}),
+			deliveryExample(componentType, "hidden-label", map[string]any{
+				"name": "marketing", "label": "Marketing cookies", "hideLabel": true,
+				"checked": true, "size": "sm",
+			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"name": "feature", "label": "Feature flag", "disabled": true, "size": "md",
+			}),
+		},
+		Toggle,
+	)
+	return withDeliveryTags(definition, "switch", "toggle", "boolean", "form", "input", "on-off")
 }
 
 func labelDeliveryDefinition() DeliveryDefinition {
@@ -948,15 +1360,23 @@ func textDeliveryDefinition() DeliveryDefinition {
 	root := deliveryClassBound(
 		deliveryClassBound(
 			deliveryClassBound(
-				deliveryText("Text", "", "A clear supporting sentence.", "content"),
-				"size",
-				textSizeClasses(),
+				deliveryClassBound(
+					deliveryClassBound(
+						deliveryText("Text", "", "A clear supporting sentence.", "content"),
+						"size",
+						textSizeClasses(),
+					),
+					"align",
+					textAlignClasses(),
+				),
+				"weight",
+				textWeightClasses(),
 			),
-			"weight",
-			textWeightClasses(),
+			"color",
+			textColorClasses(),
 		),
-		"color",
-		textColorClasses(),
+		"transform",
+		compileClassMap(clTextTransform),
 	)
 	return withDeliveryTags(newDeliveryDefinition(
 		componentType,
@@ -964,18 +1384,27 @@ func textDeliveryDefinition() DeliveryDefinition {
 		stableDeliveryID(componentType),
 		"Semantic body-copy primitive.",
 		map[string]PropertyContract{
-			"content":  contentProperty("Visible copy."),
-			"size":     sizeProperty([]string{"xs", "sm", "base", "lg", "xl", "2xl"}, "base", "Text scale."),
-			"weight":   variantProperty([]string{"normal", "medium", "semibold", "bold"}, "normal", "Font weight."),
-			"color":    toneProperty([]string{"primary", "secondary", "muted", "brand", "success", "warning", "danger", "info"}, "primary", "Semantic foreground."),
-			"truncate": modifierProperty("Whether overflow is truncated."),
-			"lines":    modifierProperty("Optional line-clamp count."),
+			"content": contentProperty("Visible copy."),
+			"element": variantProperty(
+				[]string{"p", "span", "div", "strong", "em", "small", "mark", "del", "ins", "sub", "sup", "blockquote", "code", "pre", "kbd", "samp", "var"},
+				"p", "Allow-listed non-heading semantic element.",
+			),
+			"size":      sizeProperty([]string{"xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl"}, "base", "Text scale."),
+			"align":     variantProperty([]string{"left", "center", "right", "justify"}, "left", "Text alignment."),
+			"weight":    variantProperty([]string{"thin", "extralight", "light", "normal", "medium", "semibold", "bold", "extrabold", "black"}, "normal", "Font weight."),
+			"color":     toneProperty([]string{"primary", "secondary", "tertiary", "muted", "brand", "success", "warning", "danger", "info"}, "primary", "Semantic foreground."),
+			"transform": variantProperty([]string{"none", "uppercase", "lowercase", "capitalize"}, "none", "Text casing transform."),
+			"truncate":  modifierProperty("Whether single-line overflow is truncated."),
+			"nowrap":    modifierProperty("Whether wrapping is disabled."),
+			"italic":    modifierProperty("Whether copy is italicized."),
+			"underline": modifierProperty("Whether copy is underlined."),
+			"lines":     modifierProperty("Optional line-clamp count from one through six."),
 		},
 		nil,
 		deliveryDesign("body", "02 Atoms", "Typography", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "body", map[string]any{
-				"content": "A clear supporting sentence.", "size": "base",
+				"content": "A clear supporting sentence.", "element": "p", "size": "base",
 				"weight": "normal", "color": "primary",
 			}),
 			deliveryExample(componentType, "muted", map[string]any{
@@ -983,6 +1412,12 @@ func textDeliveryDefinition() DeliveryDefinition {
 			}),
 			deliveryExample(componentType, "muted-body", map[string]any{
 				"content": "Muted supporting copy", "size": "base", "color": "muted",
+			}),
+			deliveryExample(componentType, "emphasis", map[string]any{
+				"content": "Important", "element": "strong", "weight": "bold", "italic": true,
+			}),
+			deliveryExample(componentType, "clamped", map[string]any{
+				"content": "Long supporting copy", "lines": 3, "color": "secondary",
 			}),
 		},
 		Text,
@@ -1093,6 +1528,167 @@ func spinnerDeliveryDefinition() DeliveryDefinition {
 		},
 		Spinner,
 	)
+}
+
+func progressDeliveryDefinition() DeliveryDefinition {
+	componentType := "Progress"
+	toneClasses := compileClassMap(clProgressTone)
+	determinateFill := deliveryClassBound(
+		deliveryFrame(
+			"Fill",
+			clProgressFill.
+				Merge(clProgressTone["brand"]).
+				Merge(tw.New().Width(tw.SFull)).
+				Compile(),
+		),
+		"tone",
+		toneClasses,
+	)
+	indeterminateFill := deliveryClassBound(
+		deliveryFrame(
+			"IndeterminateFill",
+			clProgressFill.
+				Merge(clProgressTone["brand"]).
+				Merge(clProgressIndeterminate).
+				Compile(),
+		),
+		"tone",
+		toneClasses,
+	)
+	track := deliveryClassBound(
+		deliveryFrame(
+			"Track",
+			clProgressTrack.Merge(clProgressTrackSize["md"]).Compile(),
+			deliveryHiddenWhen(determinateFill, map[string]any{"indeterminate": true}),
+			deliveryVisibleWhen(indeterminateFill, map[string]any{"indeterminate": true}),
+		),
+		"size",
+		compileClassMap(clProgressTrackSize),
+	)
+	root := deliverySemantics(
+		deliveryFrame(
+			componentType,
+			clProgressRoot.Compile(),
+			deliveryFrame(
+				"Header",
+				clProgressHeader.Compile(),
+				deliveryText("Label", clProgressLabel.Compile(), "Upload progress", "label"),
+				deliveryVisibleWhen(
+					deliveryText("Value", clProgressValue.Compile(), "75%", "value"),
+					map[string]any{"showText": true},
+				),
+			),
+			track,
+		),
+		"progressbar",
+		"determinate or indeterminate task completion status",
+	)
+	definition := newDeliveryDefinition(
+		componentType,
+		uicomponent.TierAtom,
+		stableDeliveryID(componentType),
+		"Accessible progress status with governed bounds, labels, semantic tones, sizes, percentage text, and indeterminate state.",
+		map[string]PropertyContract{
+			"value":         roleProperty(designcomponent.PropRoleDefault, "Current value, normalized into the zero-to-maximum range."),
+			"max":           roleProperty(designcomponent.PropRoleDefault, "Positive maximum value; non-positive values fall back to 100."),
+			"label":         contentProperty("Optional visible progress label."),
+			"ariaLabel":     contentProperty("Accessible name used when no visible label is rendered."),
+			"showText":      modifierProperty("Whether to show the normalized integer percentage."),
+			"tone":          toneProperty([]string{"brand", "success", "warning", "danger", "info"}, "brand", "Semantic fill tone."),
+			"size":          sizeProperty([]string{"sm", "md", "lg"}, "md", "Progress track height."),
+			"indeterminate": stateProperty("Whether progress has no currently knowable value."),
+		},
+		nil,
+		deliveryDesign("default", "02 Atoms", "Feedback", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "default", map[string]any{
+				"value": 75, "max": 100, "ariaLabel": "Upload progress",
+				"showText": true, "tone": "brand", "size": "md",
+			}),
+			deliveryExample(componentType, "with-label", map[string]any{
+				"value": 45, "max": 100, "label": "Upload progress",
+				"showText": true, "tone": "warning", "size": "lg",
+			}),
+			deliveryExample(componentType, "complete", map[string]any{
+				"value": 100, "max": 100, "ariaLabel": "Import completion",
+				"showText": true, "tone": "success", "size": "sm",
+			}),
+			deliveryExample(componentType, "indeterminate", map[string]any{
+				"value": 0, "label": "Preparing export", "indeterminate": true,
+				"tone": "info", "size": "md",
+			}),
+		},
+		Progress,
+	)
+	return withDeliveryTags(definition, "progress", "status", "loading", "completion", "percentage", "feedback")
+}
+
+func tooltipDeliveryDefinition() DeliveryDefinition {
+	componentType := "Tooltip"
+	root := deliveryFrame(
+		componentType,
+		clTooltipContainer.Compile(),
+		deliverySlot(
+			"Trigger",
+			"trigger",
+			clTooltipTrigger.Compile(),
+			deliveryInstance("TriggerButton", "Button", "primary", ""),
+		),
+		deliveryClassBound(
+			deliveryText(
+				"Popup",
+				clTooltipPopup.Compile()+" "+clTooltipPosition["top"].Compile(),
+				"Helpful context",
+				"content",
+			),
+			"position",
+			compileClassMap(clTooltipPosition),
+		),
+	)
+	definition := newSlottedDeliveryDefinition(
+		componentType,
+		uicomponent.TierAtom,
+		stableDeliveryID(componentType),
+		"Accessible contextual help shown from one authored trigger on hover or focus.",
+		map[string]PropertyContract{
+			"content":  contentProperty("Required contextual help text."),
+			"position": variantProperty([]string{"top", "bottom", "left", "right"}, "top", "Popup placement relative to the trigger."),
+			"delay": {
+				Role:        designcomponent.PropRoleDefault,
+				Description: "Show delay in milliseconds.",
+				Default:     "200",
+			},
+		},
+		[]designcomponent.Slot{{
+			Name:         "trigger",
+			Required:     true,
+			Description:  "The single interactive or informational element that owns the tooltip.",
+			AllowedTypes: deliveryAtomicContentTypes(),
+			Cardinality:  designcomponent.SlotOne,
+		}},
+		deliveryDesign("default", "02 Atoms", "Feedback", root),
+		[]DeliveryExample{
+			withDeliveryExampleSlots(
+				canonicalDeliveryExample(componentType, "default", map[string]any{
+					"content": "Helpful context", "position": "top", "delay": 200,
+				}),
+				deliveryExampleSlot(
+					"trigger",
+					deliveryExampleComponent(
+						"tooltip-trigger",
+						"Button",
+						map[string]any{
+							"label": "More information", "variant": "secondary", "size": "md",
+						},
+					),
+				),
+			),
+		},
+		func(props atoms.TooltipProps, slots DeliverySlotChildren) g.Node {
+			return Tooltip(props, slots.Nodes("trigger")...)
+		},
+	)
+	return withDeliveryTags(definition, "tooltip", "contextual-help", "accessibility")
 }
 
 func skeletonDeliveryDefinition() DeliveryDefinition {
@@ -1427,6 +2023,14 @@ func textWeightClasses() map[string]string {
 	out := make(map[string]string, len(clTextWeight))
 	for key, value := range clTextWeight {
 		out[key] = tw.New().FontWeight(value).Compile()
+	}
+	return out
+}
+
+func textAlignClasses() map[string]string {
+	out := make(map[string]string, len(clTextAlign))
+	for key, value := range clTextAlign {
+		out[key] = tw.New().TextAlign(value).Compile()
 	}
 	return out
 }

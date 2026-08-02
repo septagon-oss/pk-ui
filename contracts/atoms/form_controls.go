@@ -10,7 +10,7 @@ type CheckboxProps struct {
 	contracts.ComponentProps
 
 	Name          string `json:"name"`
-	Label         string `json:"label"`
+	Label         string `json:"label,omitempty"`
 	Checked       bool   `json:"checked,omitempty"`
 	Indeterminate bool   `json:"indeterminate,omitempty"`
 	Value         string `json:"value,omitempty"`
@@ -26,7 +26,8 @@ type RadioProps struct {
 	contracts.ComponentProps
 
 	Name     string `json:"name"`
-	Label    string `json:"label"`
+	Label    string `json:"label,omitempty"`
+	HelpText string `json:"helpText,omitempty"`
 	Value    string `json:"value"`
 	Checked  bool   `json:"checked,omitempty"`
 	Required bool   `json:"required,omitempty"`
@@ -39,10 +40,12 @@ func (p RadioProps) ToMap() map[string]any { return propsToMap(p) }
 type ToggleProps struct {
 	contracts.ComponentProps
 
-	Name    string `json:"name"`
-	Label   string `json:"label"`
-	Checked bool   `json:"checked,omitempty"`
-	Size    string `json:"size,omitempty"` // small, medium, large
+	Name      string `json:"name"`
+	Label     string `json:"label,omitempty"`
+	AriaLabel string `json:"ariaLabel,omitempty"`
+	HideLabel bool   `json:"hideLabel,omitempty"`
+	Checked   bool   `json:"checked,omitempty"`
+	Size      string `json:"size,omitempty"` // sm, md, lg
 }
 
 // ToMap converts ToggleProps to map[string]any for unified Component construction.
@@ -52,13 +55,15 @@ func (p ToggleProps) ToMap() map[string]any { return propsToMap(p) }
 type SliderProps struct {
 	contracts.ComponentProps
 
-	Name      string  `json:"name"`
-	Min       float64 `json:"min"`
-	Max       float64 `json:"max"`
-	Step      float64 `json:"step,omitempty"`
-	Value     float64 `json:"value,omitempty"`
-	ShowValue bool    `json:"showValue,omitempty"`
-	Label     string  `json:"label,omitempty"`
+	Name          string  `json:"name"`
+	Min           float64 `json:"min"`
+	Max           float64 `json:"max"`
+	Step          float64 `json:"step,omitempty"`
+	Value         float64 `json:"value,omitempty"`
+	ShowValue     bool    `json:"showValue,omitempty"`
+	Label         string  `json:"label,omitempty"`
+	Tone          string  `json:"tone,omitempty"`
+	AriaValueText string  `json:"ariaValueText,omitempty"`
 }
 
 // ToMap converts SliderProps to map[string]any for unified Component construction.

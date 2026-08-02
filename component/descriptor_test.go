@@ -14,8 +14,8 @@ func TestFoundationCatalogIsValidUniqueAndDefensive(t *testing.T) {
 	t.Parallel()
 
 	catalog := component.FoundationCatalog()
-	if len(catalog) != 43 {
-		t.Fatalf("FoundationCatalog() has %d descriptors, want 43", len(catalog))
+	if len(catalog) != 44 {
+		t.Fatalf("FoundationCatalog() has %d descriptors, want 44", len(catalog))
 	}
 
 	seen := make(map[component.ID]struct{}, len(catalog))
@@ -33,6 +33,18 @@ func TestFoundationCatalogIsValidUniqueAndDefensive(t *testing.T) {
 	fresh := component.FoundationCatalog()
 	if fresh[0].Owner != component.FoundationOwner {
 		t.Fatal("FoundationCatalog returned shared mutable storage")
+	}
+}
+
+func TestDashboardWidgetIsFoundationOrganism(t *testing.T) {
+	t.Parallel()
+
+	descriptor, ok := component.FoundationDescriptor(component.TypeDashboardWidget)
+	if !ok {
+		t.Fatal("DashboardWidget is missing from the foundation catalog")
+	}
+	if descriptor.Tier != component.TierOrganism {
+		t.Fatalf("DashboardWidget tier = %q, want %q", descriptor.Tier, component.TierOrganism)
 	}
 }
 

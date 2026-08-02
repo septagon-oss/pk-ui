@@ -41,8 +41,10 @@ type AvatarProps struct {
 	FallbackIcon   string `json:"fallbackIcon,omitempty"`
 	Size           string `json:"size,omitempty"`           // xs, small, medium, large, xl, 2xl
 	Shape          string `json:"shape,omitempty"`          // circle, rounded, square, pill
+	Tone           string `json:"tone,omitempty"`           // neutral, brand, success, warning, danger, info
 	Status         string `json:"status,omitempty"`         // online, offline, busy, away
 	StatusPosition string `json:"statusPosition,omitempty"` // top-right, bottom-right, top-left, bottom-left
+	StatusLabel    string `json:"statusLabel,omitempty"`    // localized accessible presence label
 }
 
 // ToMap converts AvatarProps to map[string]any for unified Component construction.

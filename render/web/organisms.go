@@ -11,10 +11,12 @@ package web
 
 import (
 	"strconv"
+	"strings"
 
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
+	"github.com/septagon-oss/pk-ui/contracts/atoms"
 	"github.com/septagon-oss/pk-ui/contracts/organisms"
 )
 
@@ -36,6 +38,13 @@ type WindowedCollectionSlots struct {
 	Controls g.Node
 }
 
+// DashboardWidgetSlots carries rich widget content without serializing
+// arbitrary child markup into the portable property contract.
+type DashboardWidgetSlots struct {
+	Content []g.Node
+	Footer  []g.Node
+}
+
 // DataGrid arranges an explicitly composed toolbar, table, status region, and
 // pagination. It never reconstructs child components from opaque nested props.
 func DataGrid(p organisms.DataGridProps, slots DataGridSlots) g.Node {
@@ -52,7 +61,10 @@ func DataGrid(p organisms.DataGridProps, slots DataGridSlots) g.Node {
 	}
 
 	section := baseAttrs(p.ComponentProps, htmxAttrs(p.HTMXProps)...)
-	section = append(section, classes(clGridSection.Compile(), p.Class))
+	section = append(section,
+		classes(clGridSection.Compile(), p.Class),
+		g.Attr("data-component", "data-grid"),
+	)
 	if len(toolbar) > 0 {
 		bar := []g.Node{h.Class(clGridToolbar.Compile())}
 		if slots.Search != nil {
@@ -68,6 +80,103 @@ func DataGrid(p organisms.DataGridProps, slots DataGridSlots) g.Node {
 		section = append(section, slots.Pagination)
 	}
 	return h.Section(section...)
+}
+
+// DashboardWidget renders the canonical dashboard metric/content card.
+func DashboardWidget(p organisms.DashboardWidgetProps, slots DashboardWidgetSlots) g.Node {
+	span := strings.TrimSpace(p.Span)
+	if _, ok := clDashboardWidgetSpan[span]; !ok {
+		span = "1"
+	}
+	trend := strings.ToLower(strings.TrimSpace(p.Trend))
+	if trend != "up" && trend != "down" && trend != "flat" {
+		trend = "flat"
+	}
+
+	htmx := p.HTMXProps
+	if htmx.Get == "" {
+		htmx.Get = p.RefreshURL
+	}
+	if htmx.Get != "" {
+		if htmx.Swap == "" {
+			htmx.Swap = "innerHTML"
+		}
+		if htmx.Trigger == "" {
+			var triggers []string
+			if p.RefreshSeconds > 0 && p.RefreshSeconds <= 86400 {
+				triggers = append(triggers, "every "+strconv.Itoa(p.RefreshSeconds)+"s")
+			} else {
+				triggers = append(triggers, "load")
+			}
+			if event := strings.TrimSpace(p.RefreshOn); event != "" {
+				triggers = append(triggers, event+" from:body")
+			}
+			htmx.Trigger = strings.Join(triggers, ", ")
+		}
+	}
+
+	root := baseAttrs(p.ComponentProps, htmxAttrs(htmx)...)
+	root = append(root,
+		classes(clDashboardWidget.Merge(clDashboardWidgetSpan[span]).Compile(), p.Class),
+		g.Attr("data-component", "dashboard-widget"),
+		g.Attr("data-widget-type", fallbackText(p.Type, "stat")),
+	)
+
+	var title g.Node = g.Text(p.Title)
+	if p.DetailURL != "" {
+		title = h.A(h.Href(p.DetailURL), g.Text(p.Title))
+	}
+	header := []g.Node{h.Div(
+		h.Class(clDashboardWidgetCopy.Compile()),
+		h.P(h.Class(clDashboardWidgetTitle.Compile()), title),
+		g.If(p.Subtitle != "", h.P(
+			h.Class(clDashboardWidgetSubtitle.Compile()),
+			g.Text(p.Subtitle),
+		)),
+	)}
+	if p.Icon != "" {
+		header = append([]g.Node{h.Div(
+			h.Class(clDashboardWidgetIcon.Compile()),
+			Icon(atoms.IconProps{Name: p.Icon, Size: "md", Tone: "brand"}),
+		)}, header...)
+	}
+	root = append(root, h.Header(
+		h.Class(clDashboardWidgetHeader.Compile()),
+		g.Group(header),
+	))
+
+	if len(slots.Content) > 0 {
+		root = append(root, h.Div(h.Class(clDashboardWidgetBody.Compile()), g.Group(slots.Content)))
+	} else {
+		body := []g.Node{h.P(
+			h.Class(clDashboardWidgetValue.Compile()),
+			g.Attr("data-dashboard-widget-value", ""),
+			g.Text(p.Value),
+		)}
+		if p.Change != "" {
+			arrow := map[string]string{"up": "↑ ", "down": "↓ ", "flat": "→ "}[trend]
+			body = append(body, h.Div(
+				h.Class(clDashboardWidgetTrend.Compile()),
+				g.Attr("data-dashboard-widget-trend", trend),
+				h.Span(
+					h.Class(clDashboardWidgetChange.Merge(clDashboardWidgetTrendTone[trend]).Compile()),
+					g.Text(arrow+p.Change),
+				),
+				g.If(p.PreviousValue != "", h.Span(
+					h.Class(clDashboardWidgetPrevious.Compile()),
+					g.Text("from "+p.PreviousValue),
+				)),
+			))
+		}
+		root = append(root, h.Div(h.Class(clDashboardWidgetBody.Compile()), g.Group(body)))
+	}
+	if len(slots.Footer) > 0 {
+		root = append(root, h.Footer(
+			h.Class(clDashboardWidgetFooter.Compile()),
+			g.Group(slots.Footer),
+		))
+	}
+	return h.Article(root...)
 }
 
 // WindowedCollection renders one bounded collection window and its resilient

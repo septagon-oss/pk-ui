@@ -38,6 +38,7 @@ type HTMXProps struct {
 	Target      string `json:"hx-target,omitempty"`
 	Swap        string `json:"hx-swap,omitempty"`
 	Trigger     string `json:"hx-trigger,omitempty"`
+	Include     string `json:"hx-include,omitempty"`
 	Confirm     string `json:"hx-confirm,omitempty"`
 	Ext         string `json:"hx-ext,omitempty"`
 	Indicator   string `json:"hx-indicator,omitempty"`

@@ -769,25 +769,25 @@ func cloneDeliveryValueMap(values map[string]any) map[string]any {
 func deliveryAtomicContentTypes() []string {
 	return []string{
 		"Badge", "Button", "Divider", "Heading", "Kbd", "Label", "Link",
-		"Spinner", "Tag", "Text",
+		"Spinner", "Tag", "Text", "Toast",
 	}
 }
 
 func deliveryMoleculeContentTypes() []string {
 	return []string{
-		"Alert", "Badge", "Breadcrumb", "Button", "Card", "Checkbox",
-		"Divider", "EmptyState", "Heading", "Input", "Kbd", "Label", "Link",
-		"Pagination", "SearchBar", "Select", "Spinner", "Table", "Tabs", "Tag",
-		"Text", "Textarea",
+		"Accordion", "ActionMenu", "Alert", "Autocomplete", "Badge", "Breadcrumb", "Button", "Card", "Checkbox", "Drawer",
+		"DatePicker", "Divider", "EmptyState", "Heading", "Input", "Kbd", "Label", "Link",
+		"Pagination", "SearchBar", "Select", "Sidebar", "Spinner", "Stepper", "Table", "Tabs", "Tag",
+		"Text", "Textarea", "Toast",
 	}
 }
 
 func deliveryTemplateContentTypes() []string {
 	return []string{
-		"Alert", "Badge", "Breadcrumb", "Button", "Card", "Checkbox",
-		"Container", "DataGrid", "Divider", "EmptyState", "Flex", "Grid",
+		"Accordion", "ActionMenu", "Alert", "Autocomplete", "Badge", "Breadcrumb", "Button", "Card", "Checkbox", "Drawer",
+		"Container", "DashboardWidget", "DataGrid", "DatePicker", "Divider", "EmptyState", "Flex", "Grid",
 		"Heading", "Input", "Kbd", "Label", "Link", "Pagination", "SearchBar",
-		"Select", "Spinner", "Stack", "Table", "Tabs", "Tag", "Text", "Textarea",
+		"Select", "Sidebar", "Spinner", "Stack", "Stepper", "Table", "Tabs", "Tag", "Text", "Textarea", "Toast",
 	}
 }
 

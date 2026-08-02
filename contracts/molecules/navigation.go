@@ -36,9 +36,11 @@ type TabItem struct {
 type AccordionProps struct {
 	contracts.ComponentProps
 
-	Items       []AccordionItem `json:"items"`
-	Multiple    bool            `json:"multiple,omitempty"` // allow multiple open
-	DefaultOpen []string        `json:"defaultOpen,omitempty"`
+	Items       []AccordionItem `json:"items,omitempty"`
+	Multiple    bool            `json:"multiple,omitempty"`    // allow multiple open
+	DefaultOpen []string        `json:"defaultOpen,omitempty"` // item IDs open on first render
+	Bordered    *bool           `json:"bordered,omitempty"`    // nil defaults to true
+	Flush       bool            `json:"flush,omitempty"`       // remove outer surface chrome
 }
 
 // ToMap converts AccordionProps to map[string]any for unified Component construction.
@@ -46,8 +48,15 @@ func (p AccordionProps) ToMap() map[string]any { return propsToMap(p) }
 
 // AccordionItem represents an accordion section.
 type AccordionItem struct {
-	Key   string `json:"key"`
-	Title string `json:"title"`
+	ID          string `json:"id,omitempty"`
+	Key         string `json:"key,omitempty"` // compatibility alias for portable clients
+	Title       string `json:"title"`
+	Subtitle    string `json:"subtitle,omitempty"`
+	Icon        string `json:"icon,omitempty"`
+	Content     string `json:"content,omitempty"`
+	DefaultOpen bool   `json:"defaultOpen,omitempty"`
+	Open        bool   `json:"open,omitempty"` // compatibility alias for JSON-driven surfaces
+	Disabled    bool   `json:"disabled,omitempty"`
 }
 
 // BreadcrumbProps defines properties for breadcrumb navigation.
@@ -82,6 +91,10 @@ type PaginationProps struct {
 	Siblings        int    `json:"siblings,omitempty"` // pages shown around current
 	BaseURL         string `json:"baseURL,omitempty"`
 	CursorMode      string `json:"cursorMode,omitempty"` // previous-next, load-more
+	PreviousCursor  string `json:"previousCursor,omitempty"`
+	NextCursor      string `json:"nextCursor,omitempty"`
+	BeforeParameter string `json:"beforeParameter,omitempty"`
+	AfterParameter  string `json:"afterParameter,omitempty"`
 	PreviousURL     string `json:"previousURL,omitempty"`
 	NextURL         string `json:"nextURL,omitempty"`
 	PreviousLabel   string `json:"previousLabel,omitempty"`
@@ -97,14 +110,18 @@ func (p PaginationProps) ToMap() map[string]any { return propsToMap(p) }
 type StepperProps struct {
 	contracts.ComponentProps
 
-	Steps       []StepItem `json:"steps"`
-	CurrentStep int        `json:"currentStep"`
-	Orientation string     `json:"orientation,omitempty"` // horizontal, vertical
-	Clickable   bool       `json:"clickable,omitempty"`
+	Steps           []StepItem `json:"steps"`
+	CurrentStep     int        `json:"currentStep"`
+	Orientation     string     `json:"orientation,omitempty"` // horizontal, vertical
+	Clickable       bool       `json:"clickable,omitempty"`
+	Compact         bool       `json:"compact,omitempty"`
+	StepAction      string     `json:"stepAction,omitempty"`      // controller action for whole-step activation
+	NavigationLabel string     `json:"navigationLabel,omitempty"` // accessible nav label
 }
 
 // StepItem represents a step in a stepper.
 type StepItem struct {
+	Key         string `json:"key,omitempty"`
 	Label       string `json:"label"`
 	Description string `json:"description,omitempty"`
 	Icon        string `json:"icon,omitempty"`

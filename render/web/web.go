@@ -91,6 +91,7 @@ func htmxAttrs(p contracts.HTMXProps) []g.Node {
 	add("hx-target", p.Target)
 	add("hx-swap", p.Swap)
 	add("hx-trigger", p.Trigger)
+	add("hx-include", p.Include)
 	add("hx-confirm", p.Confirm)
 	add("hx-ext", p.Ext)
 	add("hx-indicator", p.Indicator)
@@ -120,10 +121,24 @@ func classes(compiled, extra string) g.Node {
 // text carries the meaning, so the Icon atom hides this convenience form from
 // assistive technology.
 func icon(name string) g.Node {
-	if name == "" {
+	if !validIconName(name) {
 		return nil
 	}
 	return Icon(atoms.IconProps{Name: name})
+}
+
+func validIconName(name string) bool {
+	if name == "" {
+		return false
+	}
+	for _, char := range name {
+		if (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
+			(char >= '0' && char <= '9') || char == '-' || char == '_' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func itoa(n int) string { return strconv.Itoa(n) }

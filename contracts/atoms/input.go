@@ -17,6 +17,7 @@ type InputProps struct {
 	Label        string `json:"label,omitempty"`
 	HelpText     string `json:"helpText,omitempty"`
 	Error        string `json:"error,omitempty"`
+	Invalid      bool   `json:"invalid,omitempty"`
 	Required     bool   `json:"required,omitempty"`
 	ReadOnly     bool   `json:"readOnly,omitempty"`
 	AutoFocus    bool   `json:"autoFocus,omitempty"`
@@ -28,6 +29,8 @@ type InputProps struct {
 	Pattern      string `json:"pattern,omitempty"`
 	Autocomplete string `json:"autocomplete,omitempty"`
 	Size         string `json:"size,omitempty"` // sm, md, lg
+	Tone         string `json:"tone,omitempty"` // neutral, success, warning, danger
+	FullWidth    bool   `json:"fullWidth,omitempty"`
 }
 
 // ToMap converts InputProps to map[string]any for unified Component construction.

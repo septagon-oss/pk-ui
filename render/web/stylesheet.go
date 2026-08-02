@@ -34,7 +34,24 @@ func Stylesheet(theme themes.Theme, options styleengine.RenderOptions) (string, 
 	if err != nil {
 		return "", fmt.Errorf("render OSS component utilities: %w", err)
 	}
-	return strings.TrimSpace(tokenCSS) + "\n" + componentCSS, nil
+	return strings.TrimSpace(tokenCSS) + "\n" + componentCSS + "\n" + progressValueCSS(), nil
+}
+
+// progressValueCSS owns the finite visual projection of the Progress
+// contract's normalized integer percentage. Attribute selectors keep runtime
+// markup CSP-safe and avoid requiring 101 proprietary utility classes from a
+// downstream host. The renderer clamps every value to this exact 0..100 set.
+func progressValueCSS() string {
+	var rules strings.Builder
+	for percent := 0; percent <= 100; percent++ {
+		fmt.Fprintf(
+			&rules,
+			`[data-component=progress][data-progress-percent="%d"] [data-progress-fill=true]{width:%d%%}`,
+			percent,
+			percent,
+		)
+	}
+	return rules.String()
 }
 
 // DefaultStylesheet renders the canonical OSS theme and catalog stylesheet.

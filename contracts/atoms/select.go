@@ -21,15 +21,18 @@ type SelectProps struct {
 	Required    bool           `json:"required,omitempty"`
 	Multiple    bool           `json:"multiple,omitempty"`
 	VisibleRows int            `json:"visibleRows,omitempty"`
+	FullWidth   bool           `json:"fullWidth,omitempty"`
 	HelpText    string         `json:"helpText,omitempty"`
 	Error       string         `json:"error,omitempty"`
 }
 
 // SelectOption is one choice in a Select.
 type SelectOption struct {
-	Label    string `json:"label"`
-	Value    string `json:"value"`
-	Disabled bool   `json:"disabled,omitempty"`
+	Label       string `json:"label"`
+	Value       string `json:"value"`
+	Description string `json:"description,omitempty"`
+	Group       string `json:"group,omitempty"`
+	Disabled    bool   `json:"disabled,omitempty"`
 }
 
 // ToMap converts SelectProps to map[string]any for unified Component construction.

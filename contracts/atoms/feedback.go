@@ -21,12 +21,18 @@ func (p SpinnerProps) ToMap() map[string]any { return propsToMap(p) }
 type ProgressProps struct {
 	contracts.ComponentProps
 
-	Value         int    `json:"value"`         // 0-100
-	Max           int    `json:"max,omitempty"` // default 100
+	Value         int    `json:"value"`         // clamped to 0-Max
+	Max           int    `json:"max,omitempty"` // positive maximum; default 100
 	Label         string `json:"label,omitempty"`
-	ShowText      bool   `json:"showText,omitempty"` // show percentage
-	Variant       string `json:"variant,omitempty"`  // default, success, warning, error
+	AriaLabel     string `json:"ariaLabel,omitempty"` // accessible name without a visible label
+	ShowText      bool   `json:"showText,omitempty"`  // show normalized percentage
+	Tone          string `json:"tone,omitempty"`      // brand, success, warning, danger, info
+	Size          string `json:"size,omitempty"`      // sm, md, lg
 	Indeterminate bool   `json:"indeterminate,omitempty"`
+
+	// Variant is a deprecated direct-render alias retained for callers of the
+	// original contract-only draft. Governed delivery exposes Tone only.
+	Variant string `json:"variant,omitempty" delivery:"internal"`
 }
 
 // ToMap converts ProgressProps to map[string]any for unified Component construction.
@@ -52,9 +58,18 @@ func (p TooltipProps) ToMap() map[string]any { return propsToMap(p) }
 type ToastProps struct {
 	contracts.ComponentProps
 
-	Message  string `json:"message"`
-	Variant  string `json:"variant,omitempty"` // success, error, warning, info
-	Duration int    `json:"duration,omitempty"`
+	Message    string `json:"message"`
+	Title      string `json:"title,omitempty"`
+	Tone       string `json:"tone,omitempty"`       // info, success, warning, danger
+	Duration   int    `json:"duration,omitempty"`   // auto-dismiss delay in milliseconds
+	Persistent bool   `json:"persistent,omitempty"` // remains until explicitly dismissed
+	Position   string `json:"position,omitempty"`   // top-right, top-left, bottom-right, bottom-left
+	Closable   *bool  `json:"closable,omitempty"`   // defaults to true when omitted
+	CloseLabel string `json:"closeLabel,omitempty"`
+
+	// Variant is a deprecated direct-render alias retained for callers of the
+	// original contract-only draft. Governed delivery exposes Tone only.
+	Variant string `json:"variant,omitempty" delivery:"internal"`
 }
 
 // ToMap converts ToastProps to map[string]any for unified Component construction.

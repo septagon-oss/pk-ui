@@ -70,13 +70,19 @@ type DashboardWidgetProps struct {
 	contracts.ComponentProps
 	contracts.HTMXProps
 
-	Title     string `json:"title"`
-	Value     string `json:"value,omitempty"`
-	Change    string `json:"change,omitempty"` // e.g., "+12%"
-	Trend     string `json:"trend,omitempty"`  // up, down, flat
-	Icon      string `json:"icon,omitempty"`
-	RefreshOn string `json:"refreshOn,omitempty"` // HTMX trigger event
-	DetailURL string `json:"detailURL,omitempty"`
+	Title          string `json:"title"`
+	Subtitle       string `json:"subtitle,omitempty"`
+	Type           string `json:"type,omitempty"` // stat, chart, list, empty
+	Value          string `json:"value,omitempty"`
+	PreviousValue  string `json:"previousValue,omitempty"`
+	Change         string `json:"change,omitempty"` // e.g., "+12%"
+	Trend          string `json:"trend,omitempty"`  // up, down, flat
+	Icon           string `json:"icon,omitempty"`
+	RefreshURL     string `json:"refreshURL,omitempty"`
+	RefreshOn      string `json:"refreshOn,omitempty"` // HTMX trigger event
+	RefreshSeconds int    `json:"refreshSeconds,omitempty"`
+	DetailURL      string `json:"detailURL,omitempty"`
+	Span           string `json:"span,omitempty"` // grid columns: 1, 2, 3, 4
 }
 
 // WizardProps defines properties for a multi-step wizard/form.

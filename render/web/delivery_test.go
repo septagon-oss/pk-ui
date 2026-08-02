@@ -24,7 +24,7 @@ func TestOSSDeliveryCatalogIsCompleteNativeAndExecutable(t *testing.T) {
 	t.Parallel()
 
 	catalog := OSSDeliveryCatalog()
-	if got, want := len(catalog), 34; got != want {
+	if got, want := len(catalog), 54; got != want {
 		t.Fatalf("catalog has %d entries, want %d", got, want)
 	}
 
@@ -111,6 +111,33 @@ func TestDataGridDeliveryExampleUsesRealNamedSlotComposition(t *testing.T) {
 	}
 }
 
+func TestDashboardWidgetDeliveryUsesCanonicalRendererAndSlots(t *testing.T) {
+	t.Parallel()
+
+	node, err := RenderDeliveryExample(
+		"DashboardWidget",
+		deliveryExampleID("DashboardWidget", "activity-list"),
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rendered bytes.Buffer
+	if err := node.Render(&rendered); err != nil {
+		t.Fatal(err)
+	}
+	html := rendered.String()
+	for _, fragment := range []string{
+		`data-component="dashboard-widget"`, `data-widget-type="list"`,
+		`hx-get="/dashboard/activity"`, `activity:changed from:body`,
+		`Three workspace events need review.`, `>View activity</a>`,
+	} {
+		if !strings.Contains(html, fragment) {
+			t.Errorf("composed DashboardWidget example is missing %q:\n%s", fragment, html)
+		}
+	}
+}
+
 func TestIconDeliveryBlueprintIsBoundEditableVector(t *testing.T) {
 	t.Parallel()
 
@@ -177,6 +204,29 @@ func TestDeliveryRuntimeNeverInjectsExampleContentWithoutSlots(t *testing.T) {
 				)
 			}
 		}
+	}
+}
+
+func TestInputDeliveryRejectsUnsupportedNativeType(t *testing.T) {
+	t.Parallel()
+
+	var input *DeliveryDefinition
+	catalog := OSSDeliveryCatalog()
+	for index := range catalog {
+		definition := catalog[index]
+		if definition.Identity.ID == "Input" {
+			input = &definition
+			break
+		}
+	}
+	if input == nil {
+		t.Fatal("catalog has no Input definition")
+	}
+	if _, err := input.Render(map[string]any{
+		"name": "attachment",
+		"type": "file",
+	}, nil); err == nil || !strings.Contains(err.Error(), "unsupported type") {
+		t.Fatalf("Input delivery error = %v, want unsupported type", err)
 	}
 }
 
