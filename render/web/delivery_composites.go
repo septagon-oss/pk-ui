@@ -1263,8 +1263,12 @@ func drawerDeliveryDefinition() DeliveryDefinition {
 func drawerDeliveryExample(example DeliveryExample) DeliveryExample {
 	return withDeliveryExampleSlots(
 		example,
+		// The nested Text instance may only set props the Figma ComponentSet
+		// represents natively; size is a class-bound design axis, so an
+		// instance-level override cannot round-trip and fails delivery
+		// validation. Body copy inherits the authored baseline instead.
 		deliveryExampleSlot("content", deliveryExampleComponent("body-copy", "Text", map[string]any{
-			"content": "Review and update the information in this panel.", "size": "sm",
+			"content": "Review and update the information in this panel.",
 		})),
 		deliveryExampleSlot("actions", deliveryExampleComponent("save", "Button", map[string]any{
 			"label": "Save changes", "variant": "primary",
@@ -1392,7 +1396,7 @@ func modalDeliveryExample(example DeliveryExample) DeliveryExample {
 	return withDeliveryExampleSlots(
 		example,
 		deliveryExampleSlot("content", deliveryExampleComponent("body-copy", "Text", map[string]any{
-			"content": "Review the consequences before continuing.", "size": "sm",
+			"content": "Review the consequences before continuing.",
 		})),
 		deliveryExampleSlot("actions", deliveryExampleComponent("confirm", "Button", map[string]any{
 			"label": "Continue", "variant": "primary",
@@ -2032,13 +2036,18 @@ func windowedCollectionDeliveryDefinition() DeliveryDefinition {
 				),
 				deliveryExampleSlot(
 					"controls",
+					// A nested instance is only natively representable when its
+					// props match the authored variant it targets; the cursor
+					// variant expresses forward navigation as baseURL+nextCursor,
+					// and nextURL has no native representation in the design.
 					deliveryExampleComponent(
 						"window-pagination",
 						"Pagination",
 						map[string]any{
 							"currentPage": 1,
 							"totalPages":  0,
-							"nextURL":     "/workspaces?after=opaque",
+							"baseURL":     "/workspaces?sort=recent",
+							"nextCursor":  "opaque",
 						},
 					),
 				),
