@@ -42,6 +42,16 @@ var (
 	TypeSizes    = []string{"xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl"}
 )
 
+// Word-scales outside these families exist on exactly two axes, and that is
+// a deliberate design decision (identity audit 2026-08-07): Card `padding`
+// and `shadow` use word scales (none/sm/md/lg) because they are DENSITY and
+// ELEVATION axes, not size axes — a card is not "a large version of a
+// small card", its content breathes more and its lift changes. Unifying
+// them into ControlSizes would pretend padding and size are the same axis,
+// which is precisely the conflation this vocabulary exists to prevent. New
+// axes must reach for an existing family first; a fourth family requires a
+// ratchet update and a rationale as explicit as this one.
+
 // CanonicalTones is the shared semantic tone vocabulary.
 var CanonicalTones = []string{"neutral", "brand", "success", "warning", "danger", "info"}
 
