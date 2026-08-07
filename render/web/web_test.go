@@ -592,7 +592,7 @@ func TestTextRejectsHeadingTagsAndNormalizesDefaults(t *testing.T) {
 	t.Parallel()
 
 	var rendered strings.Builder
-	if err := Text(atoms.TextProps{Content: "Body copy", Element: "h1", Color: "error"}).Render(&rendered); err != nil {
+	if err := Text(atoms.TextProps{Content: "Body copy", Element: "h1", Color: "danger"}).Render(&rendered); err != nil {
 		t.Fatal(err)
 	}
 	html := rendered.String()

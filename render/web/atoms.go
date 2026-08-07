@@ -504,7 +504,7 @@ func defaultAlertIcon(tone string) string {
 		return "check-circle"
 	case "warning":
 		return "exclamation-triangle"
-	case "danger", "error":
+	case "danger":
 		return "x-circle"
 	default:
 		return "information-circle"
@@ -1633,9 +1633,6 @@ func normalizeTextWeight(weight string) string {
 
 func normalizeTextColor(color string) string {
 	color = strings.ToLower(strings.TrimSpace(color))
-	if color == "error" {
-		return "danger"
-	}
 	if _, exists := clTextColor[color]; exists {
 		return color
 	}
