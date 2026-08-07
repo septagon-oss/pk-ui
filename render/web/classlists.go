@@ -218,7 +218,6 @@ var (
 		"neutral": tw.New().Bg(tw.SurfaceTertiary).TextColor(tw.FgSecondary).BorderColor(tw.BorderPrimary),
 		"success": tw.New().NoUnderline().Bg(tw.SurfaceSuccessSoft).TextColor(tw.FgSuccess).BorderColor(tw.BorderSuccess),
 		"warning": tw.New().NoUnderline().Bg(tw.SurfaceWarningSoft).TextColor(tw.FgWarning).BorderColor(tw.BorderWarning),
-		"error":   tw.New().Bg(tw.SurfaceDangerSoft).TextColor(tw.FgDanger).BorderColor(tw.BorderDanger),
 		"danger":  tw.New().Bg(tw.SurfaceDangerSoft).TextColor(tw.FgDanger).BorderColor(tw.BorderDanger),
 		"info":    tw.New().Bg(tw.SurfaceInfoSoft).TextColor(tw.FgInfo).BorderColor(tw.BorderInfo),
 	}
@@ -710,10 +709,10 @@ var (
 	clTextColor = map[string]tw.Color{
 		"primary": tw.FgPrimary, "secondary": tw.FgSecondary, "tertiary": tw.FgTertiary, "muted": tw.FgMuted,
 		"brand": tw.FgBrand, "success": tw.FgSuccess, "warning": tw.FgWarning,
-		"danger": tw.FgDanger, "error": tw.FgDanger, "info": tw.FgInfo,
+		"danger": tw.FgDanger, "info": tw.FgInfo,
 	}
 	clTextSize = map[string]tw.FontSize{
-		"xs": tw.TextXS, "sm": tw.TextSM, "base": tw.TextBase, "md": tw.TextBase,
+		"xs": tw.TextXS, "sm": tw.TextSM, "base": tw.TextBase,
 		"lg": tw.TextLG, "xl": tw.TextXL, "2xl": tw.Text2XL,
 		"3xl": tw.Text3XL, "4xl": tw.Text4XL, "5xl": tw.Text5XL,
 	}

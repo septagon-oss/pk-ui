@@ -1924,7 +1924,7 @@ func TestProgressOwnsNormalizedAccessibleDeterminateContract(t *testing.T) {
 			ID: "upload", Class: "client-progress", Attrs: map[string]string{"data-owner": "importer"},
 		},
 		Value: 25, Max: 50, Label: "Upload progress", ShowText: true,
-		Tone: "warning", Size: "large",
+		Tone: "warning", Size: "lg",
 	})
 	var output strings.Builder
 	if err := node.Render(&output); err != nil {
@@ -1964,7 +1964,7 @@ func TestProgressIndeterminateOmitsValueAndKeepsAccessibleName(t *testing.T) {
 	t.Parallel()
 	node := Progress(atoms.ProgressProps{
 		AriaLabel: "Preparing export", ShowText: true, Indeterminate: true,
-		Tone: "info", Variant: "error",
+		Tone: "info",
 	})
 	var output strings.Builder
 	if err := node.Render(&output); err != nil {
@@ -1991,9 +1991,9 @@ func TestProgressIndeterminateOmitsValueAndKeepsAccessibleName(t *testing.T) {
 	}
 }
 
-func TestProgressClampsValuesAndSupportsDeprecatedVariantAlias(t *testing.T) {
+func TestProgressClampsValuesAndRendersCanonicalTone(t *testing.T) {
 	t.Parallel()
-	node := Progress(atoms.ProgressProps{Value: 150, Max: 100, AriaLabel: "Completion", Variant: "error"})
+	node := Progress(atoms.ProgressProps{Value: 150, Max: 100, AriaLabel: "Completion", Tone: "danger"})
 	var output strings.Builder
 	if err := node.Render(&output); err != nil {
 		t.Fatal(err)
@@ -2530,7 +2530,7 @@ func TestAvatarOwnsAccessibleFallbackAndPresenceContract(t *testing.T) {
 	node := Avatar(atoms.AvatarProps{
 		ComponentProps: contracts.ComponentProps{ID: "ada", Class: "custom-avatar"},
 		Name:           "Ada Lovelace",
-		Size:           "large",
+		Size:           "lg",
 		Shape:          "rounded",
 		Tone:           "brand",
 		Status:         "ONLINE",
@@ -2904,7 +2904,6 @@ func TestDashboardWidgetOwnsTypedStatAndRefreshContract(t *testing.T) {
 		}
 	}
 }
-
 
 func renderNodeToString(t *testing.T, node g.Node) string {
 	t.Helper()

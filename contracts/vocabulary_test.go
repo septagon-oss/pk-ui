@@ -24,29 +24,6 @@ type axisField struct {
 }
 
 func TestVocabulary_PureVocabularyInvariants(t *testing.T) {
-	t.Run("aliases never collide with canonical values", func(t *testing.T) {
-		for alias, canonical := range ControlSizeAliases {
-			for _, size := range ControlSizes {
-				if alias == size {
-					t.Errorf("control size alias %q shadows a canonical value", alias)
-				}
-			}
-			if NormalizeControlSize(canonical) != canonical {
-				t.Errorf("control size alias %q targets non-canonical %q", alias, canonical)
-			}
-		}
-		for alias, canonical := range ToneAliases {
-			for _, tone := range CanonicalTones {
-				if alias == tone {
-					t.Errorf("tone alias %q shadows a canonical value", alias)
-				}
-			}
-			if CanonicalTone(canonical) != canonical {
-				t.Errorf("tone alias %q targets non-canonical %q", alias, canonical)
-			}
-		}
-	})
-
 	t.Run("feedback tones stay a canonical subset", func(t *testing.T) {
 		for _, tone := range FeedbackTones {
 			if !contains(CanonicalTones, tone) {
@@ -138,22 +115,13 @@ func TestVocabulary_ContractEnumsMatchCanonicalBindings(t *testing.T) {
 }
 
 // checkScaleEnum validates one documented size enum against its scale family:
-// values must be canonical members, and canonical spellings must not mix with
-// their own legacy aliases (xs next to extra-small, md next to medium).
+// every value must be a canonical member of the declared family.
 func checkScaleEnum(violations *[]string, key string, family ScaleFamily, seen []string) {
 	canonical := ScaleValues(family)
 	for _, v := range seen {
 		if !contains(canonical, v) {
 			*violations = append(*violations,
 				key+" uses size "+strconv(v)+" outside the "+string(family)+" scale ["+strings.Join(canonical, ", ")+"]")
-		}
-	}
-	if family == ScaleFamilyControl {
-		for alias := range ControlSizeAliases {
-			if contains(seen, alias) {
-				*violations = append(*violations,
-					key+" mixes legacy alias "+strconv(alias)+" into the canonical control scale enum")
-			}
 		}
 	}
 }

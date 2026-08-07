@@ -1270,13 +1270,8 @@ func Dropdown(p molecules.DropdownProps) g.Node {
 		openLabel = "Open options"
 	}
 	size := strings.ToLower(strings.TrimSpace(p.Size))
-	switch size {
-	case "small":
-		size = "sm"
-	case "medium", "":
+	if size == "" {
 		size = "md"
-	case "large":
-		size = "lg"
 	}
 	if _, ok := clDropdownTriggerSize[size]; !ok {
 		size = "md"

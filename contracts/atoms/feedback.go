@@ -29,10 +29,6 @@ type ProgressProps struct {
 	Tone          string `json:"tone,omitempty"`      // neutral, brand, success, warning, danger, info (default brand)
 	Size          string `json:"size,omitempty"`      // sm, md, lg
 	Indeterminate bool   `json:"indeterminate,omitempty"`
-
-	// Variant is a deprecated direct-render alias retained for callers of the
-	// original contract-only draft. Governed delivery exposes Tone only.
-	Variant string `json:"variant,omitempty" delivery:"internal"`
 }
 
 // ToMap converts ProgressProps to map[string]any for unified Component construction.
@@ -66,10 +62,6 @@ type ToastProps struct {
 	Position   string `json:"position,omitempty"`   // top-right, top-left, bottom-right, bottom-left
 	Closable   *bool  `json:"closable,omitempty"`   // defaults to true when omitted
 	CloseLabel string `json:"closeLabel,omitempty"`
-
-	// Variant is a deprecated direct-render alias retained for callers of the
-	// original contract-only draft. Governed delivery exposes Tone only.
-	Variant string `json:"variant,omitempty" delivery:"internal"`
 }
 
 // ToMap converts ToastProps to map[string]any for unified Component construction.

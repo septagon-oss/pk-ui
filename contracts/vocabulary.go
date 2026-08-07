@@ -4,8 +4,6 @@
 
 package contracts
 
-import "strings"
-
 // vocabulary.go declares the canonical design vocabulary shared by every
 // PlatformKit renderer and projection. The Props schemas in this package are
 // the delivery source of truth for the web renderer, the A2UI/native
@@ -44,35 +42,12 @@ var (
 	TypeSizes    = []string{"xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl"}
 )
 
-// ControlSizeAliases maps accepted legacy spellings onto the canonical
-// control scale. Renderers accept aliases on intake for backward
-// compatibility; authored contracts, manifests, and documentation always use
-// canonical values.
-var ControlSizeAliases = map[string]string{
-	"extra-small":       "xs",
-	"small":             "sm",
-	"medium":            "md",
-	"large":             "lg",
-	"extra-large":       "xl",
-	"xxl":               "2xl",
-	"extra-extra-large": "2xl",
-}
-
 // CanonicalTones is the shared semantic tone vocabulary.
 var CanonicalTones = []string{"neutral", "brand", "success", "warning", "danger", "info"}
 
 // FeedbackTones is the restricted set for inline feedback surfaces (Alert,
 // Toast): neutral plus the four status tones.
 var FeedbackTones = []string{"neutral", "info", "success", "warning", "danger"}
-
-// ToneAliases maps legacy / cross-platform spellings onto canonical tones.
-// Native renderers historically used "accent" for the brand tone; delivery
-// uses "error" for danger. Renderers resolve aliases on intake.
-var ToneAliases = map[string]string{
-	"accent":      "brand",
-	"error":       "danger",
-	"destructive": "danger",
-}
 
 // CollectionStates is the state axis for data-bearing surfaces
 // (WindowedCollection). "empty" is derived from itemCount, not a state value.
@@ -148,40 +123,4 @@ func ScaleValues(family ScaleFamily) []string {
 	default:
 		return nil
 	}
-}
-
-// NormalizeControlSize maps an accepted spelling (canonical or legacy alias)
-// onto the canonical control scale, or returns "" for unknown values.
-func NormalizeControlSize(value string) string {
-	v := strings.ToLower(strings.TrimSpace(value))
-	if v == "" {
-		return ""
-	}
-	for _, size := range ControlSizes {
-		if v == size {
-			return v
-		}
-	}
-	if canonical, ok := ControlSizeAliases[v]; ok {
-		return canonical
-	}
-	return ""
-}
-
-// CanonicalTone resolves a tone spelling (canonical or alias) to its
-// canonical value, or returns "" for unknown values.
-func CanonicalTone(value string) string {
-	v := strings.ToLower(strings.TrimSpace(value))
-	if v == "" {
-		return ""
-	}
-	for _, tone := range CanonicalTones {
-		if v == tone {
-			return v
-		}
-	}
-	if canonical, ok := ToneAliases[v]; ok {
-		return canonical
-	}
-	return ""
 }

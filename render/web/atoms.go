@@ -157,16 +157,8 @@ func Avatar(p atoms.AvatarProps) g.Node {
 
 func normalizeAvatarSize(size string) string {
 	switch strings.ToLower(strings.TrimSpace(size)) {
-	case "xs", "extra-small":
-		return "xs"
-	case "sm", "small":
-		return "sm"
-	case "lg", "large":
-		return "lg"
-	case "xl", "extra-large":
-		return "xl"
-	case "2xl", "xxl", "extra-extra-large":
-		return "2xl"
+	case "xs", "sm", "lg", "xl", "2xl":
+		return strings.ToLower(strings.TrimSpace(size))
 	default:
 		return "md"
 	}
@@ -527,11 +519,8 @@ func Toast(p atoms.ToastProps) g.Node {
 }
 
 func toastWithSlots(p atoms.ToastProps, iconStart []g.Node) g.Node {
-	tone := normalizeToastTone(p.Tone, p.Variant)
-	variant := strings.ToLower(strings.TrimSpace(p.Variant))
-	if variant == "" {
-		variant = tone
-	}
+	tone := normalizeToastTone(p.Tone)
+	variant := tone
 	duration := p.Duration
 	if duration <= 0 && !p.Persistent {
 		duration = 5000
@@ -604,14 +593,8 @@ func toastWithSlots(p atoms.ToastProps, iconStart []g.Node) g.Node {
 	return h.Div(children...)
 }
 
-func normalizeToastTone(tone, variant string) string {
+func normalizeToastTone(tone string) string {
 	tone = strings.ToLower(strings.TrimSpace(tone))
-	if tone == "" {
-		tone = strings.ToLower(strings.TrimSpace(variant))
-	}
-	if tone == "error" || tone == "destructive" {
-		tone = "danger"
-	}
 	if _, exists := clToastTone[tone]; !exists {
 		return "info"
 	}
@@ -1534,10 +1517,8 @@ func Toggle(p atoms.ToggleProps) g.Node {
 
 func normalizeToggleSize(size string) string {
 	switch size {
-	case "sm", "small":
-		return "sm"
-	case "lg", "large":
-		return "lg"
+	case "sm", "lg":
+		return size
 	default:
 		return "md"
 	}
@@ -1626,10 +1607,6 @@ func normalizeTextSize(size string) string {
 	switch strings.ToLower(strings.TrimSpace(size)) {
 	case "xs", "sm", "lg", "xl", "2xl", "3xl", "4xl", "5xl":
 		return strings.ToLower(strings.TrimSpace(size))
-	case "small":
-		return "sm"
-	case "large":
-		return "lg"
 	default:
 		return "base"
 	}
@@ -1782,7 +1759,7 @@ func Progress(p atoms.ProgressProps) g.Node {
 	}
 
 	size := normalizeProgressSize(p.Size)
-	tone := normalizeProgressTone(p.Tone, p.Variant)
+	tone := normalizeProgressTone(p.Tone)
 	root := baseAttrs(p.ComponentProps)
 	root = append(
 		root,
@@ -1870,10 +1847,8 @@ func Progress(p atoms.ProgressProps) g.Node {
 
 func normalizeProgressSize(size string) string {
 	switch strings.ToLower(strings.TrimSpace(size)) {
-	case "sm", "small":
-		return "sm"
-	case "lg", "large":
-		return "lg"
+	case "sm", "lg":
+		return strings.ToLower(strings.TrimSpace(size))
 	default:
 		return "md"
 	}
@@ -1883,23 +1858,15 @@ func normalizeSpinnerTone(tone string) string {
 	switch strings.ToLower(strings.TrimSpace(tone)) {
 	case "neutral", "success", "warning", "danger", "info", "brand":
 		return strings.ToLower(strings.TrimSpace(tone))
-	case "error":
-		return "danger"
 	default:
 		return "brand"
 	}
 }
 
-func normalizeProgressTone(tone, variant string) string {
-	value := strings.ToLower(strings.TrimSpace(tone))
-	if value == "" {
-		value = strings.ToLower(strings.TrimSpace(variant))
-	}
-	switch value {
+func normalizeProgressTone(tone string) string {
+	switch strings.ToLower(strings.TrimSpace(tone)) {
 	case "neutral", "success", "warning", "danger", "info":
-		return value
-	case "error":
-		return "danger"
+		return strings.ToLower(strings.TrimSpace(tone))
 	default:
 		return "brand"
 	}
