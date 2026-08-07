@@ -18,6 +18,7 @@ import (
 
 	designcomponent "github.com/septagon-oss/pk-design/pkg/components"
 	uicomponent "github.com/septagon-oss/pk-ui/component"
+	"github.com/septagon-oss/pk-ui/contracts"
 	"github.com/septagon-oss/pk-ui/contracts/atoms"
 	"github.com/septagon-oss/tw"
 )
@@ -26,8 +27,12 @@ var (
 	buttonVariants = []string{
 		"primary", "secondary", "outline", "ghost", "link",
 	}
-	controlSizes = []string{"xs", "sm", "md", "lg", "xl", "2xl"}
-	gaps         = []string{"0", "1", "2", "3", "4", "5", "6", "8"}
+	// Scale and tone lists reference the canonical contract vocabulary so the
+	// delivery schema can never drift from the Props contracts it serves.
+	controlSizes   = contracts.ControlSizes
+	canonicalTones = contracts.CanonicalTones
+	feedbackTones  = contracts.FeedbackTones
+	gaps           = []string{"0", "1", "2", "3", "4", "5", "6", "8"}
 )
 
 // OSSDeliveryCatalog returns the complete renderer-backed OSS web library in
@@ -139,7 +144,7 @@ func avatarDeliveryDefinition() DeliveryDefinition {
 			"fallbackIcon":   contentProperty("Governed icon name used without an image or initials."),
 			"size":           sizeProperty(controlSizes, "md", "Avatar dimensions."),
 			"shape":          variantProperty([]string{"circle", "rounded", "square", "pill"}, "circle", "Avatar silhouette."),
-			"tone":           toneProperty([]string{"neutral", "brand", "success", "warning", "danger", "info"}, "neutral", "Initials or icon surface tone."),
+			"tone":           toneProperty(canonicalTones, "neutral", "Initials or icon surface tone."),
 			"status":         variantProperty([]string{"none", "online", "offline", "busy", "away"}, "none", "Optional presence indicator."),
 			"statusPosition": variantProperty([]string{"top-right", "bottom-right", "top-left", "bottom-left"}, "bottom-right", "Presence indicator placement."),
 			"statusLabel":    contentProperty("Localized accessible presence label."),
@@ -393,7 +398,7 @@ func iconDeliveryDefinition() DeliveryDefinition {
 			"name": contentProperty("Canonical glyph name."),
 			"size": sizeProperty(controlSizes, "md", "Rendered glyph size."),
 			"tone": toneProperty(
-				[]string{"neutral", "brand", "success", "warning", "danger", "info"},
+				canonicalTones,
 				"neutral",
 				"Semantic foreground tone.",
 			),
@@ -523,7 +528,7 @@ func buttonDeliveryDefinition() DeliveryDefinition {
 			"label":     contentProperty("Visible button label."),
 			"href":      contentProperty("Optional navigation target; renders link semantics when set."),
 			"variant":   variantProperty(buttonVariants, "primary", "Visual treatment."),
-			"tone":      toneProperty([]string{"neutral", "brand", "success", "warning", "danger", "info"}, "neutral", "Semantic intent."),
+			"tone":      toneProperty(canonicalTones, "neutral", "Semantic intent."),
 			"size":      sizeProperty(controlSizes, "md", "Control size."),
 			"type":      enumProperty([]string{"button", "submit", "reset"}, "button", "HTML button type."),
 			"loading":   stateProperty("Whether progress replaces the leading content."),
@@ -638,7 +643,7 @@ func badgeDeliveryDefinition() DeliveryDefinition {
 			"label":   contentProperty("Visible badge label."),
 			"variant": variantProperty([]string{"primary", "secondary", "outline"}, "primary", "Visual treatment."),
 			"tone": toneProperty(
-				[]string{"neutral", "brand", "success", "warning", "danger", "info"},
+				canonicalTones,
 				"neutral",
 				"Semantic intent independent of the visual treatment.",
 			),
@@ -716,7 +721,7 @@ func alertDeliveryDefinition() DeliveryDefinition {
 		map[string]PropertyContract{
 			"message":     contentProperty("Required status message."),
 			"title":       contentProperty("Optional status title."),
-			"tone":        toneProperty([]string{"info", "success", "warning", "danger"}, "info", "Severity."),
+			"tone":        toneProperty(feedbackTones, "info", "Severity."),
 			"dismissible": stateProperty("Whether a dismiss affordance is exposed."),
 			"bordered":    modifierProperty("Whether the message has a leading accent border."),
 			"compact":     modifierProperty("Whether spacing is compact."),
@@ -784,7 +789,7 @@ func toastDeliveryDefinition() DeliveryDefinition {
 		map[string]PropertyContract{
 			"message": contentProperty("Required notification message."),
 			"title":   contentProperty("Optional notification title."),
-			"tone":    toneProperty([]string{"info", "success", "warning", "danger"}, "info", "Notification severity."),
+			"tone":    toneProperty(feedbackTones, "info", "Notification severity."),
 			"duration": {
 				Role: designcomponent.PropRoleState, Description: "Auto-dismiss delay in milliseconds.", Default: "5000",
 			},
@@ -1215,7 +1220,7 @@ func sliderDeliveryDefinition() DeliveryDefinition {
 			"step":          roleProperty(designcomponent.PropRoleDefault, "Step increment; non-positive values fall back to one."),
 			"value":         contentProperty("Current numeric value."),
 			"showValue":     modifierProperty("Whether to render a live numeric value mirror."),
-			"tone":          toneProperty([]string{"brand", "success", "warning", "danger", "info"}, "brand", "Semantic accent for the native range control."),
+			"tone":          toneProperty(canonicalTones, "brand", "Semantic accent for the native range control."),
 			"ariaValueText": contentProperty("Optional human-readable value including units."),
 			"disabled":      stateProperty("Whether the range control is unavailable."),
 		},
@@ -1517,7 +1522,7 @@ func spinnerDeliveryDefinition() DeliveryDefinition {
 		map[string]PropertyContract{
 			"label": contentProperty("Screen-reader status label."),
 			"size":  sizeProperty(controlSizes, "md", "Indicator size."),
-			"tone":  toneProperty([]string{"brand", "success", "warning", "danger", "info"}, "brand", "Semantic progress tone."),
+			"tone":  toneProperty(canonicalTones, "brand", "Semantic progress tone."),
 		},
 		nil,
 		deliveryDesign("medium", "02 Atoms", "Feedback", root),
@@ -1594,7 +1599,7 @@ func progressDeliveryDefinition() DeliveryDefinition {
 			"label":         contentProperty("Optional visible progress label."),
 			"ariaLabel":     contentProperty("Accessible name used when no visible label is rendered."),
 			"showText":      modifierProperty("Whether to show the normalized integer percentage."),
-			"tone":          toneProperty([]string{"brand", "success", "warning", "danger", "info"}, "brand", "Semantic fill tone."),
+			"tone":          toneProperty(canonicalTones, "brand", "Semantic fill tone."),
 			"size":          sizeProperty([]string{"sm", "md", "lg"}, "md", "Progress track height."),
 			"indeterminate": stateProperty("Whether progress has no currently knowable value."),
 		},
@@ -1934,7 +1939,7 @@ func tagDeliveryDefinition() DeliveryDefinition {
 		"Selectable or removable metadata chip.",
 		map[string]PropertyContract{
 			"label":       contentProperty("Visible tag label."),
-			"tone":        toneProperty([]string{"neutral", "brand", "success", "warning", "danger", "info"}, "neutral", "Semantic intent."),
+			"tone":        toneProperty(canonicalTones, "neutral", "Semantic intent."),
 			"removable":   stateProperty("Whether removal is available."),
 			"selected":    stateProperty("Whether the tag is selected."),
 			"onRemoveURL": contentProperty("Optional progressive-enhancement removal endpoint."),
