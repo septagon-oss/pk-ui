@@ -41,7 +41,7 @@ type WindowedCollectionProps struct {
 	contracts.ComponentProps
 	contracts.HTMXProps
 
-	State                 string `json:"state,omitempty"`
+	State                 string `json:"state,omitempty"` // ready, loading, error (empty is derived from itemCount)
 	ItemCount             int    `json:"itemCount,omitempty"`
 	MaxItems              int    `json:"maxItems,omitempty"`
 	CollectionLabel       string `json:"collectionLabel,omitempty"`

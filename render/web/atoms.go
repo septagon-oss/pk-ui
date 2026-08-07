@@ -1750,7 +1750,7 @@ func Divider(p atoms.DividerProps) g.Node {
 func Spinner(p atoms.SpinnerProps) g.Node {
 	cl := clSpinner.
 		Merge(variantOr(clSpinnerSize, p.Size, "md")).
-		Merge(variantOr(clSpinnerTone, p.Tone, "brand"))
+		Merge(variantOr(clSpinnerTone, normalizeSpinnerTone(p.Tone), "brand"))
 	label := p.Label
 	if label == "" {
 		label = "Loading"
@@ -1879,13 +1879,24 @@ func normalizeProgressSize(size string) string {
 	}
 }
 
+func normalizeSpinnerTone(tone string) string {
+	switch strings.ToLower(strings.TrimSpace(tone)) {
+	case "neutral", "success", "warning", "danger", "info", "brand":
+		return strings.ToLower(strings.TrimSpace(tone))
+	case "error":
+		return "danger"
+	default:
+		return "brand"
+	}
+}
+
 func normalizeProgressTone(tone, variant string) string {
 	value := strings.ToLower(strings.TrimSpace(tone))
 	if value == "" {
 		value = strings.ToLower(strings.TrimSpace(variant))
 	}
 	switch value {
-	case "success", "warning", "danger", "info":
+	case "neutral", "success", "warning", "danger", "info":
 		return value
 	case "error":
 		return "danger"

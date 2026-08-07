@@ -11,7 +11,7 @@ type SpinnerProps struct {
 
 	Label string `json:"label,omitempty"` // sr-only text
 	Size  string `json:"size,omitempty"`  // xs, sm, md, lg, xl, 2xl
-	Tone  string `json:"tone,omitempty"`  // brand, success, warning, danger, info
+	Tone  string `json:"tone,omitempty"`  // neutral, brand, success, warning, danger, info (default brand)
 }
 
 // ToMap converts SpinnerProps to map[string]any for unified Component construction.
@@ -26,7 +26,7 @@ type ProgressProps struct {
 	Label         string `json:"label,omitempty"`
 	AriaLabel     string `json:"ariaLabel,omitempty"` // accessible name without a visible label
 	ShowText      bool   `json:"showText,omitempty"`  // show normalized percentage
-	Tone          string `json:"tone,omitempty"`      // brand, success, warning, danger, info
+	Tone          string `json:"tone,omitempty"`      // neutral, brand, success, warning, danger, info (default brand)
 	Size          string `json:"size,omitempty"`      // sm, md, lg
 	Indeterminate bool   `json:"indeterminate,omitempty"`
 
@@ -60,7 +60,7 @@ type ToastProps struct {
 
 	Message    string `json:"message"`
 	Title      string `json:"title,omitempty"`
-	Tone       string `json:"tone,omitempty"`       // info, success, warning, danger
+	Tone       string `json:"tone,omitempty"`       // neutral, info, success, warning, danger (default info)
 	Duration   int    `json:"duration,omitempty"`   // auto-dismiss delay in milliseconds
 	Persistent bool   `json:"persistent,omitempty"` // remains until explicitly dismissed
 	Position   string `json:"position,omitempty"`   // top-right, top-left, bottom-right, bottom-left

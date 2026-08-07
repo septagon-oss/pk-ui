@@ -62,7 +62,7 @@ type SliderProps struct {
 	Value         float64 `json:"value,omitempty"`
 	ShowValue     bool    `json:"showValue,omitempty"`
 	Label         string  `json:"label,omitempty"`
-	Tone          string  `json:"tone,omitempty"`
+	Tone          string  `json:"tone,omitempty"` // neutral, brand, success, warning, danger, info (default brand)
 	AriaValueText string  `json:"ariaValueText,omitempty"`
 }
 

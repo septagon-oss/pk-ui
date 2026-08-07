@@ -11,7 +11,7 @@ type AlertProps struct {
 
 	Message     string `json:"message"`
 	Title       string `json:"title,omitempty"`
-	Tone        string `json:"tone,omitempty"` // info, success, warning, danger
+	Tone        string `json:"tone,omitempty"` // neutral, info, success, warning, danger (default info)
 	Dismissible bool   `json:"dismissible,omitempty"`
 	Bordered    bool   `json:"bordered,omitempty"`
 	Compact     bool   `json:"compact,omitempty"`

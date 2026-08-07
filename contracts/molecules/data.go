@@ -124,7 +124,7 @@ type SidebarSection struct {
 	ID         string        `json:"id,omitempty"`
 	Label      string        `json:"label,omitempty"`
 	Glyph      string        `json:"glyph,omitempty"`
-	Tone       string        `json:"tone,omitempty"`
+	Tone       string        `json:"tone,omitempty"` // neutral, brand, success, warning, danger, info
 	SearchText string        `json:"searchText,omitempty"`
 	Items      []SidebarItem `json:"items,omitempty"`
 }

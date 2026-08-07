@@ -2904,3 +2904,41 @@ func TestDashboardWidgetOwnsTypedStatAndRefreshContract(t *testing.T) {
 		}
 	}
 }
+
+
+func renderNodeToString(t *testing.T, node g.Node) string {
+	t.Helper()
+	var output strings.Builder
+	if err := node.Render(&output); err != nil {
+		t.Fatal(err)
+	}
+	return output.String()
+}
+
+func TestNeutralToneRendersAcrossFeedbackAtoms(t *testing.T) {
+	t.Parallel()
+
+	spinner := renderNodeToString(t, Spinner(atoms.SpinnerProps{Tone: "neutral"}))
+	if !strings.Contains(spinner, "border-t-fg-secondary") {
+		t.Errorf("neutral Spinner missing neutral border tone: %s", spinner)
+	}
+
+	progress := renderNodeToString(t, Progress(atoms.ProgressProps{Value: 40, Tone: "neutral"}))
+	for _, fragment := range []string{`data-tone="neutral"`, "bg-fg-secondary"} {
+		if !strings.Contains(progress, fragment) {
+			t.Errorf("neutral Progress missing %s: %s", fragment, progress)
+		}
+	}
+
+	alert := renderNodeToString(t, Alert(atoms.AlertProps{Message: "Note", Tone: "neutral"}))
+	for _, fragment := range []string{`data-alert-tone="neutral"`, `role="status"`, "bg-surface-tertiary"} {
+		if !strings.Contains(alert, fragment) {
+			t.Errorf("neutral Alert missing %s: %s", fragment, alert)
+		}
+	}
+
+	toast := renderNodeToString(t, Toast(atoms.ToastProps{Message: "Saved", Tone: "neutral"}))
+	if !strings.Contains(toast, "bg-surface-tertiary") {
+		t.Errorf("neutral Toast missing neutral surface: %s", toast)
+	}
+}

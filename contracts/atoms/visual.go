@@ -39,7 +39,7 @@ type AvatarProps struct {
 	Name           string `json:"name,omitempty"`
 	Initials       string `json:"initials,omitempty"`
 	FallbackIcon   string `json:"fallbackIcon,omitempty"`
-	Size           string `json:"size,omitempty"`           // xs, small, medium, large, xl, 2xl
+	Size           string `json:"size,omitempty"`           // xs, sm, md, lg, xl, 2xl (canonical control scale; legacy words small/medium/large still accepted on render)
 	Shape          string `json:"shape,omitempty"`          // circle, rounded, square, pill
 	Tone           string `json:"tone,omitempty"`           // neutral, brand, success, warning, danger, info
 	Status         string `json:"status,omitempty"`         // online, offline, busy, away

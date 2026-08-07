@@ -215,6 +215,7 @@ var (
 	clAlertBordered = tw.New().BorderLeft(tw.Border4)
 
 	clAlertVariant = map[string]tw.ClassList{
+		"neutral": tw.New().Bg(tw.SurfaceTertiary).TextColor(tw.FgSecondary).BorderColor(tw.BorderPrimary),
 		"success": tw.New().NoUnderline().Bg(tw.SurfaceSuccessSoft).TextColor(tw.FgSuccess).BorderColor(tw.BorderSuccess),
 		"warning": tw.New().NoUnderline().Bg(tw.SurfaceWarningSoft).TextColor(tw.FgWarning).BorderColor(tw.BorderWarning),
 		"error":   tw.New().Bg(tw.SurfaceDangerSoft).TextColor(tw.FgDanger).BorderColor(tw.BorderDanger),
@@ -241,6 +242,7 @@ var (
 			Shadow(tw.ShadowLG).PointerEvents(tw.PointerAuto).Overflow(tw.OverflowHidden).
 			Padding(tw.S4)
 	clToastTone = map[string]tw.ClassList{
+		"neutral": clAlertVariant["neutral"].Merge(tw.New().BorderLeft(tw.Border4)),
 		"success": clAlertVariant["success"].Merge(tw.New().BorderLeft(tw.Border4)),
 		"warning": clAlertVariant["warning"].Merge(tw.New().BorderLeft(tw.Border4)),
 		"danger":  clAlertVariant["danger"].Merge(tw.New().BorderLeft(tw.Border4)),
@@ -763,6 +765,7 @@ var (
 		"2xl": tw.New().Width(tw.S12).Height(tw.S12),
 	}
 	clSpinnerTone = map[string]tw.ClassList{
+		"neutral": tw.New().BorderTopColor(tw.FgSecondary),
 		"brand":   tw.New().BorderTopColor(tw.FgBrand),
 		"success": tw.New().BorderTopColor(tw.FgSuccess),
 		"warning": tw.New().BorderTopColor(tw.FgWarning),
@@ -791,6 +794,7 @@ var (
 	clProgressFill = tw.New().Height(tw.SFull).Rounded(tw.RadiusFull).
 			Transition(tw.TransitionAll).Duration(tw.Duration300).Easing(tw.EaseOut)
 	clProgressTone = map[string]tw.ClassList{
+		"neutral": tw.New().Bg(tw.FgSecondary),
 		"brand":   tw.New().Bg(tw.SurfaceBrand),
 		"success": tw.New().Bg(tw.SurfaceSuccess),
 		"warning": tw.New().Bg(tw.SurfaceWarning),
