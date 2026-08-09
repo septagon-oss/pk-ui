@@ -25,10 +25,16 @@ type ErrorDocument struct {
 	RetryURL     string `json:"retryUrl,omitempty"`
 	RetryLabel   string `json:"retryLabel,omitempty"`
 	BrandName    string `json:"brandName,omitempty"`
-	ReferenceID  string `json:"referenceId,omitempty"`
-	Locale       string `json:"locale,omitempty"`
-	Direction    string `json:"direction,omitempty"`
-	Nonce        string `json:"nonce,omitempty"`
+	// SignedInLabel, when set, reports that the visitor already holds an
+	// authenticated session (copy is pre-resolved, e.g. "Signed in as
+	// marta@example.com"). Renderers must surface it in the page context and
+	// suppress the sign-in action — offering a login to a signed-in visitor
+	// is a dead end.
+	SignedInLabel string `json:"signedInLabel,omitempty"`
+	ReferenceID   string `json:"referenceId,omitempty"`
+	Locale        string `json:"locale,omitempty"`
+	Direction     string `json:"direction,omitempty"`
+	Nonce         string `json:"nonce,omitempty"`
 }
 
 // ErrorDocumentRenderer builds a complete HTML document. Implementations may
