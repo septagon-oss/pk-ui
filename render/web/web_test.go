@@ -2873,6 +2873,61 @@ func TestWindowedCollectionFailsClosedAboveBudget(t *testing.T) {
 	}
 }
 
+func TestWindowedCollectionProjectsSemanticGridLayout(t *testing.T) {
+	t.Parallel()
+
+	node := WindowedCollection(
+		organisms.WindowedCollectionProps{
+			Layout:      "grid",
+			ItemCount:   2,
+			MaxItems:    100,
+			Title:       "Your stickers",
+			Description: "Every sticker you own.",
+		},
+		WindowedCollectionSlots{Items: []g.Node{
+			Text(atoms.TextProps{Content: "First"}),
+			Text(atoms.TextProps{Content: "Second"}),
+		}},
+	)
+	var output strings.Builder
+	if err := node.Render(&output); err != nil {
+		t.Fatal(err)
+	}
+	html := output.String()
+	for _, fragment := range []string{
+		`data-windowed-layout="grid"`,
+		`data-windowed-items`,
+		`grid`,
+		`sm:grid-cols-2`,
+		`lg:grid-cols-3`,
+		`Your stickers`,
+		`Every sticker you own.`,
+		`bg-surface-brand`,
+	} {
+		if !strings.Contains(html, fragment) {
+			t.Fatalf("grid window missing %q: %s", fragment, html)
+		}
+	}
+}
+
+func TestWindowedCollectionDefaultsUnknownLayoutToList(t *testing.T) {
+	t.Parallel()
+
+	node := WindowedCollection(
+		organisms.WindowedCollectionProps{Layout: "masonry", ItemCount: 1, MaxItems: 100},
+		WindowedCollectionSlots{Items: []g.Node{Text(atoms.TextProps{Content: "Only"})}},
+	)
+	var output strings.Builder
+	if err := node.Render(&output); err != nil {
+		t.Fatal(err)
+	}
+	html := output.String()
+	if !strings.Contains(html, `data-windowed-layout="list"`) ||
+		strings.Contains(html, `sm:grid-cols-2`) {
+		t.Fatalf("unknown layout did not fail closed to list: %s", html)
+	}
+}
+
 func TestDashboardWidgetOwnsTypedStatAndRefreshContract(t *testing.T) {
 	t.Parallel()
 	node := DashboardWidget(

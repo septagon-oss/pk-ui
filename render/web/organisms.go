@@ -193,6 +193,10 @@ func WindowedCollection(
 	if state == "" {
 		state = "ready"
 	}
+	layout := p.Layout
+	if layout != "grid" {
+		layout = "list"
+	}
 	contractError := p.ContractError ||
 		p.MaxItems < 1 ||
 		p.MaxItems > 500 ||
@@ -210,15 +214,37 @@ func WindowedCollection(
 		section,
 		classes(clWindow.Compile(), p.Class),
 		g.Attr("data-component", "windowed-collection"),
+		g.Attr("data-windowed-layout", layout),
 		g.Attr("data-windowed-state", state),
 		g.Attr("data-windowed-item-count", strconv.Itoa(p.ItemCount)),
 		g.Attr("data-windowed-max-items", strconv.Itoa(p.MaxItems)),
 		g.Attr("aria-label", collectionLabel),
 		g.Attr("aria-busy", strconv.FormatBool(state == "loading")),
 	)
+	if p.Title != "" || p.Description != "" {
+		section = append(section, h.Header(
+			h.Class(clWindowHeader.Compile()),
+			h.Span(
+				h.Class(clWindowAccent.Compile()),
+				g.Attr("aria-hidden", "true"),
+			),
+			g.If(p.Title != "", h.H2(
+				h.Class(clWindowHeading.Compile()),
+				g.Text(p.Title),
+			)),
+			g.If(p.Description != "", h.P(
+				h.Class(clWindowIntro.Compile()),
+				g.Text(p.Description),
+			)),
+		))
+	}
 	if len(slots.Items) > 0 {
+		itemsClass := clWindowItems
+		if layout == "grid" {
+			itemsClass = clWindowItemsGrid
+		}
 		section = append(section, h.Div(
-			h.Class(clWindowItems.Compile()),
+			h.Class(itemsClass.Compile()),
 			g.Attr("data-windowed-items", ""),
 			g.Group(slots.Items),
 		))
