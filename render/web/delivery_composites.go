@@ -214,6 +214,73 @@ func tableDeliveryDefinition() DeliveryDefinition {
 	)
 }
 
+func detailListDeliveryDefinition() DeliveryDefinition {
+	componentType := "DetailList"
+	root := deliverySemantics(
+		deliveryFrame(
+			componentType,
+			clDetailList.Compile(),
+			deliveryFrame(
+				"Header",
+				clDetailHeader.Compile(),
+				deliveryText("Title", clDetailTitle.Compile(), "Profile", "title"),
+				deliveryText(
+					"Description",
+					clDetailDescription.Compile(),
+					"Identity used across this workspace.",
+					"description",
+				),
+			),
+			deliveryFrame(
+				"Items",
+				clDetailItems.Compile(),
+				deliveryFrame(
+					"Item",
+					clDetailRow.Compile(),
+					deliveryText("Label", clDetailTerm.Compile(), "Email"),
+					deliveryText("Value", clDetailValue.Merge(clDetailValueTone["neutral"]).Compile(), "ada@example.test"),
+				),
+			),
+		),
+		"section",
+		"semantic label and value facts",
+	)
+	definition := newDeliveryDefinition(
+		componentType,
+		uicomponent.TierMolecule,
+		stableDeliveryID(componentType),
+		"Accessible description list with explicit visible section copy and a stable adaptive semantic role.",
+		map[string]PropertyContract{
+			"title":        contentProperty("Optional visible section heading."),
+			"description":  contentProperty("Optional visible supporting section copy."),
+			"semanticRole": contentProperty("Stable non-localized machine key for adaptive section meaning."),
+			"items":        contentProperty("Required ordered label and value facts."),
+		},
+		nil,
+		deliveryDesign("identity", "03 Molecules", "Data", root),
+		[]DeliveryExample{
+			canonicalDeliveryExample(componentType, "identity", map[string]any{
+				"title":        "Profile",
+				"description":  "Identity used across this workspace.",
+				"semanticRole": "identity",
+				"items": []map[string]any{
+					{"label": "Email", "value": "ada@example.test"},
+					{"label": "Role", "value": "Owner", "description": "Applies to this workspace.", "tone": "brand"},
+				},
+			}),
+			deliveryExample(componentType, "activity", map[string]any{
+				"title":        "Activity",
+				"semanticRole": "activity",
+				"items": []map[string]any{
+					{"label": "Last sign-in", "value": "Today"},
+				},
+			}),
+		},
+		DetailList,
+	)
+	return withDeliveryTags(definition, "details", "description-list", "semantic-section")
+}
+
 func cardDeliveryDefinition() DeliveryDefinition {
 	componentType := "Card"
 	root := deliveryClassBound(
@@ -1982,6 +2049,25 @@ func windowedCollectionDeliveryDefinition() DeliveryDefinition {
 			map[string]any{"state": "error"},
 		),
 		deliveryVisibleWhen(
+			deliveryFrame(
+				"Offline",
+				clWindowOffline.Compile(),
+				deliveryText(
+					"OfflineTitle",
+					clWindowTitle.Compile(),
+					"You are offline",
+					"offlineTitle",
+				),
+				deliveryText(
+					"OfflineDescription",
+					clWindowDescription.Compile(),
+					"Reconnect to load this window, then try again.",
+					"offlineDescription",
+				),
+			),
+			map[string]any{"state": "offline"},
+		),
+		deliveryVisibleWhen(
 			deliveryText(
 				"Empty",
 				clWindowEmpty.Compile(),
@@ -2009,7 +2095,7 @@ func windowedCollectionDeliveryDefinition() DeliveryDefinition {
 				"Semantic item arrangement shared by adaptive, web, and native renderers.",
 			),
 			"state": variantProperty(
-				[]string{"ready", "loading", "error"},
+				contracts.CollectionStates,
 				"ready",
 				"Current collection state.",
 			),
@@ -2023,6 +2109,8 @@ func windowedCollectionDeliveryDefinition() DeliveryDefinition {
 			"loadingLabel":          contentProperty("Localized loading status."),
 			"errorTitle":            contentProperty("Localized error title."),
 			"errorDescription":      contentProperty("Localized error description."),
+			"offlineTitle":          contentProperty("Localized offline title."),
+			"offlineDescription":    contentProperty("Localized offline recovery guidance."),
 			"retryLabel":            contentProperty("Localized retry label."),
 			"retryURL":              contentProperty("Progressive retry URL."),
 			"navigationUnavailable": contentProperty("Cursor-navigation failure message."),
@@ -2082,6 +2170,12 @@ func windowedCollectionDeliveryDefinition() DeliveryDefinition {
 			),
 			deliveryExample(componentType, "empty", map[string]any{
 				"state": "ready", "itemCount": 0, "maxItems": 100,
+			}),
+			deliveryExample(componentType, "offline", map[string]any{
+				"state": "offline", "itemCount": 0, "maxItems": 100,
+				"offlineTitle":       "You are offline",
+				"offlineDescription": "Reconnect to load this window, then try again.",
+				"retryLabel":         "Try again", "retryURL": "/results/retry",
 			}),
 		},
 		func(

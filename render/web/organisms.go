@@ -202,7 +202,8 @@ func WindowedCollection(
 		p.MaxItems > 500 ||
 		p.ItemCount < 0 ||
 		p.ItemCount > p.MaxItems
-	if contractError || (state != "ready" && state != "loading" && state != "error") {
+	if contractError ||
+		(state != "ready" && state != "loading" && state != "error" && state != "offline") {
 		state = "error"
 		contractError = true
 		slots.Items = nil
@@ -261,6 +262,15 @@ func WindowedCollection(
 		))
 	case state == "error":
 		section = append(section, windowedError(p, contractError))
+	case state == "offline":
+		section = append(section, windowedRecoverableStatus(
+			p,
+			"offline",
+			clWindowOffline.Compile(),
+			fallbackText(p.OfflineTitle, "You are offline"),
+			fallbackText(p.OfflineDescription, "Reconnect to load this window, then try again."),
+			false,
+		))
 	case p.ItemCount == 0:
 		section = append(section, windowedStatus(
 			"data-windowed-empty",
@@ -290,9 +300,27 @@ func windowedError(
 	p organisms.WindowedCollectionProps,
 	contractError bool,
 ) g.Node {
+	return windowedRecoverableStatus(
+		p,
+		"error",
+		clWindowError.Compile(),
+		fallbackText(p.ErrorTitle, "Unable to load results"),
+		fallbackText(p.ErrorDescription, "Try again in a moment."),
+		contractError,
+	)
+}
+
+func windowedRecoverableStatus(
+	p organisms.WindowedCollectionProps,
+	kind string,
+	class string,
+	title string,
+	description string,
+	contractError bool,
+) g.Node {
 	nodes := []g.Node{
-		h.Class(clWindowError.Compile()),
-		g.Attr("data-windowed-error", ""),
+		h.Class(class),
+		g.Attr("data-windowed-"+kind, ""),
 		g.Attr("role", "alert"),
 	}
 	if contractError {
@@ -302,11 +330,11 @@ func windowedError(
 		nodes,
 		h.P(
 			h.Class(clWindowTitle.Compile()),
-			g.Text(fallbackText(p.ErrorTitle, "Unable to load results")),
+			g.Text(title),
 		),
 		h.P(
 			h.Class(clWindowDescription.Compile()),
-			g.Text(fallbackText(p.ErrorDescription, "Try again in a moment.")),
+			g.Text(description),
 		),
 	)
 	if p.RetryURL != "" {

@@ -61,7 +61,7 @@ var FeedbackTones = []string{"neutral", "info", "success", "warning", "danger"}
 
 // CollectionStates is the state axis for data-bearing surfaces
 // (WindowedCollection). "empty" is derived from itemCount, not a state value.
-var CollectionStates = []string{"ready", "loading", "error"}
+var CollectionStates = []string{"ready", "loading", "error", "offline"}
 
 // PresenceStates is the status axis for identity marks (Avatar).
 var PresenceStates = []string{"online", "offline", "busy", "away"}
@@ -110,6 +110,7 @@ var ToneAxisBindings = map[string]bool{
 	"ToastProps.tone":     true,
 	"ActionMenuItem.tone": true,
 	"SidebarSection.tone": true,
+	"DetailItem.tone":     true,
 }
 
 // StateAxisBindings records the component props carrying a declared state or

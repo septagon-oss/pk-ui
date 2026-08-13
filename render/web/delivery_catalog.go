@@ -69,6 +69,7 @@ func OSSDeliveryCatalog() []DeliveryDefinition {
 		linkDeliveryDefinition(),
 		tagDeliveryDefinition(),
 		tableDeliveryDefinition(),
+		detailListDeliveryDefinition(),
 		tableSkeletonDeliveryDefinition(),
 		cardDeliveryDefinition(),
 		cardSkeletonDeliveryDefinition(),
