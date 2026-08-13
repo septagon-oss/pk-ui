@@ -1933,9 +1933,7 @@ func dashboardWidgetDeliveryDefinition() DeliveryDefinition {
 
 func windowedCollectionDeliveryDefinition() DeliveryDefinition {
 	componentType := "WindowedCollection"
-	root := deliveryFrame(
-		componentType,
-		clWindow.Compile(),
+	items := deliveryClassBound(
 		deliverySlot(
 			"Items",
 			"items",
@@ -1943,6 +1941,28 @@ func windowedCollectionDeliveryDefinition() DeliveryDefinition {
 			deliveryInstance("FirstItem", "Card", "summary", ""),
 			deliveryInstance("SecondItem", "Card", "summary", ""),
 		),
+		"layout",
+		map[string]string{
+			"list": "",
+			"grid": clWindowItemsGrid.Compile(),
+		},
+	)
+	root := deliveryFrame(
+		componentType,
+		clWindow.Compile(),
+		deliveryFrame(
+			"Header",
+			clWindowHeader.Compile(),
+			deliveryFrame("Accent", clWindowAccent.Compile()),
+			deliveryText("Title", clWindowHeading.Compile(), "Recent work", "title"),
+			deliveryText(
+				"Description",
+				clWindowIntro.Compile(),
+				"A bounded window of recent work.",
+				"description",
+			),
+		),
+		items,
 		deliveryVisibleWhen(
 			deliveryText(
 				"Loading",
@@ -1983,6 +2003,11 @@ func windowedCollectionDeliveryDefinition() DeliveryDefinition {
 		stableDeliveryID(componentType),
 		"Bounded collection shell with explicit item, state, and cursor-control composition.",
 		map[string]PropertyContract{
+			"layout": variantProperty(
+				[]string{"list", "grid"},
+				"list",
+				"Semantic item arrangement shared by adaptive, web, and native renderers.",
+			),
 			"state": variantProperty(
 				[]string{"ready", "loading", "error"},
 				"ready",
@@ -1991,6 +2016,8 @@ func windowedCollectionDeliveryDefinition() DeliveryDefinition {
 			"itemCount":             contentProperty("Number of bounded item roots."),
 			"maxItems":              modifierProperty("Hard render-node budget."),
 			"collectionLabel":       contentProperty("Accessible collection label."),
+			"title":                 contentProperty("Optional visible collection heading."),
+			"description":           contentProperty("Optional supporting collection copy."),
 			"emptyTitle":            contentProperty("Localized empty-state title."),
 			"emptyDescription":      contentProperty("Localized empty-state description."),
 			"loadingLabel":          contentProperty("Localized loading status."),
@@ -2019,7 +2046,8 @@ func windowedCollectionDeliveryDefinition() DeliveryDefinition {
 		[]DeliveryExample{
 			withDeliveryExampleSlots(
 				canonicalDeliveryExample(componentType, "cards", map[string]any{
-					"state": "ready", "itemCount": 2, "maxItems": 100,
+					"layout": "grid", "state": "ready", "itemCount": 2, "maxItems": 100,
+					"title": "Recent work", "description": "A bounded window of recent work.",
 				}),
 				deliveryExampleSlot(
 					"items",

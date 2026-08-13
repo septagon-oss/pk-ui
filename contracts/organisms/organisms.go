@@ -41,10 +41,13 @@ type WindowedCollectionProps struct {
 	contracts.ComponentProps
 	contracts.HTMXProps
 
-	State                 string `json:"state,omitempty"` // ready, loading, error (empty is derived from itemCount)
+	Layout                string `json:"layout,omitempty"` // list, grid (responsive equal-width items)
+	State                 string `json:"state,omitempty"`  // ready, loading, error (empty is derived from itemCount)
 	ItemCount             int    `json:"itemCount,omitempty"`
 	MaxItems              int    `json:"maxItems,omitempty"`
 	CollectionLabel       string `json:"collectionLabel,omitempty"`
+	Title                 string `json:"title,omitempty"`
+	Description           string `json:"description,omitempty"`
 	EmptyTitle            string `json:"emptyTitle,omitempty"`
 	EmptyDescription      string `json:"emptyDescription,omitempty"`
 	LoadingLabel          string `json:"loadingLabel,omitempty"`

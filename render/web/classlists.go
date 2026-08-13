@@ -1155,8 +1155,20 @@ var (
 		})
 
 	// WindowedCollection.
-	clWindow      = tw.New().MinWidth(tw.S0)
-	clWindowItems = tw.New().MinWidth(tw.S0)
+	clWindow       = tw.New().MinWidth(tw.S0)
+	clWindowHeader = tw.New().MarginBottom(tw.S4).MinWidth(tw.S0)
+	clWindowAccent = tw.New().Display(tw.DisplayBlock).Height(tw.S1).Width(tw.S8).
+			Rounded(tw.RadiusFull).Bg(tw.SurfaceBrand).MarginBottom(tw.S3)
+	clWindowHeading   = tw.New().FontSize(tw.TextXL).FontWeight(tw.FontSemibold).BreakWords()
+	clWindowIntro     = tw.New().MarginTop(tw.S1).FontSize(tw.TextSM).TextColor(tw.FgSecondary).BreakWords()
+	clWindowItems     = tw.New().MinWidth(tw.S0)
+	clWindowItemsGrid = clWindowItems.Display(tw.DisplayGrid).GridCols(1).Gap(tw.S4).
+				Breakpoint(tw.BreakpointSM, func(cl tw.ClassList) tw.ClassList {
+			return cl.GridCols(2)
+		}).
+		Breakpoint(tw.BreakpointLG, func(cl tw.ClassList) tw.ClassList {
+			return cl.GridCols(3)
+		})
 	clWindowState = tw.New().MarginTop(tw.S4).Rounded(tw.RadiusLG).
 			Border(tw.Border1).Padding(tw.S4).BreakWords()
 	clWindowLoading = clWindowState.Bg(tw.SurfaceInfoSoft).
