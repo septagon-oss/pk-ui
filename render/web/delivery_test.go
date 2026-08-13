@@ -24,7 +24,7 @@ func TestOSSDeliveryCatalogIsCompleteNativeAndExecutable(t *testing.T) {
 	t.Parallel()
 
 	catalog := OSSDeliveryCatalog()
-	if got, want := len(catalog), 54; got != want {
+	if got, want := len(catalog), 55; got != want {
 		t.Fatalf("catalog has %d entries, want %d", got, want)
 	}
 
@@ -77,6 +77,50 @@ func TestOSSDeliveryCatalogIsCompleteNativeAndExecutable(t *testing.T) {
 		}
 		if !found {
 			t.Errorf("%s does not publish semantic tag %q", componentType, expectedTag)
+		}
+	}
+}
+
+func TestAdaptiveDetailAndOfflineContractsArePublished(t *testing.T) {
+	t.Parallel()
+
+	definitions := make(map[string]DeliveryDefinition)
+	for _, definition := range OSSDeliveryCatalog() {
+		definitions[string(definition.Identity.ID)] = definition
+	}
+
+	detail, ok := definitions["DetailList"]
+	if !ok {
+		t.Fatal("catalog has no DetailList delivery contract")
+	}
+	detailProps := make(map[string]bool)
+	for _, prop := range detail.Contract.Props {
+		detailProps[prop.Name] = true
+	}
+	for _, name := range []string{"title", "description", "semanticRole", "items"} {
+		if !detailProps[name] {
+			t.Errorf("DetailList contract is missing %q", name)
+		}
+	}
+
+	window, ok := definitions["WindowedCollection"]
+	if !ok {
+		t.Fatal("catalog has no WindowedCollection delivery contract")
+	}
+	windowProps := make(map[string]bool)
+	var states []string
+	for _, prop := range window.Contract.Props {
+		windowProps[prop.Name] = true
+		if prop.Name == "state" {
+			states = prop.EnumValues
+		}
+	}
+	if !slices.Contains(states, "offline") {
+		t.Errorf("WindowedCollection state enum = %v, want offline", states)
+	}
+	for _, name := range []string{"offlineTitle", "offlineDescription"} {
+		if !windowProps[name] {
+			t.Errorf("WindowedCollection contract is missing %q", name)
 		}
 	}
 }

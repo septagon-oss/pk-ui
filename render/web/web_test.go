@@ -302,6 +302,20 @@ func gallery() []g.Node {
 				{ID: "r3", Cells: map[string]any{"name": "Third", "count": 2}},
 			},
 		}),
+		DetailList(molecules.DetailListProps{
+			ComponentProps: contracts.ComponentProps{ID: "account-facts"},
+			Title:          "Profile",
+			Description:    "Identity used across this workspace.",
+			SemanticRole:   "identity",
+			Items: []molecules.DetailItem{
+				{Label: "Email", Value: "ada@example.test", Tone: "neutral"},
+				{Label: "Plan", Value: "Studio", Description: "Renews next month.", Tone: "brand"},
+				{Label: "Health", Value: "Good", Tone: "success"},
+				{Label: "Review", Value: "Soon", Tone: "warning"},
+				{Label: "Risk", Value: "High", Tone: "danger"},
+				{Label: "Region", Value: "EU", Tone: "info"},
+			},
+		}),
 
 		Card(molecules.CardProps{Title: "Plain card", Description: "With copy."}),
 		Card(molecules.CardProps{Title: "Go somewhere", Clickable: true, Href: "/detail"}),
@@ -2925,6 +2939,109 @@ func TestWindowedCollectionDefaultsUnknownLayoutToList(t *testing.T) {
 	if !strings.Contains(html, `data-windowed-layout="list"`) ||
 		strings.Contains(html, `sm:grid-cols-2`) {
 		t.Fatalf("unknown layout did not fail closed to list: %s", html)
+	}
+}
+
+func TestWindowedCollectionRendersRecoverableOfflineStateWithCachedItems(t *testing.T) {
+	t.Parallel()
+
+	node := WindowedCollection(
+		organisms.WindowedCollectionProps{
+			State:              "offline",
+			ItemCount:          1,
+			MaxItems:           100,
+			OfflineTitle:       "Sem ligação",
+			OfflineDescription: "Volte a ligar-se para atualizar esta janela.",
+			RetryLabel:         "Tentar novamente",
+			RetryURL:           "/results/retry",
+		},
+		WindowedCollectionSlots{
+			Items:    []g.Node{Text(atoms.TextProps{Content: "Cached result"})},
+			Controls: g.Text("must not paginate while offline"),
+		},
+	)
+	var output strings.Builder
+	if err := node.Render(&output); err != nil {
+		t.Fatal(err)
+	}
+	html := output.String()
+	for _, fragment := range []string{
+		`data-windowed-state="offline"`,
+		`data-windowed-offline`,
+		`role="alert"`,
+		`Sem ligação`,
+		`Volte a ligar-se para atualizar esta janela.`,
+		`href="/results/retry"`,
+		`Tentar novamente`,
+		`Cached result`,
+		`bg-surface-warning-soft`,
+	} {
+		if !strings.Contains(html, fragment) {
+			t.Fatalf("offline window missing %q: %s", fragment, html)
+		}
+	}
+	if strings.Contains(html, "must not paginate while offline") {
+		t.Fatalf("offline window exposed cursor controls: %s", html)
+	}
+}
+
+func TestDetailListRendersExplicitAccessibleSectionSemantics(t *testing.T) {
+	t.Parallel()
+
+	node := DetailList(molecules.DetailListProps{
+		ComponentProps: contracts.ComponentProps{ID: "profile-details"},
+		Title:          "Perfil",
+		Description:    "Dados usados nesta conta.",
+		SemanticRole:   "identity",
+		Items: []molecules.DetailItem{
+			{Label: "Email", Value: "ada@example.test"},
+			{Label: "Plano", Value: "Studio", Description: "Renova amanhã.", Tone: "brand"},
+			{Label: "", Value: "must not render"},
+		},
+	})
+	var output strings.Builder
+	if err := node.Render(&output); err != nil {
+		t.Fatal(err)
+	}
+	html := output.String()
+	for _, fragment := range []string{
+		`data-component="detail-list"`,
+		`data-semantic-role="identity"`,
+		`aria-labelledby="profile-details-title"`,
+		`aria-describedby="profile-details-description"`,
+		`id="profile-details-title"`,
+		`id="profile-details-description"`,
+		`<dl`,
+		`<dt`,
+		`<dd`,
+		`Perfil`,
+		`Dados usados nesta conta.`,
+		`Renova amanhã.`,
+		`text-fg-brand`,
+	} {
+		if !strings.Contains(html, fragment) {
+			t.Fatalf("semantic detail list missing %q: %s", fragment, html)
+		}
+	}
+	if strings.Contains(html, "must not render") || strings.Count(html, `data-detail-item`) != 2 {
+		t.Fatalf("detail list did not fail closed for malformed facts: %s", html)
+	}
+}
+
+func TestDetailListRejectsDisplayCopyAsSemanticRole(t *testing.T) {
+	t.Parallel()
+
+	node := DetailList(molecules.DetailListProps{
+		SemanticRole: "Profile Details",
+		Items:        []molecules.DetailItem{{Label: "Status", Value: "Ready"}},
+	})
+	var output strings.Builder
+	if err := node.Render(&output); err != nil {
+		t.Fatal(err)
+	}
+	html := output.String()
+	if strings.Contains(html, "data-semantic-role") || strings.Contains(html, `role="Profile Details"`) {
+		t.Fatalf("detail list projected invalid semantic role: %s", html)
 	}
 }
 

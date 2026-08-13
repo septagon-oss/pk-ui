@@ -42,7 +42,7 @@ type WindowedCollectionProps struct {
 	contracts.HTMXProps
 
 	Layout                string `json:"layout,omitempty"` // list, grid (responsive equal-width items)
-	State                 string `json:"state,omitempty"`  // ready, loading, error (empty is derived from itemCount)
+	State                 string `json:"state,omitempty"`  // ready, loading, error, offline (empty is derived from itemCount)
 	ItemCount             int    `json:"itemCount,omitempty"`
 	MaxItems              int    `json:"maxItems,omitempty"`
 	CollectionLabel       string `json:"collectionLabel,omitempty"`
@@ -53,6 +53,8 @@ type WindowedCollectionProps struct {
 	LoadingLabel          string `json:"loadingLabel,omitempty"`
 	ErrorTitle            string `json:"errorTitle,omitempty"`
 	ErrorDescription      string `json:"errorDescription,omitempty"`
+	OfflineTitle          string `json:"offlineTitle,omitempty"`
+	OfflineDescription    string `json:"offlineDescription,omitempty"`
 	RetryLabel            string `json:"retryLabel,omitempty"`
 	RetryURL              string `json:"retryURL,omitempty"`
 	NavigationUnavailable string `json:"navigationUnavailable,omitempty"`

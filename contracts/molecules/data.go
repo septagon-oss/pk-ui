@@ -38,6 +38,30 @@ type TableRow struct {
 	Cells map[string]any `json:"cells"`
 }
 
+// DetailListProps defines a compact semantic description list. Title and
+// description are visible section copy; SemanticRole is a stable,
+// non-localized machine key that lets adaptive renderers preserve section
+// meaning without interpreting translated labels.
+type DetailListProps struct {
+	contracts.ComponentProps
+
+	Title        string       `json:"title,omitempty"`
+	Description  string       `json:"description,omitempty"`
+	SemanticRole string       `json:"semanticRole,omitempty"`
+	Items        []DetailItem `json:"items"`
+}
+
+// DetailItem is one label/value fact in a DetailList.
+type DetailItem struct {
+	Label       string `json:"label"`
+	Value       string `json:"value"`
+	Description string `json:"description,omitempty"`
+	Tone        string `json:"tone,omitempty"` // neutral, brand, success, warning, danger, info
+}
+
+// ToMap converts DetailListProps to map[string]any for unified Component construction.
+func (p DetailListProps) ToMap() map[string]any { return propsToMap(p) }
+
 // CardProps defines platform-agnostic properties for a Card component.
 type CardProps struct {
 	contracts.ComponentProps

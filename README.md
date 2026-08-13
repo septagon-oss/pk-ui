@@ -35,6 +35,20 @@ pk-ui contracts + component + surface + generic web renderers
 bind it directly instead of translating it into a private parallel vocabulary.
 Product and client UI stays downstream.
 
+## Adaptive data semantics
+
+`WindowedCollection` is the canonical bounded list/grid shell. Its state axis
+is `ready`, `loading`, `error`, or `offline`; an empty view is derived from
+`itemCount`. Offline projections keep already verified items visible, use
+`offlineTitle` and `offlineDescription` for localized recovery copy, and do
+not expose cursor controls until the collection returns to `ready`.
+
+`DetailList` is the canonical label/value section. `title` and `description`
+are visible copy. `semanticRole` is an optional stable, non-localized machine
+key (for example `identity`, `preferences`, or `activity`) that adaptive
+renderers may use to preserve information architecture without interpreting
+translated item labels. It is never projected as an HTML or ARIA role.
+
 ## Verify
 
 ```bash

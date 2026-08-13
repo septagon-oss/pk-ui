@@ -956,6 +956,36 @@ var (
 	clTableActions  = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S2).Justify(tw.JustifyEnd)
 	clTableCellNote = tw.New().TextColor(tw.FgMuted).FontSize(tw.TextXS)
 
+	// DetailList. The section copy and semantic description-list markup stay
+	// presentation-neutral; renderers use semanticRole as a machine key, never
+	// as visible or ARIA copy.
+	clDetailList   = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S3).MinWidth(tw.S0)
+	clDetailHeader = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1).
+			MinWidth(tw.S0)
+	clDetailTitle = tw.New().FontSize(tw.TextLG).FontWeight(tw.FontSemibold).
+			TextColor(tw.FgPrimary).BreakWords()
+	clDetailDescription = tw.New().FontSize(tw.TextSM).TextColor(tw.FgSecondary).BreakWords()
+	clDetailItems       = tw.New().Overflow(tw.OverflowHidden).Rounded(tw.RadiusLG).
+				Border(tw.Border1).BorderColor(tw.BorderPrimary).Bg(tw.SurfacePrimary)
+	clDetailRow = tw.New().Display(tw.DisplayGrid).GridCols(1).Gap(tw.S2).
+			PaddingX(tw.S4).PaddingY(tw.S3).
+			Breakpoint(tw.BreakpointSM, func(cl tw.ClassList) tw.ClassList {
+			return cl.GridCols(2).Gap(tw.S6)
+		})
+	clDetailRowSeparated    = tw.New().BorderTop(tw.Border1).BorderColor(tw.BorderPrimary)
+	clDetailTerm            = tw.New().MinWidth(tw.S0).FontSize(tw.TextSM).FontWeight(tw.FontMedium).TextColor(tw.FgSecondary).BreakWords()
+	clDetailTermDescription = tw.New().Display(tw.DisplayBlock).MarginTop(tw.S1).
+				FontSize(tw.TextXS).FontWeight(tw.FontNormal).TextColor(tw.FgMuted).BreakWords()
+	clDetailValue     = tw.New().MinWidth(tw.S0).FontSize(tw.TextSM).FontWeight(tw.FontSemibold).BreakWords()
+	clDetailValueTone = map[string]tw.ClassList{
+		"neutral": tw.New().TextColor(tw.FgPrimary),
+		"brand":   tw.New().TextColor(tw.FgBrand),
+		"success": tw.New().TextColor(tw.FgSuccess),
+		"warning": tw.New().TextColor(tw.FgWarning),
+		"danger":  tw.New().TextColor(tw.FgDanger),
+		"info":    tw.New().TextColor(tw.FgInfo),
+	}
+
 	// Card. clCard remains the compiled default frame used by delivery and
 	// skeleton projections; the smaller fragments let CardWithSlots own
 	// section padding and variants without a private downstream style stack.
@@ -1175,6 +1205,8 @@ var (
 			BorderColor(tw.BorderInfo).TextColor(tw.FgInfo)
 	clWindowEmpty = clWindowState.Bg(tw.SurfaceSecondary).
 			BorderColor(tw.BorderPrimary).TextColor(tw.FgSecondary)
+	clWindowOffline = clWindowState.Bg(tw.SurfaceWarningSoft).
+			BorderColor(tw.BorderWarning).TextColor(tw.FgWarning)
 	clWindowError = clWindowState.Bg(tw.SurfaceDangerSoft).
 			BorderColor(tw.BorderDanger).TextColor(tw.FgDanger)
 	clWindowTitle           = tw.New().FontSize(tw.TextSM).FontWeight(tw.FontSemibold).BreakWords()
@@ -1333,6 +1365,9 @@ func ClassLists() []tw.ClassList {
 		clStack, clFlex, clGrid, clContainer, clDataManagementPage,
 		clTableWrap, clTable, clTableHead, clTableThBase, clTableTh, clTableTd, clTableRow, clTableTdC,
 		clTableThSort, clTableSortBtn, clTableRowAlt, clTableTdStrong, clTableActions, clTableCellNote,
+		clDetailList, clDetailHeader, clDetailTitle, clDetailDescription,
+		clDetailItems, clDetailRow, clDetailRowSeparated, clDetailTerm,
+		clDetailTermDescription, clDetailValue,
 		clCard, clCardFrame, clCardSectioned, clCardBorder,
 		clCardPadNone, clCardPadSmall, clCardPadDefault, clCardPadMedium, clCardPadLarge,
 		clCardShadowSmall, clCardShadowMedium, clCardShadowLarge,
@@ -1370,7 +1405,7 @@ func ClassLists() []tw.ClassList {
 		clSidebarFooterAdmin, clSidebarFooterContent,
 		clGridSection, clGridToolbar, clGridActions,
 		clWindow, clWindowItems, clWindowState, clWindowLoading, clWindowEmpty,
-		clWindowError, clWindowTitle, clWindowDescription, clWindowRetry,
+		clWindowOffline, clWindowError, clWindowTitle, clWindowDescription, clWindowRetry,
 		clWindowFooter, clWindowNavigationError,
 		clPagination, clPageBtn, clPageIdle, clPageCur, clPageLabel,
 		clTabsRoot, clTabsRootHorizontal, clTabsRootVertical,
@@ -1393,7 +1428,7 @@ func ClassLists() []tw.ClassList {
 		clInputSize, clInputTone, clDropdownTriggerSize, clDropdownButtonSize,
 		clSliderTone, clToggleTrackSize, clToggleTrackState, clToggleKnobSize, clToggleKnobChecked,
 		clSpinnerSize, clSpinnerTone, clProgressTrackSize, clProgressTone,
-		clTooltipPosition, clKbdSize, clTagTone,
+		clTooltipPosition, clKbdSize, clTagTone, clDetailValueTone,
 		clSkeletonBlockSize, clSkeletonLineSize, clSkeletonCircleSize,
 		clTextTransform, clStepperIndicatorState, clStepperLabelState,
 		clStepperDescriptionState, clStepperConnectorState,
