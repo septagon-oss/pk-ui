@@ -15,7 +15,7 @@ import (
 	g "maragu.dev/gomponents"
 )
 
-func TestCheckboxGroupUsesGroupRequiredSemantics(t *testing.T) {
+func TestCheckboxGroupUsesSupportedRequiredAndErrorSemantics(t *testing.T) {
 	t.Parallel()
 
 	html := renderChoiceGroup(t, CheckboxGroup(molecules.CheckboxGroupProps{
@@ -25,6 +25,7 @@ func TestCheckboxGroupUsesGroupRequiredSemantics(t *testing.T) {
 		Label:          "Topics",
 		Description:    "Choose at least one.",
 		Required:       true,
+		Error:          "Choose at least one topic.",
 		Selected:       []string{"security"},
 		Options: []molecules.Option{
 			{Label: "Product", Value: "product"},
@@ -33,9 +34,10 @@ func TestCheckboxGroupUsesGroupRequiredSemantics(t *testing.T) {
 	}))
 
 	for _, want := range []string{
-		`<fieldset`, `data-component="checkbox-group"`, `aria-required="true"`,
-		`aria-describedby="topics-description"`, `hx-post="/preferences"`,
-		`hx-trigger="change"`, `value="security" checked`, `Critical notices.`,
+		`<fieldset`, `data-component="checkbox-group"`, `data-required="true"`,
+		`aria-describedby="topics-description topics-error"`, `hx-post="/preferences"`,
+		`hx-trigger="change"`, `value="security" checked`,
+		`Critical notices.`, `aria-invalid="true"`, `Choose at least one topic.`,
 	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("checkbox group missing %q:\n%s", want, html)
@@ -43,6 +45,19 @@ func TestCheckboxGroupUsesGroupRequiredSemantics(t *testing.T) {
 	}
 	if strings.Contains(html, `type="checkbox" required`) {
 		t.Fatalf("group required must not require every checkbox:\n%s", html)
+	}
+	fieldsetEnd := strings.Index(html, ">")
+	if fieldsetEnd < 0 {
+		t.Fatalf("checkbox group has no opening fieldset tag:\n%s", html)
+	}
+	fieldset := html[:fieldsetEnd]
+	for _, unsupported := range []string{`aria-required=`, `aria-invalid=`} {
+		if strings.Contains(fieldset, unsupported) {
+			t.Fatalf("checkbox fieldset must not carry unsupported %s:\n%s", unsupported, html)
+		}
+	}
+	if got := strings.Count(html, `aria-invalid="true"`); got != 2 {
+		t.Fatalf("expected both native checkboxes to expose the invalid state, got %d:\n%s", got, html)
 	}
 }
 

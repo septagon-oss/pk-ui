@@ -19,9 +19,9 @@ type FormProps struct {
 // ToMap converts FormProps to map[string]any for unified Component construction.
 func (p FormProps) ToMap() map[string]any { return propsToMap(p) }
 
-// CheckboxGroupProps defines a native multiple-choice fieldset. Required is a
-// group-level semantic and must also be enforced by the server because HTML
-// has no native "at least one checkbox" constraint.
+// CheckboxGroupProps defines a native multiple-choice fieldset. Required is
+// exposed by the legend and must be enforced by the server because HTML and
+// ARIA have no native "at least one checkbox" constraint.
 type CheckboxGroupProps struct {
 	contracts.ComponentProps
 	contracts.HTMXProps

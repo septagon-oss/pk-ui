@@ -26,9 +26,10 @@ import (
 )
 
 // CheckboxGroup renders a native multiple-choice fieldset from canonical
-// Checkbox atoms. Required is exposed as a group semantic for assistive
-// technology and server validation; applying HTML required to every checkbox
-// would incorrectly require every option to be selected.
+// Checkbox atoms. The legend exposes the required state visually and server
+// validation remains authoritative because HTML and ARIA have no native
+// "at least one checkbox" constraint. Applying required semantics to every
+// option would incorrectly require every checkbox to be selected.
 func CheckboxGroup(p molecules.CheckboxGroupProps) g.Node {
 	selected := make(map[string]struct{}, len(p.Selected))
 	for _, value := range p.Selected {
@@ -49,10 +50,18 @@ func CheckboxGroup(p molecules.CheckboxGroupProps) g.Node {
 		func(groupID string, index int) g.Node {
 			option := p.Options[index]
 			_, checked := selected[option.Value]
+			attrs := map[string]string(nil)
+			if strings.TrimSpace(p.Error) != "" {
+				// aria-invalid is not supported on fieldset/group. Mark each
+				// native checkbox invalid while the fieldset associates the
+				// shared description and error with the complete choice set.
+				attrs = map[string]string{"aria-invalid": "true"}
+			}
 			return Checkbox(atoms.CheckboxProps{
 				ComponentProps: contracts.ComponentProps{
 					ID:       fmt.Sprintf("%s-option-%d", groupID, index),
 					Disabled: p.Disabled || option.Disabled,
+					Attrs:    attrs,
 				},
 				Name:     p.Name,
 				Label:    choiceOptionLabel(option),
@@ -148,9 +157,12 @@ func choiceGroup(
 		root = append(root, h.Disabled())
 	}
 	if required {
-		root = append(root, g.Attr("aria-required", "true"), g.Attr("data-required", "true"))
+		root = append(root, g.Attr("data-required", "true"))
+		if componentName == "radio-group" {
+			root = append(root, g.Attr("aria-required", "true"))
+		}
 	}
-	if errorMessage != "" {
+	if errorMessage != "" && componentName == "radio-group" {
 		root = append(root, g.Attr("aria-invalid", "true"))
 	}
 	if len(describedBy) > 0 {
