@@ -23,6 +23,11 @@ import (
 	"github.com/septagon-oss/tw"
 )
 
+// deliveryFixtureImageDataURL keeps executable browser examples independent
+// from application routes and external hosts. Product consumers still provide
+// ordinary image URLs through the same public contracts.
+const deliveryFixtureImageDataURL = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23e2e8f0'/%3E%3Ccircle cx='32' cy='24' r='12' fill='%2364758b'/%3E%3Cpath d='M12 58c2-13 10-20 20-20s18 7 20 20' fill='%2364758b'/%3E%3C/svg%3E"
+
 var (
 	buttonVariants = []string{
 		"primary", "secondary", "outline", "ghost", "link",
@@ -161,7 +166,7 @@ func avatarDeliveryDefinition() DeliveryDefinition {
 				"statusPosition": "bottom-right", "tone": "brand",
 			}),
 			deliveryExample(componentType, "with-image", map[string]any{
-				"src": "https://example.test/avatar.png", "alt": "Profile portrait", "shape": "rounded",
+				"src": deliveryFixtureImageDataURL, "alt": "Profile portrait", "shape": "rounded",
 			}),
 			deliveryExample(componentType, "fallback-icon", map[string]any{
 				"fallbackIcon": "user", "alt": "Account", "size": "sm",

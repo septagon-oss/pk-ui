@@ -943,7 +943,7 @@ func fileUploadDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "remote-upload", map[string]any{
 				"name": "logo_url", "label": "Company logo", "accept": "image/*",
 				"preview": true, "uploadURL": "/api/v1/files/upload", "uploadCategory": "image",
-				"value": "/media/logo.png", "currentName": "logo.png",
+				"value": deliveryFixtureImageDataURL, "currentName": "logo.svg",
 			}),
 			deliveryExample(componentType, "htmx-upload", map[string]any{
 				"name": "evidence", "label": "Evidence", "accept": ".pdf",
@@ -1976,7 +1976,6 @@ func dashboardWidgetDeliveryDefinition() DeliveryDefinition {
 			withDeliveryExampleSlots(
 				deliveryExample(componentType, "activity-list", map[string]any{
 					"title": "Recent activity", "type": "list", "span": "2",
-					"refreshURL": "/dashboard/activity", "refreshOn": "activity:changed",
 				}),
 				deliveryExampleSlot("content", deliveryExampleComponent(
 					"activity-copy", "Text", map[string]any{

@@ -173,13 +173,57 @@ func TestDashboardWidgetDeliveryUsesCanonicalRendererAndSlots(t *testing.T) {
 	html := rendered.String()
 	for _, fragment := range []string{
 		`data-component="dashboard-widget"`, `data-widget-type="list"`,
-		`hx-get="/dashboard/activity"`, `activity:changed from:body`,
 		`Three workspace events need review.`, `>View activity</a>`,
 	} {
 		if !strings.Contains(html, fragment) {
 			t.Errorf("composed DashboardWidget example is missing %q:\n%s", fragment, html)
 		}
 	}
+	if strings.Contains(html, `hx-get=`) {
+		t.Fatalf("static activity fixture must not auto-request an application route:\n%s", html)
+	}
+}
+
+func TestImageDeliveryExamplesAreBrowserSelfContained(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		component string
+		example   string
+		property  string
+	}{
+		{component: "Avatar", example: "with-image", property: "src"},
+		{component: "FileUpload", example: "remote-upload", property: "value"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.component+"/"+tt.example, func(t *testing.T) {
+			t.Parallel()
+			props := deliveryExamplePropsForTest(t, tt.component, tt.example)
+			value, _ := props[tt.property].(string)
+			if !strings.HasPrefix(value, "data:image/svg+xml,") {
+				t.Fatalf("%s fixture %s must use an inline image, got %q", tt.component, tt.property, value)
+			}
+		})
+	}
+}
+
+func deliveryExamplePropsForTest(t *testing.T, componentType, exampleName string) map[string]any {
+	t.Helper()
+	for _, definition := range OSSDeliveryCatalog() {
+		if string(definition.Identity.ID) != componentType {
+			continue
+		}
+		wantID := deliveryExampleID(componentType, exampleName)
+		for _, example := range definition.Examples {
+			if example.ID == wantID {
+				return example.Props
+			}
+		}
+		t.Fatalf("component %s has no example %s", componentType, exampleName)
+	}
+	t.Fatalf("delivery catalog has no component %s", componentType)
+	return nil
 }
 
 func TestIconDeliveryBlueprintIsBoundEditableVector(t *testing.T) {
