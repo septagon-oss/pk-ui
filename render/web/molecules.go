@@ -26,10 +26,11 @@ import (
 )
 
 // CheckboxGroup renders a native multiple-choice fieldset from canonical
-// Checkbox atoms. The legend exposes the required state visually and server
-// validation remains authoritative because HTML and ARIA have no native
-// "at least one checkbox" constraint. Applying required semantics to every
-// option would incorrectly require every checkbox to be selected.
+// Checkbox atoms. The legend exposes the required state visually and in its
+// accessible name; server validation remains authoritative because HTML and
+// ARIA have no native "at least one checkbox" constraint. Applying required
+// semantics to every option would incorrectly require every checkbox to be
+// selected.
 func CheckboxGroup(p molecules.CheckboxGroupProps) g.Node {
 	selected := make(map[string]struct{}, len(p.Selected))
 	for _, value := range p.Selected {
@@ -185,6 +186,12 @@ func choiceGroup(
 		legend := []g.Node{h.Class(clChoiceGroupLegend.Compile()), g.Text(label)}
 		if required {
 			legend = append(legend, h.Span(h.Class(clRequired.Compile()), g.Attr("aria-hidden", "true"), g.Text(" *")))
+			if componentName == "checkbox-group" {
+				// Checkbox sets have no supported group-level required state.
+				// Keep the visible marker and include its meaning in the
+				// fieldset's native accessible name instead.
+				legend = append(legend, h.Span(h.Class(clSrOnly.Compile()), g.Text(" (required)")))
+			}
 		}
 		root = append(root, h.Legend(legend...))
 	}

@@ -38,6 +38,7 @@ func TestCheckboxGroupUsesSupportedRequiredAndErrorSemantics(t *testing.T) {
 		`aria-describedby="topics-description topics-error"`, `hx-post="/preferences"`,
 		`hx-trigger="change"`, `value="security" checked`,
 		`Critical notices.`, `aria-invalid="true"`, `Choose at least one topic.`,
+		`aria-hidden="true"> *</span>`, `> (required)</span>`,
 	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("checkbox group missing %q:\n%s", want, html)

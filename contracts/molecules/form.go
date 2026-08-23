@@ -20,8 +20,9 @@ type FormProps struct {
 func (p FormProps) ToMap() map[string]any { return propsToMap(p) }
 
 // CheckboxGroupProps defines a native multiple-choice fieldset. Required is
-// exposed by the legend and must be enforced by the server because HTML and
-// ARIA have no native "at least one checkbox" constraint.
+// exposed by the legend visually and in its accessible name, and must be
+// enforced by the server because HTML and ARIA have no native "at least one
+// checkbox" constraint.
 type CheckboxGroupProps struct {
 	contracts.ComponentProps
 	contracts.HTMXProps
