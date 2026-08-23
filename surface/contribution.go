@@ -264,6 +264,43 @@ type DesignArtifactSet struct {
 	ClaudeDesign string `json:"claudeDesign,omitempty"`
 }
 
+// DeliveryContainer identifies the familiar interaction container chosen for
+// a primary action. Modal exceptions are explicit because they are suitable
+// only for brief, context-bound work that does not benefit from navigation,
+// history, recovery, or deep linking.
+type DeliveryContainer string
+
+// Supported delivery containers.
+const (
+	DeliveryContainerRoute          DeliveryContainer = "route"
+	DeliveryContainerInline         DeliveryContainer = "inline"
+	DeliveryContainerModalException DeliveryContainer = "modal-exception"
+)
+
+// PrimaryActionDecision records the single visually primary action for one
+// task or decision region. A region may be omitted when it has no primary
+// action; duplicate region IDs are invalid.
+type PrimaryActionDecision struct {
+	RegionID             string            `json:"regionId"`
+	ActionID             string            `json:"actionId"`
+	DeliveryContainer    DeliveryContainer `json:"deliveryContainer"`
+	ModalExceptionReason string            `json:"modalExceptionReason,omitempty"`
+}
+
+// SurfaceDecision carries the smallest renderer-neutral product decision a
+// shell needs to preserve: who the page serves, the job and measurable
+// outcome, the evidence behind the common case, and the container selected
+// for each primary action. EvidenceIsAssumption makes an unvalidated common-
+// case claim explicit without inventing supporting evidence.
+type SurfaceDecision struct {
+	Audience             string                  `json:"audience"`
+	PrimaryJob           string                  `json:"primaryJob"`
+	MeasurableOutcome    string                  `json:"measurableOutcome"`
+	CommonCaseEvidence   string                  `json:"commonCaseEvidence"`
+	EvidenceIsAssumption bool                    `json:"evidenceIsAssumption,omitempty"`
+	PrimaryActions       []PrimaryActionDecision `json:"primaryActions,omitempty"`
+}
+
 // PageContract is the canonical renderer-neutral page-system contract. Shells
 // consume this exact type and add only their own chrome/runtime state; they do
 // not translate it into a parallel page model.
@@ -277,6 +314,7 @@ type PageContract struct {
 	Slots           []SlotContract      `json:"slots,omitempty"`
 	Storybook       *StorybookReference `json:"storybook,omitempty"`
 	DesignArtifacts *DesignArtifactSet  `json:"designArtifacts,omitempty"`
+	Decision        *SurfaceDecision    `json:"decision,omitempty"`
 }
 
 // NamespacedRouteID returns the globally-namespaced form
@@ -528,6 +566,56 @@ func ValidatePageContract(page PageContract) error {
 		strings.TrimSpace(page.DesignArtifacts.ClaudeDesign) == "" {
 		return fmt.Errorf("page contract invalid for %q: design artifacts are empty", routeID)
 	}
+	if page.Decision != nil {
+		if err := validateSurfaceDecision(*page.Decision); err != nil {
+			return fmt.Errorf("page contract invalid for %q: %w", routeID, err)
+		}
+	}
+	return nil
+}
+
+func validateSurfaceDecision(decision SurfaceDecision) error {
+	if strings.TrimSpace(decision.Audience) == "" {
+		return fmt.Errorf("surface decision audience is required")
+	}
+	if strings.TrimSpace(decision.PrimaryJob) == "" {
+		return fmt.Errorf("surface decision primary job is required")
+	}
+	if strings.TrimSpace(decision.MeasurableOutcome) == "" {
+		return fmt.Errorf("surface decision measurable outcome is required")
+	}
+	if strings.TrimSpace(decision.CommonCaseEvidence) == "" {
+		return fmt.Errorf("surface decision common-case evidence is required")
+	}
+
+	seenRegions := make(map[string]struct{}, len(decision.PrimaryActions))
+	for _, action := range decision.PrimaryActions {
+		regionID := strings.TrimSpace(action.RegionID)
+		if regionID == "" {
+			return fmt.Errorf("surface decision primary action region id is required")
+		}
+		if _, duplicate := seenRegions[regionID]; duplicate {
+			return fmt.Errorf("surface decision has duplicate primary action region id %q", regionID)
+		}
+		seenRegions[regionID] = struct{}{}
+		if strings.TrimSpace(action.ActionID) == "" {
+			return fmt.Errorf("surface decision primary action for region %q requires an action id", regionID)
+		}
+
+		modalReason := strings.TrimSpace(action.ModalExceptionReason)
+		switch action.DeliveryContainer {
+		case DeliveryContainerRoute, DeliveryContainerInline:
+			if modalReason != "" {
+				return fmt.Errorf("surface decision primary action for region %q may only set a modal exception reason for %q", regionID, DeliveryContainerModalException)
+			}
+		case DeliveryContainerModalException:
+			if modalReason == "" {
+				return fmt.Errorf("surface decision primary action for region %q requires a modal exception reason", regionID)
+			}
+		default:
+			return fmt.Errorf("surface decision primary action for region %q has unsupported delivery container %q", regionID, action.DeliveryContainer)
+		}
+	}
 	return nil
 }
 
@@ -546,6 +634,11 @@ func ClonePageContract(page *PageContract) *PageContract {
 	if page.DesignArtifacts != nil {
 		artifacts := *page.DesignArtifacts
 		cloned.DesignArtifacts = &artifacts
+	}
+	if page.Decision != nil {
+		decision := *page.Decision
+		decision.PrimaryActions = append([]PrimaryActionDecision(nil), page.Decision.PrimaryActions...)
+		cloned.Decision = &decision
 	}
 	return &cloned
 }

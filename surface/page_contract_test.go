@@ -77,6 +77,50 @@ func TestValidatePageContractRejectsIncompleteContracts(t *testing.T) {
 			mutate: func(page *PageContract) { page.DesignArtifacts = &DesignArtifactSet{} },
 			want:   "design artifacts are empty",
 		},
+		"decision audience": {
+			mutate: func(page *PageContract) { page.Decision.Audience = " " },
+			want:   "surface decision audience is required",
+		},
+		"decision primary job": {
+			mutate: func(page *PageContract) { page.Decision.PrimaryJob = " " },
+			want:   "surface decision primary job is required",
+		},
+		"decision measurable outcome": {
+			mutate: func(page *PageContract) { page.Decision.MeasurableOutcome = " " },
+			want:   "surface decision measurable outcome is required",
+		},
+		"decision common-case evidence": {
+			mutate: func(page *PageContract) { page.Decision.CommonCaseEvidence = " " },
+			want:   "surface decision common-case evidence is required",
+		},
+		"decision primary action region": {
+			mutate: func(page *PageContract) { page.Decision.PrimaryActions[0].RegionID = " " },
+			want:   "primary action region id is required",
+		},
+		"decision duplicate primary action region": {
+			mutate: func(page *PageContract) {
+				page.Decision.PrimaryActions = append(page.Decision.PrimaryActions, page.Decision.PrimaryActions[0])
+			},
+			want: "duplicate primary action region id",
+		},
+		"decision primary action id": {
+			mutate: func(page *PageContract) { page.Decision.PrimaryActions[0].ActionID = " " },
+			want:   "requires an action id",
+		},
+		"decision delivery container": {
+			mutate: func(page *PageContract) { page.Decision.PrimaryActions[0].DeliveryContainer = "drawer" },
+			want:   "unsupported delivery container",
+		},
+		"decision modal exception reason": {
+			mutate: func(page *PageContract) {
+				page.Decision.PrimaryActions[0].DeliveryContainer = DeliveryContainerModalException
+			},
+			want: "requires a modal exception reason",
+		},
+		"decision non-modal exception reason": {
+			mutate: func(page *PageContract) { page.Decision.PrimaryActions[0].ModalExceptionReason = "Not a modal" },
+			want:   "may only set a modal exception reason",
+		},
 	}
 
 	for name, test := range tests {
@@ -135,10 +179,12 @@ func TestClonePageContractIsolatesNestedMetadata(t *testing.T) {
 	cloned.Slots[0].ID = "mutated"
 	cloned.Storybook.Story = "mutated"
 	cloned.DesignArtifacts.Manifest = "mutated"
+	cloned.Decision.PrimaryActions[0].ActionID = "mutated"
 
 	if page.Slots[0].ID != "orders" ||
 		page.Storybook.Story != "Orders/List" ||
-		page.DesignArtifacts.Manifest != "design/orders.json" {
+		page.DesignArtifacts.Manifest != "design/orders.json" ||
+		page.Decision.PrimaryActions[0].ActionID != "create-order" {
 		t.Fatalf("ClonePageContract() exposed input metadata: %#v", page)
 	}
 }
@@ -153,7 +199,7 @@ func TestPageContractJSONUsesNestedCanonicalShape(t *testing.T) {
 	if err := json.Unmarshal(content, &shape); err != nil {
 		t.Fatalf("json.Unmarshal() error = %v", err)
 	}
-	for _, required := range []string{"presenter", "template"} {
+	for _, required := range []string{"presenter", "template", "decision"} {
 		if _, ok := shape[required]; !ok {
 			t.Fatalf("canonical page JSON missing nested %q object: %s", required, content)
 		}
@@ -212,6 +258,17 @@ func validPageContract() PageContract {
 		},
 		DesignArtifacts: &DesignArtifactSet{
 			Manifest: "design/orders.json",
+		},
+		Decision: &SurfaceDecision{
+			Audience:           "Order operations staff",
+			PrimaryJob:         "Find and act on an order",
+			MeasurableOutcome:  "Complete the intended order action without recovery",
+			CommonCaseEvidence: "Support cases and order task analytics",
+			PrimaryActions: []PrimaryActionDecision{{
+				RegionID:          "order-list",
+				ActionID:          "create-order",
+				DeliveryContainer: DeliveryContainerRoute,
+			}},
 		},
 	}
 }

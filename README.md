@@ -33,7 +33,9 @@ pk-ui contracts + component + surface + generic web renderers
 
 `surface.PageContract` is the single page-composition model. Downstream shells
 bind it directly instead of translating it into a private parallel vocabulary.
-Product and client UI stays downstream.
+Its optional `SurfaceDecision` preserves a page's audience, primary job,
+measurable outcome, common-case evidence, and primary-action container choice
+through composition. Product and client UI stays downstream.
 
 ## Adaptive data semantics
 
