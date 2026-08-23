@@ -909,6 +909,7 @@ func TestSidebarOwnsNestedActiveNavigationAndPortableBrand(t *testing.T) {
 		`data-sidebar-flavor="admin"`, `aria-label="Admin navigation"`,
 		`data-sidebar-brand=""`, `href="/control"`, `Acme Control`,
 		`data-sidebar-section="operate"`, `data-sidebar-tone="brand"`,
+		`text-fg-on-inverse`,
 		`data-sidebar-item="customers"`, `data-sidebar-item="accounts"`,
 		`data-active="true"`, `aria-current="page"`, `data-has-badge="true"`,
 		`data-component="badge"`, `data-sidebar-submenu="customers"`,

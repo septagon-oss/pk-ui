@@ -2786,8 +2786,12 @@ func sidebarSectionNode(
 		attrs = append(attrs, g.Attr("data-sidebar-search-text", searchText))
 	}
 	if section.Label != "" || section.Glyph != "" {
+		headerClass := clSidebarSectionHeaderAdmin
+		if flavor == "content" {
+			headerClass = clSidebarSectionHeaderContent
+		}
 		header := []g.Node{
-			h.Class(clSidebarSectionHeader.Compile()),
+			h.Class(headerClass.Compile()),
 			g.Attr("data-sidebar-section-header", ""),
 		}
 		if section.Glyph != "" {

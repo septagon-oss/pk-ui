@@ -1154,12 +1154,13 @@ var (
 	clSidebarSection       = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S2)
 	clSidebarSectionHeader = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S2).
 				PaddingX(tw.S2).PaddingBottom(tw.S2).BorderBottom(tw.Border1).
-				BorderColor(tw.BorderPrimary).FontSize(tw.TextXS).FontWeight(tw.FontBold).
-				TextColor(tw.FgTertiary)
-	clSidebarSectionGlyph = tw.New().TextColor(tw.FgBrand)
-	clSidebarSectionList  = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S0_5)
-	clSidebarPrefixAdmin  = tw.New().MinWidth(tw.S10).FontSize(tw.TextXS).
-				FontWeight(tw.FontSemibold).TextColor(tw.FgTertiary)
+				BorderColor(tw.BorderPrimary).FontSize(tw.TextXS).FontWeight(tw.FontBold)
+	clSidebarSectionHeaderAdmin   = clSidebarSectionHeader.TextColor(tw.FgOnInverse)
+	clSidebarSectionHeaderContent = clSidebarSectionHeader.TextColor(tw.FgSecondary)
+	clSidebarSectionGlyph         = tw.New().TextColor(tw.FgBrand)
+	clSidebarSectionList          = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S0_5)
+	clSidebarPrefixAdmin          = tw.New().MinWidth(tw.S10).FontSize(tw.TextXS).
+					FontWeight(tw.FontSemibold).TextColor(tw.FgOnInverse)
 	clSidebarPrefixContent = tw.New().MinWidth(tw.S10).FontSize(tw.TextXS).
 				FontWeight(tw.FontSemibold).TextColor(tw.FgSecondary)
 	clSidebarLabelVisible  = tw.New().MinWidth(tw.S0).Flex1()
@@ -1398,6 +1399,7 @@ func ClassLists() []tw.ClassList {
 		clSidebarLinkActiveAdmin, clSidebarLinkIdleAdmin,
 		clSidebarLinkActiveContent, clSidebarLinkIdleContent,
 		clSidebarItemDisabled, clSidebarSection, clSidebarSectionHeader,
+		clSidebarSectionHeaderAdmin, clSidebarSectionHeaderContent,
 		clSidebarSectionGlyph, clSidebarSectionList,
 		clSidebarPrefixAdmin, clSidebarPrefixContent,
 		clSidebarLabelVisible, clSidebarLabelHidden, clSidebarLabelContent,
