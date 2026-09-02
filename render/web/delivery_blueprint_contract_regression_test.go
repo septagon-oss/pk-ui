@@ -71,7 +71,10 @@ func TestCoreDeliveryBlueprintIconInstancesUseQualifiedSelectors(t *testing.T) {
 			selector, _ := node.Props["instance_example"].(string)
 			selector = strings.TrimSpace(selector)
 			if selector == "" {
-				t.Errorf("%s/%s has a bare Icon instance selector", component, path)
+				boundProperty, _ := node.Props["instance_example_bound_prop"].(string)
+				if strings.TrimSpace(boundProperty) == "" {
+					t.Errorf("%s/%s has a bare Icon instance selector", component, path)
+				}
 				return
 			}
 			if _, exists := selectors[selector]; !exists {
@@ -229,6 +232,7 @@ func TestAccordionAndModalBlueprintInstanceAndBindingPlacement(t *testing.T) {
 		t.Fatalf("Accordion/Sections = %#v, want public section slot", sections)
 	}
 	section := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "Section")
+	blueprintContractAssertOrder(t, section, "separator")
 	if got := section.Props["repeat_for_slot"]; got != "section" {
 		t.Errorf("Accordion/Section repeat_for_slot = %#v, want section", got)
 	}
@@ -238,6 +242,24 @@ func TestAccordionAndModalBlueprintInstanceAndBindingPlacement(t *testing.T) {
 	content := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "Content")
 	if content.Kind != blueprint.NodeFrame {
 		t.Fatalf("Accordion/Content = %#v, want internal frame inside repeated section", content)
+	}
+	blueprintContractAssertCondition(t, content, "visible_when", map[string]any{"open": true})
+	trigger := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "Trigger")
+	blueprintContractAssertOrder(t, trigger, "disabled")
+	blueprintContractAssertOrder(t, chevron, "open")
+	title := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "Title")
+	if got := blueprintContractStringValues(title.Props["text_props"]); !slices.Equal(got, []string{"title"}) {
+		t.Errorf("Accordion/Title text props = %v, want [title]", got)
+	}
+	subtitle := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "Subtitle")
+	for _, property := range []string{"clear_when_unbound", "hide_when_empty"} {
+		if enabled, _ := subtitle.Props[property].(bool); !enabled {
+			t.Errorf("Accordion/Subtitle %s = %#v, want true", property, subtitle.Props[property])
+		}
+	}
+	leadingIcon := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "LeadingIcon")
+	if got := leadingIcon.Props["instance_example_bound_prop"]; got != "icon" {
+		t.Errorf("Accordion/LeadingIcon instance bound prop = %#v, want icon", got)
 	}
 
 	modal := blueprintContractDefinition(t, "Modal")

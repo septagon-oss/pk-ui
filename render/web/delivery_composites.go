@@ -415,26 +415,52 @@ func breadcrumbDeliveryDefinition() DeliveryDefinition {
 
 func accordionDeliveryDefinition() DeliveryDefinition {
 	componentType := "Accordion"
-	section := deliveryFrame(
-		"Section",
-		"",
+	leadingIcon := deliveryInstance("LeadingIcon", "Icon", "", clAccordionItemIcon.Compile())
+	leadingIcon.Props = map[string]any{
+		"instance_example_bound_prop": "icon",
+		"instance_example_suffix":     " / Fg Tertiary / 20",
+	}
+	leadingIcon = deliveryVisibleWhen(leadingIcon, map[string]any{"icon": "*"})
+	trigger := deliveryFrame(
+		"Trigger",
+		clAccordionTrigger.Compile(),
 		deliveryFrame(
-			"Trigger",
-			clAccordionTrigger.Compile(),
+			"Lead",
+			clAccordionLead.Compile(),
+			leadingIcon,
 			deliveryFrame(
 				"TitleBlock",
 				clAccordionTitleBlock.Compile(),
-				deliveryText("Title", clAccordionTitle.Compile(), "What is PlatformKit?"),
-				deliveryText("Subtitle", clAccordionSubtitle.Compile(), "Expand to learn more"),
+				deliveryText("Title", clAccordionTitle.Compile(), "What is PlatformKit?", "title"),
+				deliveryOptionalText(deliveryText("Subtitle", clAccordionSubtitle.Compile(), "Expand to learn more", "subtitle")),
 			),
-			deliveryInstance("Chevron", "Icon", "Chevron Down / Fg Tertiary / 20", clAccordionChevron.Compile()),
 		),
+		deliveryClassBound(
+			deliveryInstance("Chevron", "Icon", "Chevron Down / Fg Tertiary / 20", clAccordionChevron.Compile()),
+			"open",
+			map[string]string{"false": "", "true": clAccordionChevronOpen.Compile()},
+		),
+	)
+	trigger = deliveryClassBound(trigger, "disabled", map[string]string{
+		"false": "", "true": clAccordionTriggerDisabled.Compile(),
+	})
+	content := deliveryVisibleWhen(
 		deliveryFrame(
 			"Content",
 			clAccordionPanel.Compile(),
 			deliveryInstance("Body", "Text", "body", ""),
 		),
+		map[string]any{"open": true},
 	)
+	section := deliveryFrame(
+		"Section",
+		"",
+		trigger,
+		content,
+	)
+	section = deliveryClassBound(section, "separator", map[string]string{
+		"false": "", "true": clAccordionSeparator.Compile(),
+	})
 	section.Props = map[string]any{
 		"repeat_for_slot":     "section",
 		"repeat_items_prop":   "items",
