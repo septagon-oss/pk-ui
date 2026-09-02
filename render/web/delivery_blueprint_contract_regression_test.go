@@ -224,6 +224,21 @@ func TestAccordionAndModalBlueprintInstanceAndBindingPlacement(t *testing.T) {
 	if got := chevron.Props["instance_example"]; got != "Chevron Down / Fg Tertiary / 20" {
 		t.Errorf("Accordion/Chevron selector = %#v, want qualified Chevron Down selector", got)
 	}
+	sections := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "Sections")
+	if sections.Kind != blueprint.NodeSlot || sections.Slot != "section" {
+		t.Fatalf("Accordion/Sections = %#v, want public section slot", sections)
+	}
+	section := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "Section")
+	if got := section.Props["repeat_for_slot"]; got != "section" {
+		t.Errorf("Accordion/Section repeat_for_slot = %#v, want section", got)
+	}
+	if got := section.Props["repeat_items_prop"]; got != "items" {
+		t.Errorf("Accordion/Section repeat_items_prop = %#v, want items", got)
+	}
+	content := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "Content")
+	if content.Kind != blueprint.NodeFrame {
+		t.Fatalf("Accordion/Content = %#v, want internal frame inside repeated section", content)
+	}
 
 	modal := blueprintContractDefinition(t, "Modal")
 	root := modal.Design.Root

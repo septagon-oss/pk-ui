@@ -429,21 +429,27 @@ func accordionDeliveryDefinition() DeliveryDefinition {
 			),
 			deliveryInstance("Chevron", "Icon", "Chevron Down / Fg Tertiary / 20", clAccordionChevron.Compile()),
 		),
-		deliverySlot(
+		deliveryFrame(
 			"Content",
-			"section",
 			clAccordionPanel.Compile(),
 			deliveryInstance("Body", "Text", "body", ""),
 		),
 	)
 	section.Props = map[string]any{
-		"repeat_for_slot": "section",
+		"repeat_for_slot":     "section",
+		"repeat_items_prop":   "items",
+		"repeat_content_node": "Content",
+		"repeat_content_prop": "content",
 		"repeat_text_bindings": map[string]any{
 			"Title": "title", "Subtitle": "subtitle",
 		},
 	}
 	flushClasses := tw.New().Border(tw.Border0).Rounded(tw.RadiusNone).Bg(tw.ColorTransparent).Compile()
-	root := deliveryFrame(componentType, clAccordionRoot.Compile(), section)
+	root := deliveryFrame(
+		componentType,
+		clAccordionRoot.Compile(),
+		deliverySlot("Sections", "section", "", section),
+	)
 	root = deliveryClassBound(root, "bordered", map[string]string{
 		"false": clAccordionUnbordered.Compile(),
 		"true":  clAccordionBordered.Compile(),
