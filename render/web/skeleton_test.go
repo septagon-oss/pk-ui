@@ -65,6 +65,51 @@ func TestDeferredSlotHonorsExplicitTriggerAndSwap(t *testing.T) {
 	}
 }
 
+func TestDeferredSlotDeliveryUsesAuthoredPlaceholderOrTextFallback(t *testing.T) {
+	t.Parallel()
+
+	definition := blueprintContractDefinition(t, "DeferredSlot")
+	for _, slots := range []DeliverySlotChildren{
+		nil,
+		{"placeholder": {{}}},
+	} {
+		node, err := definition.Render(nil, slots)
+		if err != nil {
+			t.Fatalf("render empty placeholder: %v", err)
+		}
+		html := renderNode(t, node)
+		if got := strings.Count(html, clSkeleton.Compile()); got != 3 {
+			t.Errorf("fallback line count = %d, want 3: %s", got, html)
+		}
+		if got := strings.Count(html, clSkeletonLineLast.Compile()); got != 1 {
+			t.Errorf("fallback short-last-line count = %d, want 1: %s", got, html)
+		}
+	}
+
+	const (
+		firstPlaceholder  = "authored-placeholder-first"
+		secondPlaceholder = "authored-placeholder-second"
+	)
+	node, err := definition.Render(nil, DeliverySlotChildren{
+		"placeholder": {
+			{Children: []g.Node{g.Text(firstPlaceholder)}},
+			{Children: []g.Node{g.Text(secondPlaceholder)}},
+		},
+	})
+	if err != nil {
+		t.Fatalf("render authored placeholder: %v", err)
+	}
+	html := renderNode(t, node)
+	firstIndex := strings.Index(html, firstPlaceholder)
+	secondIndex := strings.Index(html, secondPlaceholder)
+	if firstIndex < 0 || secondIndex <= firstIndex {
+		t.Errorf("authored placeholder order was not preserved: %s", html)
+	}
+	if strings.Contains(html, clSkeleton.Compile()) {
+		t.Errorf("fallback Skeleton rendered beside authored placeholder: %s", html)
+	}
+}
+
 func TestSkeletonPlaceholdersAreHiddenFromAssistiveTech(t *testing.T) {
 	t.Parallel()
 

@@ -91,6 +91,20 @@ func TestDeferredSlotBlueprintPreservesDefaultPlaceholder(t *testing.T) {
 	t.Parallel()
 
 	definition := blueprintContractDefinition(t, "DeferredSlot")
+	if got, want := len(definition.Contract.Slots), 1; got != want {
+		t.Fatalf("DeferredSlot slots = %d, want %d", got, want)
+	}
+	placeholderContract := definition.Contract.Slots[0]
+	if placeholderContract.Name != "placeholder" {
+		t.Fatalf("DeferredSlot slot name = %q, want placeholder", placeholderContract.Name)
+	}
+	if !slices.Contains(placeholderContract.AllowedTypes, "Skeleton") {
+		t.Errorf(
+			"DeferredSlot placeholder allowed types = %v, want Skeleton",
+			placeholderContract.AllowedTypes,
+		)
+	}
+
 	placeholder := blueprintContractOnlyNodeNamed(t, definition.Design.Root, "Placeholder")
 	if placeholder.Kind != blueprint.NodeSlot || placeholder.Slot != "placeholder" {
 		t.Fatalf("DeferredSlot/Placeholder = %#v, want placeholder slot", placeholder)
@@ -108,8 +122,8 @@ func TestDeferredSlotBlueprintPreservesDefaultPlaceholder(t *testing.T) {
 	if pending.Kind != blueprint.NodeInstance || pending.Text != "Skeleton" {
 		t.Fatalf("DeferredSlot/Placeholder/Pending = %#v, want Skeleton instance", pending)
 	}
-	if got := pending.Props["instance_example"]; got != "block" {
-		t.Errorf("DeferredSlot/Placeholder/Pending selector = %#v, want block", got)
+	if got := pending.Props["instance_example"]; got != "text" {
+		t.Errorf("DeferredSlot/Placeholder/Pending selector = %#v, want text", got)
 	}
 }
 

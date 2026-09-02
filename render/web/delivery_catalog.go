@@ -1976,10 +1976,10 @@ func deferredSlotDeliveryDefinition() DeliveryDefinition {
 			"Placeholder",
 			"placeholder",
 			"",
-			deliveryInstance("Pending", "Skeleton", "block", ""),
+			deliveryInstance("Pending", "Skeleton", "text", ""),
 		)),
 	)
-	return newDeliveryDefinition(
+	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
 		stableDeliveryID(componentType),
@@ -1988,7 +1988,7 @@ func deferredSlotDeliveryDefinition() DeliveryDefinition {
 		[]designcomponent.Slot{{
 			Name:         "placeholder",
 			Description:  "Skeleton shown until the fragment arrives.",
-			AllowedTypes: deliveryAtomicContentTypes(),
+			AllowedTypes: append(deliveryAtomicContentTypes(), "Skeleton"),
 			Cardinality:  designcomponent.SlotMany,
 			// A placeholder may be several skeleton pieces standing in for the
 			// fragment's shape, so each occupancy carries its own identity.
@@ -1998,8 +1998,14 @@ func deferredSlotDeliveryDefinition() DeliveryDefinition {
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "load", map[string]any{}),
 		},
-		func(props atoms.DeferredSlotProps) g.Node {
-			return DeferredSlot(props, Skeleton(atoms.SkeletonProps{Shape: "text", Lines: 3}))
+		func(props atoms.DeferredSlotProps, slots DeliverySlotChildren) g.Node {
+			placeholder := slots.Nodes("placeholder")
+			if len(placeholder) == 0 {
+				placeholder = []g.Node{
+					Skeleton(atoms.SkeletonProps{Shape: "text", Lines: 3}),
+				}
+			}
+			return DeferredSlot(props, placeholder...)
 		},
 	)
 }
