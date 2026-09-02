@@ -538,10 +538,26 @@ func TestButtonOwnsNativeLinkSlotsAndStateContract(t *testing.T) {
 		`data-component="button"`, `data-variant="primary"`, `data-tone="success"`,
 		`data-loading="true"`, `aria-busy="true"`, `hx-post="/save"`,
 		`hx-target="#result"`, `hx-include="#save-form"`, `data-action="save"`, `Saving`,
+		`text-fg-on-brand`, `border-t-fg-on-brand`,
 	} {
 		if !strings.Contains(native.String(), fragment) {
 			t.Errorf("native Button output is missing %q: %s", fragment, native.String())
 		}
+	}
+	if strings.Contains(native.String(), "border-t-fg-brand") {
+		t.Errorf("loading Button retained an invisible brand-on-brand Spinner arc: %s", native.String())
+	}
+
+	secondary := renderNodeToString(t, Button(atoms.ButtonProps{
+		Label: "Waiting", Variant: "secondary", Tone: "neutral", Loading: true,
+	}))
+	for _, fragment := range []string{"text-fg-primary", "border-t-fg-primary"} {
+		if !strings.Contains(secondary, fragment) {
+			t.Errorf("secondary loading Button did not preserve current foreground %q: %s", fragment, secondary)
+		}
+	}
+	if strings.Contains(secondary, "border-t-fg-on-brand") {
+		t.Errorf("secondary loading Button forced filled-action contrast: %s", secondary)
 	}
 
 	var link strings.Builder
@@ -2348,10 +2364,22 @@ func TestInputOwnsValidationToneConstraintsAndSupportingText(t *testing.T) {
 		`role="alert"`,
 		`Review this address.`,
 		`Use your work email.`,
+		`text-fg-secondary`,
 	} {
 		if !strings.Contains(html, fragment) {
 			t.Fatalf("Input output missing %q: %s", fragment, html)
 		}
+	}
+
+	ordinary := renderNodeToString(t, Input(atoms.InputProps{
+		Name:  "display-name",
+		Value: "Joao",
+	}))
+	if !strings.Contains(ordinary, "text-fg-primary") {
+		t.Errorf("ordinary Input value lost primary text color: %s", ordinary)
+	}
+	if strings.Contains(ordinary, "text-fg-secondary") {
+		t.Errorf("ordinary Input value inherited read-only text color: %s", ordinary)
 	}
 }
 

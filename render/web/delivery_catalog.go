@@ -511,6 +511,14 @@ func iconDeliveryDefinition() DeliveryDefinition {
 
 func buttonDeliveryDefinition() DeliveryDefinition {
 	componentType := "Button"
+	loadingIndicator := deliveryInstance(
+		"LoadingIndicator",
+		"Spinner",
+		"small",
+		"",
+	)
+	loadingIndicator = deliveryClassBound(loadingIndicator, "variant", compileClassMap(clButtonLoadingVariant))
+	loadingIndicator = deliveryClassBound(loadingIndicator, "tone", compileClassMap(clButtonLoadingTone))
 	root := deliveryFrame(
 		componentType,
 		clButtonBase.Compile(),
@@ -519,7 +527,7 @@ func buttonDeliveryDefinition() DeliveryDefinition {
 			map[string]any{"loading": true},
 		),
 		deliveryVisibleWhen(
-			deliveryInstance("LoadingIndicator", "Spinner", "small", ""),
+			loadingIndicator,
 			map[string]any{"loading": true},
 		),
 		deliveryHiddenWhen(
@@ -861,6 +869,9 @@ func inputDeliveryDefinition() DeliveryDefinition {
 	valueText = deliveryClassBound(valueText, "value", map[string]string{
 		"":  tw.New().TextColor(tw.FgPlaceholder).Compile(),
 		"*": tw.New().TextColor(tw.FgPrimary).Compile(),
+	})
+	valueText = deliveryClassBound(valueText, "readOnly", map[string]string{
+		"false": "", "true": tw.New().TextColor(tw.FgSecondary).Compile(),
 	})
 	valueText.Props["mask_when"] = map[string]any{"type": "password"}
 	value := deliveryFrame(

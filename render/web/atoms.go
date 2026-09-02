@@ -294,7 +294,14 @@ func ButtonWithSlots(p atoms.ButtonProps, slots ButtonSlots) g.Node {
 	if len(slots.Content) > 0 {
 		children = append(children, slots.Content...)
 	} else if p.Loading {
-		children = append(children, Spinner(atoms.SpinnerProps{Size: "sm", Label: ""}))
+		indicatorAppearance := variantOr(clButtonLoadingVariant, variant, "primary")
+		if tone != "neutral" {
+			indicatorAppearance = variantOr(clButtonLoadingTone, tone, "brand")
+		}
+		children = append(children, spinnerWithAppearance(
+			atoms.SpinnerProps{Size: "sm", Label: ""},
+			indicatorAppearance,
+		))
 	} else if len(slots.IconStart) > 0 {
 		children = append(children, slots.IconStart...)
 	}
@@ -1722,9 +1729,16 @@ func Divider(p atoms.DividerProps) g.Node {
 // Spinner renders atoms.SpinnerProps; the label is announced, the rotation is
 // decoration.
 func Spinner(p atoms.SpinnerProps) g.Node {
+	return spinnerWithAppearance(
+		p,
+		variantOr(clSpinnerTone, normalizeSpinnerTone(p.Tone), "brand"),
+	)
+}
+
+func spinnerWithAppearance(p atoms.SpinnerProps, appearance tw.ClassList) g.Node {
 	cl := clSpinner.
 		Merge(variantOr(clSpinnerSize, p.Size, "md")).
-		Merge(variantOr(clSpinnerTone, normalizeSpinnerTone(p.Tone), "brand"))
+		Merge(appearance)
 	label := p.Label
 	if label == "" {
 		label = "Loading"

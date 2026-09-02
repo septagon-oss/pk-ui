@@ -18,6 +18,10 @@ func hoverBg(c tw.Color) func(tw.ClassList) tw.ClassList {
 	return func(cl tw.ClassList) tw.ClassList { return cl.Bg(c) }
 }
 
+func buttonLoadingIndicator(color tw.Color) tw.ClassList {
+	return tw.New().TextColor(color).BorderTopColor(color)
+}
+
 var (
 	// Shared fragments.
 	clIcon     = tw.New().Display(tw.DisplayInlineBlock).FlexShrink0()
@@ -155,8 +159,26 @@ var (
 		"2xl": tw.New().FontSize(tw.TextXL).PaddingX(tw.S8).PaddingY(tw.S4),
 	}
 
-	clButtonFull         = tw.New().Width(tw.SFull)
-	clButtonIconOnly     = tw.New().MinWidth(tw.S11).MinHeight(tw.S11)
+	clButtonFull     = tw.New().Width(tw.SFull)
+	clButtonIconOnly = tw.New().MinWidth(tw.S11).MinHeight(tw.S11)
+	// Loading indicators use the same foreground contract as their button.
+	// This keeps filled actions on-brand while preserving contrast for neutral
+	// secondary, outline, ghost, and link variants.
+	clButtonLoadingVariant = map[string]tw.ClassList{
+		"primary":   buttonLoadingIndicator(tw.FgOnBrand),
+		"secondary": buttonLoadingIndicator(tw.FgPrimary),
+		"outline":   buttonLoadingIndicator(tw.FgBrand),
+		"ghost":     buttonLoadingIndicator(tw.FgPrimary),
+		"link":      buttonLoadingIndicator(tw.FgLink),
+	}
+	clButtonLoadingTone = map[string]tw.ClassList{
+		"neutral": tw.New(),
+		"brand":   buttonLoadingIndicator(tw.FgOnBrand),
+		"success": buttonLoadingIndicator(tw.FgOnBrand),
+		"warning": buttonLoadingIndicator(tw.FgOnBrand),
+		"danger":  buttonLoadingIndicator(tw.FgOnBrand),
+		"info":    buttonLoadingIndicator(tw.FgOnBrand),
+	}
 	clButtonDisabledLink = tw.New().
 				Cursor(tw.CursorNotAllowed).
 				Opacity(tw.Opacity50).
@@ -1431,7 +1453,7 @@ func ClassLists() []tw.ClassList {
 		clDashboardWidgetChange, clDashboardWidgetPrevious, clDashboardWidgetFooter,
 	}
 	for _, m := range []map[string]tw.ClassList{
-		clButtonVariant, clButtonTone, clButtonSize,
+		clButtonVariant, clButtonTone, clButtonSize, clButtonLoadingVariant, clButtonLoadingTone,
 		clBadgeVariant, clBadgeTone, clBadgeSize, clBadgeDotTone, clAlertVariant, clToastTone,
 		clIconSize, clIconTone, clAvatarSize, clAvatarShape, clAvatarTone,
 		clAvatarInitialsSize, clAvatarStatusTone, clAvatarStatusSize, clAvatarStatusPosition,

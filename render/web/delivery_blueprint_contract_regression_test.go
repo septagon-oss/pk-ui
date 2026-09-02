@@ -100,6 +100,18 @@ func TestButtonBlueprintPreservesCascadeAndLoadingReplacement(t *testing.T) {
 	if got := loading.Props["instance_example"]; got != "small" {
 		t.Errorf("Button/LoadingIndicator selector = %#v, want small", got)
 	}
+	blueprintContractAssertOrder(t, loading, "variant", "tone")
+	blueprintContractAssertClassBinding(t, loading, "variant", compileClassMap(clButtonLoadingVariant))
+	blueprintContractAssertClassBinding(t, loading, "tone", compileClassMap(clButtonLoadingTone))
+	primaryClasses := strings.Fields(loading.ClassBindings["variant"]["primary"])
+	for _, class := range []string{"text-fg-on-brand", "border-t-fg-on-brand"} {
+		if !slices.Contains(primaryClasses, class) {
+			t.Errorf("Button/LoadingIndicator primary classes = %q, want %q", primaryClasses, class)
+		}
+	}
+	if slices.Contains(primaryClasses, "border-t-fg-brand") {
+		t.Errorf("Button/LoadingIndicator retained invisible brand-on-brand primary arc: %q", primaryClasses)
+	}
 	blueprintContractAssertCondition(t, loading, "visible_when", map[string]any{"loading": true})
 
 	label := blueprintContractOnlyNodeNamed(t, root, "Label")
@@ -212,10 +224,13 @@ func TestInputBlueprintPreservesBindingCascadeAndConditionalSources(t *testing.T
 		}
 	}
 	valueText := blueprintContractOnlyNodeNamed(t, value, "ValueText")
-	blueprintContractAssertOrder(t, valueText, "value")
+	blueprintContractAssertOrder(t, valueText, "value", "readOnly")
 	blueprintContractAssertClassBinding(t, valueText, "value", map[string]string{
 		"":  tw.New().TextColor(tw.FgPlaceholder).Compile(),
 		"*": tw.New().TextColor(tw.FgPrimary).Compile(),
+	})
+	blueprintContractAssertClassBinding(t, valueText, "readOnly", map[string]string{
+		"false": "", "true": tw.New().TextColor(tw.FgSecondary).Compile(),
 	})
 	if got, want := valueText.Props["mask_when"], (map[string]any{"type": "password"}); !reflect.DeepEqual(got, want) {
 		t.Errorf("Input/Value mask_when = %#v, want %#v", got, want)
