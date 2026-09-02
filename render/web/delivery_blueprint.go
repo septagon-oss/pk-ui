@@ -87,6 +87,19 @@ func deliverySlot(name, slot, classes string, children ...blueprint.Node) bluepr
 	}
 }
 
+// deliveryPreserveSlotFallback marks prop-bound fallback content that remains
+// authoritative when an executable composition does not occupy the slot. A
+// Modal title, for example, must not disappear merely because body/actions
+// are supplied as rich child components.
+func deliveryPreserveSlotFallback(node blueprint.Node) blueprint.Node {
+	node.Props = maps.Clone(node.Props)
+	if node.Props == nil {
+		node.Props = make(map[string]any)
+	}
+	node.Props["preserve_fallback_when_empty"] = true
+	return node
+}
+
 func deliveryInstance(
 	name string,
 	componentType string,

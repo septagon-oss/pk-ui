@@ -455,12 +455,16 @@ func accordionDeliveryDefinition() DeliveryDefinition {
 	section := deliveryFrame(
 		"Section",
 		"",
+		deliveryVisibleWhen(
+			deliveryFrame(
+				"Separator",
+				tw.New().Width(tw.SFull).Height(tw.SPX).Bg(tw.BorderPrimary).Compile(),
+			),
+			map[string]any{"separator": true},
+		),
 		trigger,
 		content,
 	)
-	section = deliveryClassBound(section, "separator", map[string]string{
-		"false": "", "true": clAccordionSeparator.Compile(),
-	})
 	section.Props = map[string]any{
 		"repeat_for_slot":     "section",
 		"repeat_items_prop":   "items",
@@ -1273,9 +1277,9 @@ func drawerDeliveryDefinition() DeliveryDefinition {
 					deliveryFrame(
 						"Header",
 						clDrawerHeader.Compile(),
-						deliverySlot("HeaderContent", "header", "",
+						deliveryPreserveSlotFallback(deliverySlot("HeaderContent", "header", "",
 							deliveryText("Title", clDrawerTitle.Compile(), "Account settings", "title"),
-						),
+						)),
 						deliveryText("Description", clDrawerDescription.Compile(), "Manage your profile and preferences.", "description"),
 						deliveryInstance("Close", "Icon", "X Mark / Fg Primary / 20", clDrawerClose.Compile()),
 					),
@@ -1398,13 +1402,13 @@ func modalDeliveryDefinition() DeliveryDefinition {
 		deliveryFrame(
 			"Header",
 			clModalHeader.Compile(),
-			deliverySlot(
+			deliveryPreserveSlotFallback(deliverySlot(
 				"HeaderContent",
 				"header",
 				clModalTitleBlock.Compile(),
 				deliveryOptionalText(deliveryText("Title", clModalTitle.Compile(), "", "title")),
 				deliveryOptionalText(deliveryText("Description", clModalDescription.Compile(), "", "description")),
-			),
+			)),
 			close,
 		),
 		deliverySlot("Body", "content", clModalBody.Compile(),

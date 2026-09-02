@@ -16,6 +16,7 @@ import (
 
 	g "maragu.dev/gomponents"
 
+	"github.com/septagon-oss/pk-design/pkg/blueprint"
 	designcomponent "github.com/septagon-oss/pk-design/pkg/components"
 	uicomponent "github.com/septagon-oss/pk-ui/component"
 	"github.com/septagon-oss/pk-ui/contracts"
@@ -27,6 +28,8 @@ import (
 // from application routes and external hosts. Product consumers still provide
 // ordinary image URLs through the same public contracts.
 const deliveryFixtureImageDataURL = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23e2e8f0'/%3E%3Ccircle cx='32' cy='24' r='12' fill='%2364758b'/%3E%3Cpath d='M12 58c2-13 10-20 20-20s18 7 20 20' fill='%2364758b'/%3E%3C/svg%3E"
+
+const deliverySpinnerArcSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#000" fill-rule="evenodd" d="M12 2a10 10 0 0 1 10 10h-4a6 6 0 0 0-6-6V2Z"/></svg>`
 
 var (
 	buttonVariants = []string{
@@ -516,9 +519,9 @@ func buttonDeliveryDefinition() DeliveryDefinition {
 			deliveryInstance("LoadingIndicator", "Spinner", "small", ""),
 			map[string]any{"loading": true},
 		),
-		deliveryHiddenWhenAny(
+		deliveryHiddenWhen(
 			deliveryText("Label", "", "Continue", "label"),
-			map[string]any{"iconOnly": true, "loading": true},
+			map[string]any{"iconOnly": true},
 		),
 		deliveryHiddenWhen(
 			deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
@@ -834,11 +837,17 @@ func toastDeliveryDefinition() DeliveryDefinition {
 
 func inputDeliveryDefinition() DeliveryDefinition {
 	componentType := "Input"
+	value := deliveryOptionalText(deliveryText("Value", "", "", "value", "placeholder"))
+	value = deliveryClassBound(value, "value", map[string]string{
+		"":  tw.New().TextColor(tw.FgPlaceholder).Compile(),
+		"*": tw.New().TextColor(tw.FgPrimary).Compile(),
+	})
+	value.Props["mask_when"] = map[string]any{"type": "password"}
 	control := deliveryFrame(
 		"Control",
-		clInput.Compile(),
+		clInput.Compile()+" "+tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S2).Compile(),
 		deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
-		deliveryOptionalText(deliveryText("Value", "", "", "value", "placeholder")),
+		value,
 		deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
 	)
 	control = deliveryClassBound(control, "size", compileClassMap(clInputSize))
@@ -1490,19 +1499,20 @@ func headingDeliveryDefinition() DeliveryDefinition {
 
 func dividerDeliveryDefinition() DeliveryDefinition {
 	componentType := "Divider"
-	horizontal := tw.New().Width(tw.S80).Height(tw.SPX).Merge(clDividerH).Compile()
-	vertical := tw.New().Width(tw.SPX).Height(tw.S8).Merge(clDividerV).Compile()
-	labelled := tw.New().Width(tw.S80).Merge(clDividerText).Compile()
+	horizontal := tw.New().Width(tw.S80).Height(tw.SPX).Bg(tw.BorderPrimary).Merge(clDividerH).Compile()
+	vertical := tw.New().Width(tw.SPX).Height(tw.S8).Bg(tw.BorderPrimary).Merge(clDividerV).Compile()
+	labelled := tw.New().Width(tw.S80).Height(tw.SAuto).Bg(tw.ColorTransparent).Merge(clDividerText).Compile()
+	line := tw.New().Height(tw.SPX).Bg(tw.BorderPrimary).Merge(clDividerTextLine).Compile()
 	visibleWithText := map[string]any{"text": "*"}
 	root := deliveryFrame(
 		componentType,
 		horizontal,
-		deliveryVisibleWhen(deliveryFrame("LineStart", clDividerTextLine.Compile()), visibleWithText),
+		deliveryVisibleWhen(deliveryFrame("LineStart", line), visibleWithText),
 		deliveryVisibleWhen(
 			deliveryOptionalText(deliveryText("Label", clDividerTextLabel.Compile(), "", "text")),
 			visibleWithText,
 		),
-		deliveryVisibleWhen(deliveryFrame("LineEnd", clDividerTextLine.Compile()), visibleWithText),
+		deliveryVisibleWhen(deliveryFrame("LineEnd", line), visibleWithText),
 	)
 	root = deliveryClassBound(root, "orientation", map[string]string{
 		"horizontal": horizontal,
@@ -1540,15 +1550,45 @@ func dividerDeliveryDefinition() DeliveryDefinition {
 
 func spinnerDeliveryDefinition() DeliveryDefinition {
 	componentType := "Spinner"
-	root := deliveryClassBound(
-		deliveryClassBound(
-			deliveryFrame(componentType, clSpinner.Compile()),
-			"size",
-			compileClassMap(clSpinnerSize),
+	track := deliveryClassBound(
+		deliveryFrame(
+			"Track",
+			tw.New().Position(tw.PositionAbsolute).Inset(tw.S0).Rounded(tw.RadiusFull).
+				Border(tw.Border2).BorderColor(tw.BorderSecondary).Compile(),
 		),
-		"tone",
-		compileClassMap(clSpinnerTone),
+		"size",
+		compileClassMap(clSpinnerSize),
 	)
+	arc := blueprint.Node{
+		Kind:     blueprint.NodeSVG,
+		Name:     "Arc",
+		Classes:  tw.New().Position(tw.PositionAbsolute).Inset(tw.S0).Compile(),
+		AssetRef: "asset:spinner-arc",
+	}
+	arc = deliveryClassBound(arc, "size", compileClassMap(clSpinnerSize))
+	arc = deliveryClassBound(arc, "tone", map[string]string{
+		"neutral": tw.New().TextColor(tw.FgSecondary).Compile(),
+		"brand":   tw.New().TextColor(tw.FgBrand).Compile(),
+		"success": tw.New().TextColor(tw.FgSuccess).Compile(),
+		"warning": tw.New().TextColor(tw.FgWarning).Compile(),
+		"danger":  tw.New().TextColor(tw.FgDanger).Compile(),
+		"info":    tw.New().TextColor(tw.FgInfo).Compile(),
+	})
+	root := deliveryClassBound(
+		deliveryFrame(
+			componentType,
+			tw.New().Position(tw.PositionRelative).Display(tw.DisplayInlineBlock).Compile(),
+			track,
+			arc,
+		),
+		"size",
+		compileClassMap(clSpinnerSize),
+	)
+	design := deliveryDesign("medium", "02 Atoms", "Feedback", root)
+	design.Assets = []blueprint.Asset{{
+		Name: "spinner-arc", Kind: blueprint.AssetSVG, Source: deliverySpinnerArcSVG,
+		Description: "Token-tinted quarter arc layered over the neutral loading track.",
+	}}
 	return newDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
@@ -1560,7 +1600,7 @@ func spinnerDeliveryDefinition() DeliveryDefinition {
 			"tone":  toneProperty(canonicalTones, "brand", "Semantic progress tone."),
 		},
 		nil,
-		deliveryDesign("medium", "02 Atoms", "Feedback", root),
+		design,
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "medium", map[string]any{
 				"label": "Loading results", "size": "md", "tone": "brand",

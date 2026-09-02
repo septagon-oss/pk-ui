@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/septagon-oss/pk-design/pkg/blueprint"
+	"github.com/septagon-oss/tw"
 )
 
 func TestCoreDeliveryBlueprintClassBindingOrderIsCompleteAndUnique(t *testing.T) {
@@ -99,6 +100,12 @@ func TestButtonBlueprintPreservesCascadeAndLoadingReplacement(t *testing.T) {
 		t.Errorf("Button/LoadingIndicator selector = %#v, want small", got)
 	}
 	blueprintContractAssertCondition(t, loading, "visible_when", map[string]any{"loading": true})
+
+	label := blueprintContractOnlyNodeNamed(t, root, "Label")
+	blueprintContractAssertCondition(t, label, "hidden_when", map[string]any{"iconOnly": true})
+	if hidden, _ := label.Props["hidden_when"].(map[string]any); hidden["loading"] != nil {
+		t.Errorf("Button/Label is hidden while loading: %v", hidden)
+	}
 }
 
 func TestBadgeBlueprintBindsDotToneAndKeepsCountOptional(t *testing.T) {
@@ -139,8 +146,10 @@ func TestInputBlueprintPreservesBindingCascadeAndConditionalSources(t *testing.T
 	}
 
 	control := blueprintContractOnlyNodeNamed(t, root, "Control")
-	if got, want := control.Classes, clInput.Compile(); got != want {
-		t.Errorf("Input/Control source classes = %q, want %q", got, want)
+	for _, class := range []string{"flex", "items-center", "gap-2"} {
+		if !slices.Contains(strings.Fields(control.Classes), class) {
+			t.Errorf("Input/Control classes = %q, want %q", control.Classes, class)
+		}
 	}
 	blueprintContractAssertOrder(t, control, "size", "tone", "error", "invalid", "readOnly")
 	blueprintContractAssertClassBinding(t, control, "error", map[string]string{
@@ -152,6 +161,16 @@ func TestInputBlueprintPreservesBindingCascadeAndConditionalSources(t *testing.T
 	blueprintContractAssertClassBinding(t, control, "readOnly", map[string]string{
 		"false": "", "true": clInputReadOnly.Compile(),
 	})
+
+	value := blueprintContractOnlyNodeNamed(t, root, "Value")
+	blueprintContractAssertOrder(t, value, "value")
+	blueprintContractAssertClassBinding(t, value, "value", map[string]string{
+		"":  tw.New().TextColor(tw.FgPlaceholder).Compile(),
+		"*": tw.New().TextColor(tw.FgPrimary).Compile(),
+	})
+	if got, want := value.Props["mask_when"], (map[string]any{"type": "password"}); !reflect.DeepEqual(got, want) {
+		t.Errorf("Input/Value mask_when = %#v, want %#v", got, want)
+	}
 
 	help := blueprintContractOnlyNodeNamed(t, root, "Help")
 	blueprintContractAssertOrder(t, help, "error")
@@ -178,6 +197,14 @@ func TestDividerBlueprintOwnsThreeLayerLabelledStructure(t *testing.T) {
 	}
 	for index := range root.Children {
 		blueprintContractAssertCondition(t, &root.Children[index], "visible_when", map[string]any{"text": "*"})
+	}
+	for _, name := range []string{"LineStart", "LineEnd"} {
+		line := blueprintContractOnlyNodeNamed(t, root, name)
+		for _, class := range []string{"h-px", "bg-border-primary"} {
+			if !slices.Contains(strings.Fields(line.Classes), class) {
+				t.Errorf("Divider/%s classes = %q, want %q", name, line.Classes, class)
+			}
+		}
 	}
 
 	label := blueprintContractOnlyNodeNamed(t, root, "Label")
@@ -216,6 +243,24 @@ func TestProgressBlueprintUsesOneDerivedFill(t *testing.T) {
 	blueprintContractAssertCondition(t, value, "hidden_when", map[string]any{"indeterminate": true})
 }
 
+func TestSpinnerBlueprintOwnsTrackAndTintableArc(t *testing.T) {
+	t.Parallel()
+
+	definition := blueprintContractDefinition(t, "Spinner")
+	root := definition.Design.Root
+	blueprintContractAssertOrder(t, root, "size")
+	track := blueprintContractOnlyNodeNamed(t, root, "Track")
+	arc := blueprintContractOnlyNodeNamed(t, root, "Arc")
+	if arc.Kind != blueprint.NodeSVG || arc.AssetRef != "asset:spinner-arc" {
+		t.Fatalf("Spinner/Arc = %#v, want spinner SVG asset", arc)
+	}
+	blueprintContractAssertOrder(t, track, "size")
+	blueprintContractAssertOrder(t, arc, "size", "tone")
+	if len(definition.Design.Assets) != 1 || definition.Design.Assets[0].Name != "spinner-arc" {
+		t.Fatalf("Spinner assets = %#v, want spinner-arc", definition.Design.Assets)
+	}
+}
+
 func TestAccordionAndModalBlueprintInstanceAndBindingPlacement(t *testing.T) {
 	t.Parallel()
 
@@ -232,12 +277,18 @@ func TestAccordionAndModalBlueprintInstanceAndBindingPlacement(t *testing.T) {
 		t.Fatalf("Accordion/Sections = %#v, want public section slot", sections)
 	}
 	section := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "Section")
-	blueprintContractAssertOrder(t, section, "separator")
 	if got := section.Props["repeat_for_slot"]; got != "section" {
 		t.Errorf("Accordion/Section repeat_for_slot = %#v, want section", got)
 	}
 	if got := section.Props["repeat_items_prop"]; got != "items" {
 		t.Errorf("Accordion/Section repeat_items_prop = %#v, want items", got)
+	}
+	separator := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "Separator")
+	blueprintContractAssertCondition(t, separator, "visible_when", map[string]any{"separator": true})
+	for _, class := range []string{"w-full", "h-px", "bg-border-primary"} {
+		if !slices.Contains(strings.Fields(separator.Classes), class) {
+			t.Errorf("Accordion/Separator classes = %q, want %q", separator.Classes, class)
+		}
 	}
 	content := blueprintContractOnlyNodeNamed(t, accordion.Design.Root, "Content")
 	if content.Kind != blueprint.NodeFrame {
@@ -278,6 +329,10 @@ func TestAccordionAndModalBlueprintInstanceAndBindingPlacement(t *testing.T) {
 	blueprintContractAssertClassBinding(t, panel, "size", compileClassMap(clModalPanelSize))
 	if _, misplaced := panel.ClassBindings["centered"]; misplaced {
 		t.Error("Modal/Panel owns centered binding; want it on root")
+	}
+	headerContent := blueprintContractOnlyNodeNamed(t, root, "HeaderContent")
+	if preserved, _ := headerContent.Props["preserve_fallback_when_empty"].(bool); !preserved {
+		t.Errorf("Modal/HeaderContent preserve_fallback_when_empty = %#v, want true", headerContent.Props["preserve_fallback_when_empty"])
 	}
 }
 
