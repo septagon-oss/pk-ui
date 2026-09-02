@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/septagon-oss/pk-design/pkg/blueprint"
+	designcomponent "github.com/septagon-oss/pk-design/pkg/components"
 	"github.com/septagon-oss/tw"
 )
 
@@ -247,6 +248,22 @@ func TestAlertBlueprintMatchesRuntimeGeometryAndDefaultIcons(t *testing.T) {
 			t.Errorf("Alert/Title %s = %#v, want true", property, title.Props[property])
 		}
 	}
+	blueprintContractAssertCondition(t, title, "visible_when", map[string]any{"showTitle": true})
+	showTitleFound := false
+	for _, property := range definition.Contract.Props {
+		if property.Name != "showTitle" {
+			continue
+		}
+		showTitleFound = true
+		if property.Type != designcomponent.PropBoolean ||
+			property.Role != designcomponent.PropRoleModifier ||
+			property.Default != "true" {
+			t.Errorf("Alert showTitle contract = %#v, want optional boolean modifier defaulting true", property)
+		}
+	}
+	if !showTitleFound {
+		t.Fatal("Alert contract has no showTitle property")
+	}
 
 	actions := blueprintContractOnlyNodeNamed(t, root, "Actions")
 	if actions.Kind != blueprint.NodeSlot || actions.Slot != "actions" {
@@ -363,9 +380,28 @@ func TestAlertBlueprintMatchesRuntimeGeometryAndDefaultIcons(t *testing.T) {
 	if _, titled := neutral.Props["title"]; titled {
 		t.Errorf("Alert neutral example unexpectedly supplies a title: %#v", neutral.Props)
 	}
+	if showTitle, exists := neutral.Props["showTitle"].(bool); !exists || showTitle {
+		t.Errorf("Alert neutral showTitle = %#v, want false", neutral.Props["showTitle"])
+	}
 	warning := blueprintContractExample(t, definition, "warning")
 	if got, want := blueprintContractExampleSlotNames(warning), []string{"actions"}; !slices.Equal(got, want) {
-		t.Errorf("Alert warning example slots = %v, want %v", got, want)
+		t.Fatalf("Alert warning example slots = %v, want %v", got, want)
+	}
+	if got, want := len(warning.Slots[0].Components), 1; got != want {
+		t.Fatalf("Alert warning action count = %d, want %d", got, want)
+	}
+	warningAction := warning.Slots[0].Components[0]
+	button := blueprintContractDefinition(t, warningAction.Type)
+	buttonExample, matched := blueprintContractStructuralExample(button, warningAction.Props)
+	if !matched {
+		t.Fatalf(
+			"Alert warning action props %#v have no authored %s structural variant",
+			warningAction.Props,
+			warningAction.Type,
+		)
+	}
+	if got, want := buttonExample.Name, "secondary-sm"; got != want {
+		t.Errorf("Alert warning action resolves to Button/%s, want Button/%s", got, want)
 	}
 	dismissible := blueprintContractExample(t, definition, "info-alert")
 	if enabled, _ := dismissible.Props["dismissible"].(bool); !enabled {
@@ -396,6 +432,24 @@ func TestAlertBlueprintMatchesRuntimeGeometryAndDefaultIcons(t *testing.T) {
 	}
 	if titleMarkup := `<p class="` + clAlertTitle.Compile() + `">`; strings.Contains(neutralHTML, titleMarkup) {
 		t.Errorf("title-less Alert rendered a title layer: %s", neutralHTML)
+	}
+	hiddenTitleNode, err := definition.Render(map[string]any{
+		"message":   "The status remains visible.",
+		"title":     "Suppress this title",
+		"tone":      "info",
+		"showTitle": false,
+	}, nil)
+	if err != nil {
+		t.Fatalf("render Alert with showTitle=false: %v", err)
+	}
+	var hiddenTitleOutput strings.Builder
+	if err := hiddenTitleNode.Render(&hiddenTitleOutput); err != nil {
+		t.Fatalf("render Alert with showTitle=false node: %v", err)
+	}
+	hiddenTitleHTML := hiddenTitleOutput.String()
+	if strings.Contains(hiddenTitleHTML, "Suppress this title") ||
+		!strings.Contains(hiddenTitleHTML, "The status remains visible.") {
+		t.Errorf("Alert showTitle=false did not suppress only its title: %s", hiddenTitleHTML)
 	}
 
 	warningHTML := renderExample(warning)
@@ -750,6 +804,44 @@ func blueprintContractExample(t *testing.T, definition DeliveryDefinition, name 
 	}
 	t.Fatalf("component %s has no example %s", definition.Identity.ID, name)
 	return DeliveryExample{}
+}
+
+func blueprintContractStructuralExample(
+	definition DeliveryDefinition,
+	requested map[string]any,
+) (DeliveryExample, bool) {
+	for _, example := range definition.Examples {
+		matched := true
+		for _, property := range definition.Contract.Props {
+			switch property.Role {
+			case designcomponent.PropRoleVariant,
+				designcomponent.PropRoleTone,
+				designcomponent.PropRoleSize,
+				designcomponent.PropRoleState,
+				designcomponent.PropRoleModifier:
+			default:
+				if property.Name != "name" {
+					continue
+				}
+			}
+			requestedValue, requestedSet := requested[property.Name]
+			if !requestedSet {
+				requestedValue = property.Default
+			}
+			exampleValue, exampleSet := example.Props[property.Name]
+			if !exampleSet {
+				exampleValue = property.Default
+			}
+			if fmt.Sprint(requestedValue) != fmt.Sprint(exampleValue) {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			return example, true
+		}
+	}
+	return DeliveryExample{}, false
 }
 
 func blueprintContractExampleSlotNames(example DeliveryExample) []string {

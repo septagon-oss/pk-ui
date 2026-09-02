@@ -9,8 +9,10 @@ import "github.com/septagon-oss/pk-ui/contracts"
 type AlertProps struct {
 	contracts.ComponentProps
 
-	Message     string `json:"message"`
-	Title       string `json:"title,omitempty"`
+	Message   string `json:"message"`
+	Title     string `json:"title,omitempty"`
+	ShowTitle *bool  `json:"showTitle,omitempty"` // defaults true; set false to suppress a populated title
+
 	Tone        string `json:"tone,omitempty"` // neutral, info, success, warning, danger (default info)
 	Dismissible bool   `json:"dismissible,omitempty"`
 	Bordered    bool   `json:"bordered,omitempty"`

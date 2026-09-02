@@ -604,6 +604,9 @@ func buttonDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "secondary", map[string]any{
 				"label": "Cancel", "variant": "secondary", "tone": "neutral", "size": "md",
 			}),
+			deliveryExample(componentType, "secondary-sm", map[string]any{
+				"label": "Review changes", "variant": "secondary", "tone": "neutral", "size": "sm",
+			}),
 			deliveryExample(componentType, "loading", map[string]any{
 				"label": "Saving", "variant": "primary", "tone": "neutral", "size": "md", "loading": true,
 			}),
@@ -793,6 +796,10 @@ func alertDeliveryDefinition() DeliveryDefinition {
 		),
 		map[string]any{"dismissible": true},
 	)
+	title := deliveryVisibleWhen(
+		deliveryOptionalText(deliveryText("Title", clAlertTitle.Compile(), "", "title")),
+		map[string]any{"showTitle": true},
+	)
 	root := deliveryFrame(
 		componentType,
 		clAlertBase.Compile(),
@@ -800,7 +807,7 @@ func alertDeliveryDefinition() DeliveryDefinition {
 		deliveryFrame(
 			"Body",
 			clAlertBody.Compile(),
-			deliveryOptionalText(deliveryText("Title", clAlertTitle.Compile(), "", "title")),
+			title,
 			deliveryText("Message", clAlertMessage.Compile(), "Review the latest changes.", "message"),
 		),
 		deliverySlot("Actions", "actions", clAlertActions.Compile()),
@@ -821,8 +828,12 @@ func alertDeliveryDefinition() DeliveryDefinition {
 		stableDeliveryID(componentType),
 		"Persistent accessible inline status message.",
 		map[string]PropertyContract{
-			"message":     contentProperty("Required status message."),
-			"title":       contentProperty("Optional status title."),
+			"message": contentProperty("Required status message."),
+			"title":   contentProperty("Optional status title."),
+			"showTitle": {
+				Role: designcomponent.PropRoleModifier, Default: "true",
+				Description: "Whether a populated optional title is visible.",
+			},
 			"tone":        toneProperty(feedbackTones, "info", "Severity."),
 			"dismissible": stateProperty("Whether a dismiss affordance is exposed."),
 			"bordered":    modifierProperty("Whether the message has a leading accent border."),
@@ -867,7 +878,7 @@ func alertDeliveryDefinition() DeliveryDefinition {
 				"title": "Heads up", "message": "Your session will expire in 10 minutes.", "tone": "info", "dismissible": true,
 			}),
 			deliveryExample(componentType, "neutral", map[string]any{
-				"message": "This draft is available on this device.", "tone": "neutral",
+				"message": "This draft is available on this device.", "tone": "neutral", "showTitle": false,
 			}),
 			deliveryExample(componentType, "success-compact", map[string]any{
 				"title": "Changes saved", "message": "Your updates are now live.", "tone": "success", "compact": true,

@@ -447,7 +447,8 @@ func alertWithSlots(
 		live = "assertive"
 	}
 	body := []g.Node{h.Class(clAlertBody.Compile())}
-	if p.Title != "" {
+	showTitle := p.ShowTitle == nil || *p.ShowTitle
+	if showTitle && p.Title != "" {
 		body = append(body, h.P(h.Class(clAlertTitle.Compile()), g.Text(p.Title)))
 	}
 	body = append(body, h.P(h.Class(clAlertMessage.Compile()), g.Text(p.Message)))
