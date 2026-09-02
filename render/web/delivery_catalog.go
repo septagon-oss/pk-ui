@@ -459,6 +459,33 @@ func iconDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "Check Circle / Fg Success / 16", map[string]any{
 				"name": "check-circle", "tone": "success", "size": "sm", "weight": "outline",
 			}),
+			deliveryExample(componentType, "Check / Fg Success / 24", map[string]any{
+				"name": "check", "tone": "success", "size": "lg", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Check Circle / Fg Success / 48", map[string]any{
+				"name": "check-circle", "tone": "success", "size": "2xl", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Album Stack / Fg Primary / 16", map[string]any{
+				"name": "album-stack", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Text / Fg Primary / 16", map[string]any{
+				"name": "text", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Photo / Fg Primary / 16", map[string]any{
+				"name": "photo", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Graphics / Fg Primary / 16", map[string]any{
+				"name": "graphics", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Shape / Fg Primary / 16", map[string]any{
+				"name": "shape", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Design / Fg Primary / 16", map[string]any{
+				"name": "design", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Uploads / Fg Primary / 16", map[string]any{
+				"name": "uploads", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
 			deliveryExample(componentType, "Chevron Down / Fg Tertiary / 16", map[string]any{
 				"name": "chevron-down", "tone": "neutral", "size": "sm", "weight": "outline",
 			}),
@@ -618,6 +645,9 @@ func buttonDeliveryDefinition() DeliveryDefinition {
 			}),
 			deliveryExample(componentType, "primary-brand-sm", map[string]any{
 				"label": "Next", "variant": "primary", "tone": "brand", "size": "sm",
+			}),
+			deliveryExample(componentType, "primary-success-sm", map[string]any{
+				"label": "Complete", "variant": "primary", "tone": "success", "size": "sm",
 			}),
 			deliveryExample(componentType, "loading", map[string]any{
 				"label": "Saving", "variant": "primary", "tone": "neutral", "size": "md", "loading": true,
@@ -1866,6 +1896,10 @@ func progressDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "complete", map[string]any{
 				"value": 100, "max": 100, "ariaLabel": "Import completion",
 				"showText": true, "tone": "success", "size": "sm",
+			}),
+			deliveryExample(componentType, "compact-brand-sm", map[string]any{
+				"value": 33, "max": 100, "ariaLabel": "Onboarding progress",
+				"showText": false, "tone": "brand", "size": "sm",
 			}),
 			deliveryExample(componentType, "indeterminate", map[string]any{
 				"value": 0, "label": "Preparing export", "indeterminate": true,

@@ -11,6 +11,7 @@ package web
 
 import (
 	"bytes"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -289,6 +290,125 @@ func TestIconDeliveryPublishesExtraSmallBrandCheckSpecimen(t *testing.T) {
 		if !strings.Contains(rendered.String(), fragment) {
 			t.Errorf("extra-small brand Check is missing %q: %s", fragment, rendered.String())
 		}
+	}
+}
+
+func TestIconDeliveryPublishesEditorAndCompletionSpecimens(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		example string
+		name    string
+		size    string
+		tone    string
+		classes []string
+	}{
+		{example: "Album Stack / Fg Primary / 16", name: "album-stack", size: "sm", tone: "neutral", classes: []string{"h-4", "w-4"}},
+		{example: "Text / Fg Primary / 16", name: "text", size: "sm", tone: "neutral", classes: []string{"h-4", "w-4"}},
+		{example: "Photo / Fg Primary / 16", name: "photo", size: "sm", tone: "neutral", classes: []string{"h-4", "w-4"}},
+		{example: "Graphics / Fg Primary / 16", name: "graphics", size: "sm", tone: "neutral", classes: []string{"h-4", "w-4"}},
+		{example: "Shape / Fg Primary / 16", name: "shape", size: "sm", tone: "neutral", classes: []string{"h-4", "w-4"}},
+		{example: "Design / Fg Primary / 16", name: "design", size: "sm", tone: "neutral", classes: []string{"h-4", "w-4"}},
+		{example: "Uploads / Fg Primary / 16", name: "uploads", size: "sm", tone: "neutral", classes: []string{"h-4", "w-4"}},
+		{example: "Check / Fg Success / 24", name: "check", size: "lg", tone: "success", classes: []string{"h-6", "w-6", "text-fg-success"}},
+		{example: "Check Circle / Fg Success / 48", name: "check-circle", size: "2xl", tone: "success", classes: []string{"h-12", "w-12", "text-fg-success"}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.example, func(t *testing.T) {
+			props := deliveryExamplePropsForTest(t, "Icon", test.example)
+			for prop, want := range map[string]string{
+				"name": test.name, "size": test.size, "tone": test.tone, "weight": "outline",
+			} {
+				if got, _ := props[prop].(string); got != want {
+					t.Errorf("Icon %s = %q, want %q", prop, got, want)
+				}
+			}
+
+			node, err := RenderDeliveryExample("Icon", deliveryExampleID("Icon", test.example), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var rendered strings.Builder
+			if err := node.Render(&rendered); err != nil {
+				t.Fatal(err)
+			}
+			html := rendered.String()
+			for _, fragment := range append([]string{`data-pk-icon="` + test.name + `"`}, test.classes...) {
+				if !strings.Contains(html, fragment) {
+					t.Errorf("%s is missing %q: %s", test.example, fragment, html)
+				}
+			}
+			if strings.Contains(html, `data-pk-icon-fallback="true"`) {
+				t.Errorf("%s rendered a fallback glyph: %s", test.example, html)
+			}
+		})
+	}
+}
+
+func TestDeliveryPublishesOnboardingActionAndProgressSpecimens(t *testing.T) {
+	t.Parallel()
+
+	buttonProps := deliveryExamplePropsForTest(t, "Button", "primary-success-sm")
+	wantButtonProps := map[string]any{
+		"label": "Complete", "variant": "primary", "tone": "success", "size": "sm",
+	}
+	if !reflect.DeepEqual(buttonProps, wantButtonProps) {
+		t.Fatalf("Button/primary-success-sm props = %#v, want %#v", buttonProps, wantButtonProps)
+	}
+	button, err := RenderDeliveryExample("Button", deliveryExampleID("Button", "primary-success-sm"), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var renderedButton strings.Builder
+	if err := button.Render(&renderedButton); err != nil {
+		t.Fatal(err)
+	}
+	for _, fragment := range []string{
+		`data-variant="primary"`, `data-tone="success"`, "Complete",
+		"bg-surface-success", "text-sm", "px-3", "py-1.5",
+	} {
+		if !strings.Contains(renderedButton.String(), fragment) {
+			t.Errorf("Button/primary-success-sm is missing %q: %s", fragment, renderedButton.String())
+		}
+	}
+
+	progressProps := deliveryExamplePropsForTest(t, "Progress", "compact-brand-sm")
+	for property, want := range map[string]string{
+		"ariaLabel": "Onboarding progress", "tone": "brand", "size": "sm",
+	} {
+		if got, _ := progressProps[property].(string); got != want {
+			t.Errorf("Progress/compact-brand-sm %s = %q, want %q", property, got, want)
+		}
+	}
+	if got, _ := progressProps["showText"].(bool); got {
+		t.Errorf("Progress/compact-brand-sm showText = true, want false")
+	}
+	for property, want := range map[string]any{"value": 33, "max": 100} {
+		got := progressProps[property]
+		if got != want && got != float64(want.(int)) {
+			t.Errorf("Progress/compact-brand-sm %s = %#v, want %v", property, got, want)
+		}
+	}
+	progress, err := RenderDeliveryExample("Progress", deliveryExampleID("Progress", "compact-brand-sm"), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var renderedProgress strings.Builder
+	if err := progress.Render(&renderedProgress); err != nil {
+		t.Fatal(err)
+	}
+	progressHTML := renderedProgress.String()
+	for _, fragment := range []string{
+		`aria-label="Onboarding progress"`, `data-progress-percent="33"`,
+		`data-size="sm"`, `data-tone="brand"`, "h-1.5", "bg-surface-brand",
+	} {
+		if !strings.Contains(progressHTML, fragment) {
+			t.Errorf("Progress/compact-brand-sm is missing %q: %s", fragment, progressHTML)
+		}
+	}
+	if strings.Contains(progressHTML, `data-progress-value="true"`) || strings.Contains(progressHTML, "33%") {
+		t.Errorf("Progress/compact-brand-sm unexpectedly renders percentage text: %s", progressHTML)
 	}
 }
 

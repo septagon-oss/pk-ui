@@ -54,6 +54,32 @@ func TestBuiltinProviderReturnsEditableCurrentColorVectors(t *testing.T) {
 	}
 }
 
+func TestBuiltinProviderResolvesEditorVocabulary(t *testing.T) {
+	t.Parallel()
+
+	for name, wantGlyph := range map[string]string{
+		"album-stack": "images",
+		"design":      "squares-four",
+		"graphics":    "image",
+		"photo":       "image",
+		"shape":       "shapes",
+		"text":        "text-t",
+		"uploads":     "upload-simple",
+	} {
+		glyph, found := BuiltinProvider().Resolve(name, "outline")
+		if !found {
+			t.Errorf("builtin provider did not resolve %q", name)
+			continue
+		}
+		if glyph.Name != wantGlyph {
+			t.Errorf("%s glyph = %q, want %q", name, glyph.Name, wantGlyph)
+		}
+		if err := glyph.Validate(); err != nil {
+			t.Errorf("%s glyph is invalid: %v", name, err)
+		}
+	}
+}
+
 func TestExtensionPrependsVocabularyAndPreservesOSSFallback(t *testing.T) {
 	extension := testProvider{
 		name:    "client-icons",
