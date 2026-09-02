@@ -162,6 +162,62 @@ func TestButtonBlueprintPreservesCascadeAndLoadingReplacement(t *testing.T) {
 	}
 }
 
+func TestButtonPublishesVisibleWizardActionExamples(t *testing.T) {
+	t.Parallel()
+
+	definition := blueprintContractDefinition(t, "Button")
+	tests := []struct {
+		name    string
+		label   string
+		variant string
+		tone    string
+		size    string
+	}{
+		{name: "ghost-neutral-sm", label: "Skip", variant: "ghost", tone: "neutral", size: "sm"},
+		{name: "outline-neutral-sm", label: "Previous", variant: "outline", tone: "neutral", size: "sm"},
+		{name: "primary-brand-sm", label: "Next", variant: "primary", tone: "brand", size: "sm"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			example := blueprintContractExample(t, definition, test.name)
+			wantProps := map[string]any{
+				"label":   test.label,
+				"variant": test.variant,
+				"tone":    test.tone,
+				"size":    test.size,
+			}
+			if !reflect.DeepEqual(example.Props, wantProps) {
+				t.Fatalf("Button/%s props = %#v, want %#v", test.name, example.Props, wantProps)
+			}
+
+			node, err := definition.Render(example.Props, nil)
+			if err != nil {
+				t.Fatalf("render Button/%s: %v", test.name, err)
+			}
+			html := renderNode(t, node)
+			appearance := clButtonVariant[test.variant]
+			if test.tone != "neutral" {
+				appearance = clButtonTone[test.tone]
+			}
+			for _, fragment := range []string{
+				"<button",
+				`data-variant="` + test.variant + `"`,
+				`data-tone="` + test.tone + `"`,
+				test.label,
+				appearance.Compile(),
+				clButtonSize[test.size].Compile(),
+			} {
+				if !strings.Contains(html, fragment) {
+					t.Errorf("Button/%s output is missing %q: %s", test.name, fragment, html)
+				}
+			}
+			if strings.Contains(html, ` hidden`) || strings.Contains(html, `aria-hidden="true"`) {
+				t.Errorf("Button/%s output is hidden: %s", test.name, html)
+			}
+		})
+	}
+}
+
 func TestBadgeBlueprintBindsDotToneAndKeepsCountOptional(t *testing.T) {
 	t.Parallel()
 

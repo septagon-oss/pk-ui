@@ -607,6 +607,15 @@ func buttonDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "secondary-sm", map[string]any{
 				"label": "Review changes", "variant": "secondary", "tone": "neutral", "size": "sm",
 			}),
+			deliveryExample(componentType, "ghost-neutral-sm", map[string]any{
+				"label": "Skip", "variant": "ghost", "tone": "neutral", "size": "sm",
+			}),
+			deliveryExample(componentType, "outline-neutral-sm", map[string]any{
+				"label": "Previous", "variant": "outline", "tone": "neutral", "size": "sm",
+			}),
+			deliveryExample(componentType, "primary-brand-sm", map[string]any{
+				"label": "Next", "variant": "primary", "tone": "brand", "size": "sm",
+			}),
 			deliveryExample(componentType, "loading", map[string]any{
 				"label": "Saving", "variant": "primary", "tone": "neutral", "size": "md", "loading": true,
 			}),
