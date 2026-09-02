@@ -13,6 +13,7 @@ import (
 	"bytes"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -373,42 +374,56 @@ func TestDeliveryPublishesOnboardingActionAndProgressSpecimens(t *testing.T) {
 		}
 	}
 
-	progressProps := deliveryExamplePropsForTest(t, "Progress", "compact-brand-sm")
-	for property, want := range map[string]string{
-		"ariaLabel": "Onboarding progress", "tone": "brand", "size": "sm",
+	for _, test := range []struct {
+		example string
+		value   int
+	}{
+		{example: "compact-brand-sm", value: 33},
+		{example: "compact-brand-sm-67", value: 67},
+		{example: "compact-brand-sm-100", value: 100},
 	} {
-		if got, _ := progressProps[property].(string); got != want {
-			t.Errorf("Progress/compact-brand-sm %s = %q, want %q", property, got, want)
-		}
-	}
-	if got, _ := progressProps["showText"].(bool); got {
-		t.Errorf("Progress/compact-brand-sm showText = true, want false")
-	}
-	for property, want := range map[string]any{"value": 33, "max": 100} {
-		got := progressProps[property]
-		if got != want && got != float64(want.(int)) {
-			t.Errorf("Progress/compact-brand-sm %s = %#v, want %v", property, got, want)
-		}
-	}
-	progress, err := RenderDeliveryExample("Progress", deliveryExampleID("Progress", "compact-brand-sm"), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var renderedProgress strings.Builder
-	if err := progress.Render(&renderedProgress); err != nil {
-		t.Fatal(err)
-	}
-	progressHTML := renderedProgress.String()
-	for _, fragment := range []string{
-		`aria-label="Onboarding progress"`, `data-progress-percent="33"`,
-		`data-size="sm"`, `data-tone="brand"`, "h-1.5", "bg-surface-brand",
-	} {
-		if !strings.Contains(progressHTML, fragment) {
-			t.Errorf("Progress/compact-brand-sm is missing %q: %s", fragment, progressHTML)
-		}
-	}
-	if strings.Contains(progressHTML, `data-progress-value="true"`) || strings.Contains(progressHTML, "33%") {
-		t.Errorf("Progress/compact-brand-sm unexpectedly renders percentage text: %s", progressHTML)
+		t.Run("Progress/"+test.example, func(t *testing.T) {
+			progressProps := deliveryExamplePropsForTest(t, "Progress", test.example)
+			for property, want := range map[string]string{
+				"ariaLabel": "Onboarding progress", "tone": "brand", "size": "sm",
+			} {
+				if got, _ := progressProps[property].(string); got != want {
+					t.Errorf("%s = %q, want %q", property, got, want)
+				}
+			}
+			if got, _ := progressProps["showText"].(bool); got {
+				t.Errorf("showText = true, want false")
+			}
+			for property, want := range map[string]int{"value": test.value, "max": 100} {
+				got := progressProps[property]
+				if got != want && got != float64(want) {
+					t.Errorf("%s = %#v, want %d", property, got, want)
+				}
+			}
+
+			progress, err := RenderDeliveryExample("Progress", deliveryExampleID("Progress", test.example), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var renderedProgress strings.Builder
+			if err := progress.Render(&renderedProgress); err != nil {
+				t.Fatal(err)
+			}
+			progressHTML := renderedProgress.String()
+			value := strconv.Itoa(test.value)
+			for _, fragment := range []string{
+				`aria-label="Onboarding progress"`, `aria-valuenow="` + value + `"`,
+				`aria-valuemax="100"`, `data-progress-percent="` + value + `"`,
+				`data-size="sm"`, `data-tone="brand"`, "h-1.5", "bg-surface-brand",
+			} {
+				if !strings.Contains(progressHTML, fragment) {
+					t.Errorf("rendered output is missing %q: %s", fragment, progressHTML)
+				}
+			}
+			if strings.Contains(progressHTML, `data-progress-value="true"`) || strings.Contains(progressHTML, value+"%") {
+				t.Errorf("unexpectedly renders percentage text: %s", progressHTML)
+			}
+		})
 	}
 }
 

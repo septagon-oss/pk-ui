@@ -1901,6 +1901,14 @@ func progressDeliveryDefinition() DeliveryDefinition {
 				"value": 33, "max": 100, "ariaLabel": "Onboarding progress",
 				"showText": false, "tone": "brand", "size": "sm",
 			}),
+			deliveryExample(componentType, "compact-brand-sm-67", map[string]any{
+				"value": 67, "max": 100, "ariaLabel": "Onboarding progress",
+				"showText": false, "tone": "brand", "size": "sm",
+			}),
+			deliveryExample(componentType, "compact-brand-sm-100", map[string]any{
+				"value": 100, "max": 100, "ariaLabel": "Onboarding progress",
+				"showText": false, "tone": "brand", "size": "sm",
+			}),
 			deliveryExample(componentType, "indeterminate", map[string]any{
 				"value": 0, "label": "Preparing export", "indeterminate": true,
 				"tone": "info", "size": "md",
