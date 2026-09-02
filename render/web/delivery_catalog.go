@@ -423,6 +423,9 @@ func iconDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "X Mark / Fg Primary / 24", map[string]any{
 				"name": "x-mark", "tone": "neutral", "size": "lg", "weight": "outline",
 			}),
+			deliveryExample(componentType, "X Mark / Fg Primary / 20", map[string]any{
+				"name": "x-mark", "tone": "neutral", "size": "md", "weight": "outline",
+			}),
 			deliveryExample(componentType, "Arrow Right / Fg Primary / 24", map[string]any{
 				"name": "arrow-right", "tone": "neutral", "size": "lg", "weight": "outline",
 			}),
@@ -459,6 +462,9 @@ func iconDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "Document / Fg Tertiary / 40", map[string]any{
 				"name": "document", "tone": "neutral", "size": "2xl", "weight": "outline",
 			}),
+			deliveryExample(componentType, "Document / Fg Primary / 20", map[string]any{
+				"name": "document", "tone": "neutral", "size": "md", "weight": "outline",
+			}),
 			deliveryExample(componentType, "Envelope / Fg Primary / 20", map[string]any{
 				"name": "envelope", "tone": "neutral", "size": "md", "weight": "outline",
 			}),
@@ -483,6 +489,9 @@ func iconDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "User / Fg Tertiary / 16", map[string]any{
 				"name": "user", "tone": "neutral", "size": "sm", "weight": "outline",
 			}),
+			deliveryExample(componentType, "User / Fg Primary / 20", map[string]any{
+				"name": "user", "tone": "neutral", "size": "md", "weight": "outline",
+			}),
 			deliveryExample(componentType, "X Circle / Fg Danger / 20", map[string]any{
 				"name": "x-circle", "tone": "danger", "size": "md", "weight": "outline",
 			}),
@@ -496,35 +505,37 @@ func iconDeliveryDefinition() DeliveryDefinition {
 
 func buttonDeliveryDefinition() DeliveryDefinition {
 	componentType := "Button"
-	root := deliveryClassBound(
-		deliveryClassBound(
-			deliveryClassBound(
-				deliveryClassBound(
-					deliveryFrame(
-						componentType,
-						clButtonBase.Compile(),
-						deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
-						deliveryHiddenWhen(
-							deliveryText("Label", "", "Continue", "label"),
-							map[string]any{"iconOnly": true},
-						),
-						deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
-					),
-					"iconOnly",
-					map[string]string{
-						"false": "",
-						"true":  clButtonIconOnly.Compile(),
-					},
-				),
-				"variant",
-				compileClassMap(clButtonVariant),
-			),
-			"tone",
-			compileClassMap(clButtonTone),
+	root := deliveryFrame(
+		componentType,
+		clButtonBase.Compile(),
+		deliveryHiddenWhen(
+			deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
+			map[string]any{"loading": true},
 		),
-		"size",
-		compileClassMap(clButtonSize),
+		deliveryVisibleWhen(
+			deliveryInstance("LoadingIndicator", "Spinner", "small", ""),
+			map[string]any{"loading": true},
+		),
+		deliveryHiddenWhenAny(
+			deliveryText("Label", "", "Continue", "label"),
+			map[string]any{"iconOnly": true, "loading": true},
+		),
+		deliveryHiddenWhen(
+			deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
+			map[string]any{"loading": true},
+		),
 	)
+	root = deliveryClassBound(root, "variant", compileClassMap(clButtonVariant))
+	root = deliveryClassBound(root, "tone", compileClassMap(clButtonTone))
+	root = deliveryClassBound(root, "size", compileClassMap(clButtonSize))
+	root = deliveryClassBound(root, "fullWidth", map[string]string{
+		"false": "",
+		"true":  clButtonFull.Compile(),
+	})
+	root = deliveryClassBound(root, "iconOnly", map[string]string{
+		"false": "",
+		"true":  clButtonIconOnly.Compile(),
+	})
 	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
@@ -612,34 +623,30 @@ func buttonDeliveryDefinition() DeliveryDefinition {
 
 func badgeDeliveryDefinition() DeliveryDefinition {
 	componentType := "Badge"
-	root := deliveryClassBound(
-		deliveryClassBound(
-			deliveryClassBound(
-				deliveryFrame(
-					componentType,
-					clBadgeBase.Compile(),
-					deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
-					deliveryVisibleWhen(
-						deliveryFrame("StatusDot", clBadgeDot.Merge(clBadgeDotTone["neutral"]).Compile()),
-						map[string]any{"dot": true},
-					),
-					deliveryText("Label", "", "Active", "label"),
-					deliveryText("Count", clBadgeCount.Compile(), "12", "count"),
-					deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
-					deliveryVisibleWhen(
-						deliveryText("Remove", clBadgeRemove.Compile(), "×", "removeLabel"),
-						map[string]any{"removable": true},
-					),
-				),
-				"variant",
-				compileClassMap(clBadgeVariant),
-			),
-			"tone",
-			compileClassMap(clBadgeTone),
-		),
-		"size",
-		compileClassMap(clBadgeSize),
+	statusDot := deliveryClassBound(
+		deliveryFrame("StatusDot", clBadgeDot.Compile()),
+		"tone",
+		compileClassMap(clBadgeDotTone),
 	)
+	toneClasses := compileClassMap(clBadgeTone)
+	// Neutral preserves the selected visual variant, matching the renderer.
+	toneClasses["neutral"] = ""
+	root := deliveryFrame(
+		componentType,
+		clBadgeBase.Compile(),
+		deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
+		deliveryVisibleWhen(statusDot, map[string]any{"dot": true}),
+		deliveryText("Label", "", "Active", "label"),
+		deliveryOptionalText(deliveryText("Count", clBadgeCount.Compile(), "", "count")),
+		deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
+		deliveryVisibleWhen(
+			deliveryText("Remove", clBadgeRemove.Compile(), "×"),
+			map[string]any{"removable": true},
+		),
+	)
+	root = deliveryClassBound(root, "variant", compileClassMap(clBadgeVariant))
+	root = deliveryClassBound(root, "tone", toneClasses)
+	root = deliveryClassBound(root, "size", compileClassMap(clBadgeSize))
 	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
@@ -827,28 +834,37 @@ func toastDeliveryDefinition() DeliveryDefinition {
 
 func inputDeliveryDefinition() DeliveryDefinition {
 	componentType := "Input"
+	control := deliveryFrame(
+		"Control",
+		clInput.Compile(),
+		deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
+		deliveryOptionalText(deliveryText("Value", "", "", "value", "placeholder")),
+		deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
+	)
+	control = deliveryClassBound(control, "size", compileClassMap(clInputSize))
+	control = deliveryClassBound(control, "tone", compileClassMap(clInputTone))
+	control = deliveryClassBound(control, "error", map[string]string{
+		"": "", "*": clInputError.Compile(),
+	})
+	control = deliveryClassBound(control, "invalid", map[string]string{
+		"false": "", "true": clInputError.Compile(),
+	})
+	control = deliveryClassBound(control, "readOnly", map[string]string{
+		"false": "", "true": clInputReadOnly.Compile(),
+	})
+	help := deliveryOptionalText(
+		deliveryText("Help", clHelp.Compile(), "", "error", "helpText"),
+	)
+	help = deliveryClassBound(help, "error", map[string]string{
+		"": "", "*": clFieldErr.Compile(),
+	})
 	root := deliverySemantics(
 		deliveryFrame(
 			componentType,
-			clFieldWrap.Compile(),
-			deliverySlot(
-				"LabelSlot",
-				"label",
-				"",
-				deliveryText("Label", clLabel.Compile(), "Email address", "label"),
-			),
-			deliveryClassBound(
-				deliveryFrame(
-					"Control",
-					clInput.Compile()+" "+clInputNormal.Compile(),
-					deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
-					deliveryText("Value", "", "name@example.com", "value", "placeholder"),
-					deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
-				),
-				"error",
-				map[string]string{"": clInputNormal.Compile(), "*": clInputError.Compile()},
-			),
-			deliveryText("Help", clHelp.Compile(), "We never share your email.", "helpText", "error"),
+			clFieldWrap.Merge(clFieldWrapFull).Compile(),
+			deliveryOptionalText(deliveryText("Label", clLabel.Compile(), "", "label")),
+			control,
+			help,
 		),
 		"field",
 		"field",
@@ -1474,14 +1490,27 @@ func headingDeliveryDefinition() DeliveryDefinition {
 
 func dividerDeliveryDefinition() DeliveryDefinition {
 	componentType := "Divider"
-	root := deliveryClassBound(
-		deliveryFrame(componentType, clDividerH.Compile()),
-		"orientation",
-		map[string]string{
-			"horizontal": clDividerH.Compile(),
-			"vertical":   clDividerV.Compile(),
-		},
+	horizontal := tw.New().Width(tw.S80).Height(tw.SPX).Merge(clDividerH).Compile()
+	vertical := tw.New().Width(tw.SPX).Height(tw.S8).Merge(clDividerV).Compile()
+	labelled := tw.New().Width(tw.S80).Merge(clDividerText).Compile()
+	visibleWithText := map[string]any{"text": "*"}
+	root := deliveryFrame(
+		componentType,
+		horizontal,
+		deliveryVisibleWhen(deliveryFrame("LineStart", clDividerTextLine.Compile()), visibleWithText),
+		deliveryVisibleWhen(
+			deliveryOptionalText(deliveryText("Label", clDividerTextLabel.Compile(), "", "text")),
+			visibleWithText,
+		),
+		deliveryVisibleWhen(deliveryFrame("LineEnd", clDividerTextLine.Compile()), visibleWithText),
 	)
+	root = deliveryClassBound(root, "orientation", map[string]string{
+		"horizontal": horizontal,
+		"vertical":   vertical,
+	})
+	root = deliveryClassBound(root, "text", map[string]string{
+		"": "", "*": labelled,
+	})
 	return newDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
@@ -1536,6 +1565,9 @@ func spinnerDeliveryDefinition() DeliveryDefinition {
 			canonicalDeliveryExample(componentType, "medium", map[string]any{
 				"label": "Loading results", "size": "md", "tone": "brand",
 			}),
+			deliveryExample(componentType, "small", map[string]any{
+				"label": "Loading", "size": "sm", "tone": "brand",
+			}),
 		},
 		Spinner,
 	)
@@ -1544,51 +1576,39 @@ func spinnerDeliveryDefinition() DeliveryDefinition {
 func progressDeliveryDefinition() DeliveryDefinition {
 	componentType := "Progress"
 	toneClasses := compileClassMap(clProgressTone)
-	determinateFill := deliveryClassBound(
-		deliveryFrame(
-			"Fill",
-			clProgressFill.
-				Merge(clProgressTone["brand"]).
-				Merge(tw.New().Width(tw.SFull)).
-				Compile(),
-		),
-		"tone",
-		toneClasses,
+	fill := deliveryProgressBound(
+		deliveryFrame("Fill", clProgressFill.Merge(clProgressTone["brand"]).Compile()),
+		false,
 	)
-	indeterminateFill := deliveryClassBound(
-		deliveryFrame(
-			"IndeterminateFill",
-			clProgressFill.
-				Merge(clProgressTone["brand"]).
-				Merge(clProgressIndeterminate).
-				Compile(),
-		),
-		"tone",
-		toneClasses,
-	)
+	fill = deliveryClassBound(fill, "tone", toneClasses)
+	fill = deliveryClassBound(fill, "indeterminate", map[string]string{
+		"false": "", "true": clProgressIndeterminate.Compile(),
+	})
 	track := deliveryClassBound(
 		deliveryFrame(
 			"Track",
 			clProgressTrack.Merge(clProgressTrackSize["md"]).Compile(),
-			deliveryHiddenWhen(determinateFill, map[string]any{"indeterminate": true}),
-			deliveryVisibleWhen(indeterminateFill, map[string]any{"indeterminate": true}),
+			fill,
 		),
 		"size",
 		compileClassMap(clProgressTrackSize),
+	)
+	label := deliveryOptionalText(deliveryText("Label", clProgressLabel.Compile(), "", "label"))
+	value := deliveryProgressBound(
+		deliveryText("Value", clProgressValue.Compile(), "0%"),
+		true,
+	)
+	value = deliveryVisibleWhen(value, map[string]any{"showText": true})
+	value = deliveryHiddenWhen(value, map[string]any{"indeterminate": true})
+	header := deliveryVisibleWhenAny(
+		deliveryFrame("Header", clProgressHeader.Compile(), label, value),
+		map[string]any{"label": "*", "showText": true},
 	)
 	root := deliverySemantics(
 		deliveryFrame(
 			componentType,
 			clProgressRoot.Compile(),
-			deliveryFrame(
-				"Header",
-				clProgressHeader.Compile(),
-				deliveryText("Label", clProgressLabel.Compile(), "Upload progress", "label"),
-				deliveryVisibleWhen(
-					deliveryText("Value", clProgressValue.Compile(), "75%", "value"),
-					map[string]any{"showText": true},
-				),
-			),
+			header,
 			track,
 		),
 		"progressbar",
@@ -1921,23 +1941,24 @@ func linkDeliveryDefinition() DeliveryDefinition {
 
 func tagDeliveryDefinition() DeliveryDefinition {
 	componentType := "Tag"
-	root := deliveryClassBound(
-		deliveryClassBound(
-			deliveryFrame(
-				componentType,
-				clTagBase.Compile()+" "+clTagIdle.Compile(),
-				deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
-				deliveryText("Label", "", "Design", "label"),
-			),
-			"selected",
-			map[string]string{
-				"false": clTagIdle.Compile(),
-				"true":  clTagSelected.Compile(),
-			},
+	toneClasses := compileClassMap(clTagTone)
+	// Neutral preserves the selected state; semantic tones intentionally win.
+	toneClasses["neutral"] = ""
+	root := deliveryFrame(
+		componentType,
+		clTagBase.Compile()+" "+clTagIdle.Compile(),
+		deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
+		deliveryText("Label", "", "Design", "label"),
+		deliveryVisibleWhen(
+			deliveryText("Remove", clLink.Compile(), "×"),
+			map[string]any{"removable": true},
 		),
-		"tone",
-		compileClassMap(clTagTone),
 	)
+	root = deliveryClassBound(root, "selected", map[string]string{
+		"false": clTagIdle.Compile(),
+		"true":  clTagSelected.Compile(),
+	})
+	root = deliveryClassBound(root, "tone", toneClasses)
 	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,

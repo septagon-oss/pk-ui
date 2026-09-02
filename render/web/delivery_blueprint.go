@@ -133,6 +133,13 @@ func deliveryClassBound(
 		node.ClassBindings = make(map[string]map[string]string)
 	}
 	node.ClassBindings[prop] = maps.Clone(values)
+	order := make([]string, 0, len(node.ClassBindingOrder)+1)
+	for _, existing := range node.ClassBindingOrder {
+		if existing != prop {
+			order = append(order, existing)
+		}
+	}
+	node.ClassBindingOrder = append(order, prop)
 	return node
 }
 
@@ -145,11 +152,56 @@ func deliveryHiddenWhen(node blueprint.Node, conditions map[string]any) blueprin
 	return node
 }
 
+func deliveryHiddenWhenAny(node blueprint.Node, conditions map[string]any) blueprint.Node {
+	node.Props = maps.Clone(node.Props)
+	if node.Props == nil {
+		node.Props = make(map[string]any)
+	}
+	node.Props["hidden_when_any"] = maps.Clone(conditions)
+	return node
+}
+
 func deliveryVisibleWhen(node blueprint.Node, conditions map[string]any) blueprint.Node {
 	node.Props = maps.Clone(node.Props)
 	if node.Props == nil {
 		node.Props = make(map[string]any)
 	}
 	node.Props["visible_when"] = maps.Clone(conditions)
+	return node
+}
+
+func deliveryVisibleWhenAny(node blueprint.Node, conditions map[string]any) blueprint.Node {
+	node.Props = maps.Clone(node.Props)
+	if node.Props == nil {
+		node.Props = make(map[string]any)
+	}
+	node.Props["visible_when_any"] = maps.Clone(conditions)
+	return node
+}
+
+// deliveryOptionalText keeps one stable native layer across variants, while
+// clearing and hiding it when none of its authored content properties exist.
+func deliveryOptionalText(node blueprint.Node) blueprint.Node {
+	node.Props = maps.Clone(node.Props)
+	if node.Props == nil {
+		node.Props = make(map[string]any)
+	}
+	node.Props["clear_when_unbound"] = true
+	node.Props["hide_when_empty"] = true
+	return node
+}
+
+// deliveryProgressBound identifies geometry or text derived from the same
+// normalized value/max pair as the production Progress renderer.
+func deliveryProgressBound(node blueprint.Node, formatText bool) blueprint.Node {
+	node.Props = maps.Clone(node.Props)
+	if node.Props == nil {
+		node.Props = make(map[string]any)
+	}
+	node.Props["progress_value_prop"] = "value"
+	node.Props["progress_max_prop"] = "max"
+	if formatText {
+		node.Props["progress_format"] = "percent"
+	}
 	return node
 }

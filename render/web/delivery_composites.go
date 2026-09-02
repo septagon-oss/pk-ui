@@ -415,32 +415,43 @@ func breadcrumbDeliveryDefinition() DeliveryDefinition {
 
 func accordionDeliveryDefinition() DeliveryDefinition {
 	componentType := "Accordion"
-	root := deliveryFrame(
-		componentType,
-		clAccordionRoot.Merge(clAccordionBordered).Compile(),
+	section := deliveryFrame(
+		"Section",
+		"",
 		deliveryFrame(
-			"Section",
-			"",
+			"Trigger",
+			clAccordionTrigger.Compile(),
 			deliveryFrame(
-				"Trigger",
-				clAccordionTrigger.Compile(),
-				deliveryInstance("LeadingIcon", "Icon", "", clAccordionItemIcon.Compile()),
-				deliveryFrame(
-					"TitleBlock",
-					clAccordionTitleBlock.Compile(),
-					deliveryText("Title", clAccordionTitle.Compile(), "What is PlatformKit?"),
-					deliveryText("Subtitle", clAccordionSubtitle.Compile(), "Expand to learn more"),
-				),
-				deliveryInstance("Chevron", "Icon", "", clAccordionChevron.Compile()),
+				"TitleBlock",
+				clAccordionTitleBlock.Compile(),
+				deliveryText("Title", clAccordionTitle.Compile(), "What is PlatformKit?"),
+				deliveryText("Subtitle", clAccordionSubtitle.Compile(), "Expand to learn more"),
 			),
-			deliverySlot(
-				"Content",
-				"section",
-				clAccordionPanel.Compile(),
-				deliveryInstance("Body", "Text", "body", ""),
-			),
+			deliveryInstance("Chevron", "Icon", "Chevron Down / Fg Tertiary / 20", clAccordionChevron.Compile()),
+		),
+		deliverySlot(
+			"Content",
+			"section",
+			clAccordionPanel.Compile(),
+			deliveryInstance("Body", "Text", "body", ""),
 		),
 	)
+	section.Props = map[string]any{
+		"repeat_for_slot": "section",
+		"repeat_text_bindings": map[string]any{
+			"Title": "title", "Subtitle": "subtitle",
+		},
+	}
+	flushClasses := tw.New().Border(tw.Border0).Rounded(tw.RadiusNone).Bg(tw.ColorTransparent).Compile()
+	root := deliveryFrame(componentType, clAccordionRoot.Compile(), section)
+	root = deliveryClassBound(root, "bordered", map[string]string{
+		"false": clAccordionUnbordered.Compile(),
+		"true":  clAccordionBordered.Compile(),
+	})
+	root = deliveryClassBound(root, "flush", map[string]string{
+		"false": "",
+		"true":  flushClasses,
+	})
 	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
@@ -552,7 +563,7 @@ func stepperDeliveryDefinition() DeliveryDefinition {
 				deliveryInstance(
 					"Indicator",
 					"Icon",
-					"",
+					"Check / Fg On Brand / 16",
 					clStepperIndicator.
 						Merge(clStepperIndicatorRegular).
 						Merge(clStepperIndicatorState["completed"]).
@@ -664,7 +675,7 @@ func sidebarDeliveryDefinition() DeliveryDefinition {
 							Merge(clSidebarLinkPadExpanded).
 							Merge(clSidebarLinkActiveAdmin).
 							Compile(),
-						deliveryInstance("Icon", "Icon", "", ""),
+						deliveryInstance("Icon", "Icon", "User / Fg Primary / 20", ""),
 						deliveryText("Label", clSidebarLabelVisible.Compile(), "Customers"),
 						deliveryInstance("Badge", "Badge", "", ""),
 					),
@@ -674,7 +685,7 @@ func sidebarDeliveryDefinition() DeliveryDefinition {
 							Merge(clSidebarLinkPadExpanded).
 							Merge(clSidebarLinkIdleAdmin).
 							Compile(),
-						deliveryInstance("Icon", "Icon", "", ""),
+						deliveryInstance("Icon", "Icon", "Document / Fg Primary / 20", ""),
 						deliveryText("Label", clSidebarLabelVisible.Compile(), "Reports"),
 					),
 				),
@@ -797,7 +808,7 @@ func datePickerDeliveryDefinition() DeliveryDefinition {
 				deliveryFrame(
 					"Control",
 					clInputIconWrap.Compile(),
-					deliveryInstance("CalendarIcon", "Icon", "", clInputIconStart.Compile()),
+					deliveryInstance("CalendarIcon", "Icon", "Calendar / Fg Tertiary / 20", clInputIconStart.Compile()),
 					deliveryText("Value", controlClass, "2026-04-06", "value", "placeholder"),
 				),
 				"error",
@@ -867,7 +878,7 @@ func fileUploadDeliveryDefinition() DeliveryDefinition {
 					clFileUploadDropZone.Compile(),
 					deliverySlot(
 						"Prompt", "content", clFileUploadDropZoneInner.Compile(),
-						deliveryInstance("UploadIcon", "Icon", "", clFileUploadIcon.Compile()),
+						deliveryInstance("UploadIcon", "Icon", "Upload / Fg Tertiary / 40", clFileUploadIcon.Compile()),
 						deliveryText("Action", clFileUploadPromptAction.Compile(), "Click to upload", "promptLabel"),
 						deliveryText("DropHint", clFileUploadPromptText.Compile(), "or drag and drop", "dropLabel"),
 					),
@@ -972,7 +983,7 @@ func autocompleteDeliveryDefinition() DeliveryDefinition {
 			deliveryFrame(
 				"Control",
 				clAutocompleteControl.Compile(),
-				deliveryInstance("SearchIcon", "Icon", "", clInputIconStart.Compile()),
+				deliveryInstance("SearchIcon", "Icon", "Search / Fg Tertiary / 20", clInputIconStart.Compile()),
 				deliveryText("Query", controlClass, "Search users...", "displayValue", "placeholder"),
 				deliveryFrame(
 					"Results",
@@ -1060,8 +1071,8 @@ func dropdownDeliveryDefinition() DeliveryDefinition {
 					deliveryFrame(
 						"Actions",
 						clDropdownTriggerActions.Compile(),
-						deliveryInstance("Clear", "Icon", "", clDropdownIconButton.Compile()),
-						deliveryInstance("Chevron", "Icon", "", clDropdownChevron.Compile()),
+						deliveryInstance("Clear", "Icon", "X Circle / Fg Primary / 20", clDropdownIconButton.Compile()),
+						deliveryInstance("Chevron", "Icon", "Chevron Down / Fg Tertiary / 20", clDropdownChevron.Compile()),
 					),
 				),
 				deliveryFrame(
@@ -1154,7 +1165,7 @@ func actionMenuDeliveryDefinition() DeliveryDefinition {
 				deliveryFrame(
 					"Trigger",
 					clActionMenuTrigger.Compile(),
-					deliveryInstance("TriggerIcon", "Icon", "", ""),
+					deliveryInstance("TriggerIcon", "Icon", "Ellipsis Vertical / Fg Primary / 12", ""),
 					deliveryText("TriggerLabel", "", "Actions", "triggerLabel"),
 				),
 				deliveryFrame(
@@ -1234,7 +1245,7 @@ func drawerDeliveryDefinition() DeliveryDefinition {
 							deliveryText("Title", clDrawerTitle.Compile(), "Account settings", "title"),
 						),
 						deliveryText("Description", clDrawerDescription.Compile(), "Manage your profile and preferences.", "description"),
-						deliveryInstance("Close", "Icon", "", clDrawerClose.Compile()),
+						deliveryInstance("Close", "Icon", "X Mark / Fg Primary / 20", clDrawerClose.Compile()),
 					),
 					deliverySlot("Body", "content", clDrawerBody.Compile(),
 						deliveryInstance("BodyContent", "Text", "body", ""),
@@ -1345,34 +1356,43 @@ func drawerDeliveryExample(example DeliveryExample) DeliveryExample {
 
 func modalDeliveryDefinition() DeliveryDefinition {
 	componentType := "Modal"
-	root := deliveryClassBound(
-		deliveryFrame(
-			componentType,
-			clModalRoot.Merge(clModalCentered).Compile(),
-			deliveryFrame("Backdrop", clModalOverlay.Compile()),
-			deliveryFrame(
-				"Panel",
-				clModalPanel.Merge(clModalPanelSize["medium"]).Compile(),
-				deliveryFrame(
-					"Header",
-					clModalHeader.Compile(),
-					deliverySlot("HeaderContent", "header", "",
-						deliveryText("Title", clModalTitle.Compile(), "Archive project", "title"),
-					),
-					deliveryText("Description", clModalDescription.Compile(), "Confirm this irreversible action.", "description"),
-					deliveryInstance("Close", "Icon", "", clModalClose.Compile()),
-				),
-				deliverySlot("Body", "content", clModalBody.Compile(),
-					deliveryInstance("BodyContent", "Text", "body", ""),
-				),
-				deliverySlot("Footer", "actions", clModalFooter.Compile(),
-					deliveryInstance("FooterAction", "Button", "primary", ""),
-				),
-			),
-		),
-		"size",
-		compileClassMap(clModalPanelSize),
+	close := deliveryHiddenWhenAny(
+		deliveryInstance("Close", "Icon", "X Mark / Fg Primary / 20", clModalClose.Compile()),
+		map[string]any{"closable": false, "showClose": false},
 	)
+	panel := deliveryFrame(
+		"Panel",
+		clModalPanel.Compile(),
+		deliveryFrame(
+			"Header",
+			clModalHeader.Compile(),
+			deliverySlot(
+				"HeaderContent",
+				"header",
+				clModalTitleBlock.Compile(),
+				deliveryOptionalText(deliveryText("Title", clModalTitle.Compile(), "", "title")),
+				deliveryOptionalText(deliveryText("Description", clModalDescription.Compile(), "", "description")),
+			),
+			close,
+		),
+		deliverySlot("Body", "content", clModalBody.Compile(),
+			deliveryInstance("BodyContent", "Text", "body", ""),
+		),
+		deliverySlot("Footer", "actions", clModalFooter.Compile(),
+			deliveryInstance("FooterAction", "Button", "primary", ""),
+		),
+	)
+	panel = deliveryClassBound(panel, "size", compileClassMap(clModalPanelSize))
+	panel = deliveryHiddenWhen(panel, map[string]any{"deferred": true})
+	backdrop := deliveryHiddenWhenAny(
+		deliveryFrame("Backdrop", clModalOverlay.Compile()),
+		map[string]any{"showOverlay": false, "deferred": true},
+	)
+	root := deliveryFrame(componentType, clModalRoot.Compile(), backdrop, panel)
+	root = deliveryClassBound(root, "centered", map[string]string{
+		"false": clModalBottomSheet.Compile(),
+		"true":  clModalCentered.Compile(),
+	})
 	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,

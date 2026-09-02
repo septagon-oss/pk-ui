@@ -703,6 +703,7 @@ func cloneDeliveryNode(value *blueprint.Node) *blueprint.Node {
 		return nil
 	}
 	out := *value
+	out.ClassBindingOrder = slices.Clone(value.ClassBindingOrder)
 	out.ClassBindings = make(map[string]map[string]string, len(value.ClassBindings))
 	for key, bindings := range value.ClassBindings {
 		out.ClassBindings[key] = maps.Clone(bindings)
