@@ -87,6 +87,32 @@ func TestCoreDeliveryBlueprintIconInstancesUseQualifiedSelectors(t *testing.T) {
 	}
 }
 
+func TestDeferredSlotBlueprintPreservesDefaultPlaceholder(t *testing.T) {
+	t.Parallel()
+
+	definition := blueprintContractDefinition(t, "DeferredSlot")
+	placeholder := blueprintContractOnlyNodeNamed(t, definition.Design.Root, "Placeholder")
+	if placeholder.Kind != blueprint.NodeSlot || placeholder.Slot != "placeholder" {
+		t.Fatalf("DeferredSlot/Placeholder = %#v, want placeholder slot", placeholder)
+	}
+	if preserved, _ := placeholder.Props["preserve_fallback_when_empty"].(bool); !preserved {
+		t.Errorf(
+			"DeferredSlot/Placeholder preserve_fallback_when_empty = %#v, want true",
+			placeholder.Props["preserve_fallback_when_empty"],
+		)
+	}
+	if got, want := blueprintContractDirectChildNames(placeholder), []string{"Pending"}; !slices.Equal(got, want) {
+		t.Fatalf("DeferredSlot/Placeholder children = %v, want %v", got, want)
+	}
+	pending := blueprintContractOnlyNodeNamed(t, placeholder, "Pending")
+	if pending.Kind != blueprint.NodeInstance || pending.Text != "Skeleton" {
+		t.Fatalf("DeferredSlot/Placeholder/Pending = %#v, want Skeleton instance", pending)
+	}
+	if got := pending.Props["instance_example"]; got != "block" {
+		t.Errorf("DeferredSlot/Placeholder/Pending selector = %#v, want block", got)
+	}
+}
+
 func TestButtonBlueprintPreservesCascadeAndLoadingReplacement(t *testing.T) {
 	t.Parallel()
 

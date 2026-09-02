@@ -1972,12 +1972,12 @@ func deferredSlotDeliveryDefinition() DeliveryDefinition {
 	root := deliveryFrame(
 		componentType,
 		"",
-		deliverySlot(
+		deliveryPreserveSlotFallback(deliverySlot(
 			"Placeholder",
 			"placeholder",
 			"",
 			deliveryInstance("Pending", "Skeleton", "block", ""),
-		),
+		)),
 	)
 	return newDeliveryDefinition(
 		componentType,
