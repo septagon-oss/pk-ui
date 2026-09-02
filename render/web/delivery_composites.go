@@ -1441,6 +1441,12 @@ func modalDeliveryDefinition() DeliveryDefinition {
 		"false": clModalBottomSheet.Compile(),
 		"true":  clModalCentered.Compile(),
 	})
+	design := deliveryDesign("confirm-dialog", "03 Molecules", "Overlays", root)
+	design.VariantExamples = []string{
+		"confirm-dialog",
+		"mobile-sheet",
+		"required-decision",
+	}
 	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
@@ -1500,7 +1506,7 @@ func modalDeliveryDefinition() DeliveryDefinition {
 				Attrs: deliveryRepeatingSlotAttrs(),
 			},
 		},
-		deliveryDesign("confirm-dialog", "03 Molecules", "Overlays", root),
+		design,
 		[]DeliveryExample{
 			modalDeliveryExample(canonicalDeliveryExample(componentType, "confirm-dialog", map[string]any{
 				"title": "Archive project", "description": "This action cannot be undone.",

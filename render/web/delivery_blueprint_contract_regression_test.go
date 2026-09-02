@@ -823,6 +823,46 @@ func TestAccordionAndModalBlueprintInstanceAndBindingPlacement(t *testing.T) {
 	}
 }
 
+func TestModalDesignVariantsExcludeTransientServerTarget(t *testing.T) {
+	t.Parallel()
+
+	definition := blueprintContractDefinition(t, "Modal")
+	if got, want := definition.Design.VariantExamples, []string{
+		"confirm-dialog",
+		"mobile-sheet",
+		"required-decision",
+	}; !slices.Equal(got, want) {
+		t.Fatalf("Modal design variants = %v, want %v", got, want)
+	}
+	if got, want := len(definition.Examples), 4; got != want {
+		t.Fatalf("Modal runtime examples = %d, want %d", got, want)
+	}
+	for _, name := range definition.Design.VariantExamples {
+		example := blueprintContractExample(t, definition, name)
+		if example.Props["open"] != true || example.Props["deferred"] == true {
+			t.Errorf(
+				"Modal design variant %q is not a visible open state: %#v",
+				name,
+				example.Props,
+			)
+		}
+	}
+
+	serverLoaded := blueprintContractExample(t, definition, "server-loaded")
+	for _, property := range []string{"deferred", "openOnSwap", "clearOnClose"} {
+		if serverLoaded.Props[property] != true {
+			t.Errorf(
+				"Modal server-loaded %s = %#v, want true",
+				property,
+				serverLoaded.Props[property],
+			)
+		}
+	}
+	if slices.Contains(definition.Design.VariantExamples, serverLoaded.Name) {
+		t.Errorf("transient Modal example %q remains a design variant", serverLoaded.Name)
+	}
+}
+
 func blueprintContractDefinition(t *testing.T, component string) DeliveryDefinition {
 	t.Helper()
 	for _, definition := range OSSDeliveryCatalog() {
