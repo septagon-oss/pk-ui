@@ -255,6 +255,43 @@ func TestIconDeliveryBlueprintIsBoundEditableVector(t *testing.T) {
 	}
 }
 
+func TestIconDeliveryPublishesExtraSmallBrandCheckSpecimen(t *testing.T) {
+	t.Parallel()
+
+	const example = "Check / Fg Brand / 12"
+	props := deliveryExamplePropsForTest(t, "Icon", example)
+	for name, want := range map[string]string{
+		"name":   "check",
+		"size":   "xs",
+		"tone":   "brand",
+		"weight": "outline",
+	} {
+		if got, _ := props[name].(string); got != want {
+			t.Errorf("Icon %s = %q, want %q", name, got, want)
+		}
+	}
+
+	node, err := RenderDeliveryExample("Icon", deliveryExampleID("Icon", example), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rendered strings.Builder
+	if err := node.Render(&rendered); err != nil {
+		t.Fatal(err)
+	}
+	for _, fragment := range []string{
+		`data-pk-icon="check"`,
+		`data-pk-icon-weight="outline"`,
+		"h-3",
+		"w-3",
+		"text-fg-brand",
+	} {
+		if !strings.Contains(rendered.String(), fragment) {
+			t.Errorf("extra-small brand Check is missing %q: %s", fragment, rendered.String())
+		}
+	}
+}
+
 func TestDeliveryRuntimeNeverInjectsExampleContentWithoutSlots(t *testing.T) {
 	t.Parallel()
 

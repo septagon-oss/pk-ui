@@ -444,6 +444,9 @@ func iconDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "Check / Fg Brand / 16", map[string]any{
 				"name": "check", "tone": "brand", "size": "sm", "weight": "outline",
 			}),
+			deliveryExample(componentType, "Check / Fg Brand / 12", map[string]any{
+				"name": "check", "tone": "brand", "size": "xs", "weight": "outline",
+			}),
 			deliveryExample(componentType, "Check / Fg On Brand / 16", map[string]any{
 				"name": "check", "tone": "neutral", "size": "sm", "weight": "outline",
 			}),
