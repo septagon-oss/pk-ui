@@ -5,6 +5,7 @@
 package web
 
 import (
+	"fmt"
 	"maps"
 	"reflect"
 	"slices"
@@ -114,6 +115,11 @@ func TestBadgeBlueprintBindsDotToneAndKeepsCountOptional(t *testing.T) {
 	definition := blueprintContractDefinition(t, "Badge")
 	root := definition.Design.Root
 	blueprintContractAssertOrder(t, root, "variant", "tone", "size")
+	if got, want := blueprintContractDirectChildNames(root), []string{
+		"StatusDot", "LeadingIcon", "Label", "Count", "TrailingIcon", "Remove",
+	}; !slices.Equal(got, want) {
+		t.Fatalf("Badge child order = %v, want runtime order %v", got, want)
+	}
 
 	dot := blueprintContractOnlyNodeNamed(t, root, "StatusDot")
 	blueprintContractAssertOrder(t, dot, "tone")
@@ -123,16 +129,47 @@ func TestBadgeBlueprintBindsDotToneAndKeepsCountOptional(t *testing.T) {
 	blueprintContractAssertCondition(t, dot, "visible_when", map[string]any{"dot": true})
 
 	count := blueprintContractOnlyNodeNamed(t, root, "Count")
-	if count.Kind != blueprint.NodeText || count.Text != "" {
-		t.Errorf("Badge/Count = %#v, want empty optional text", count)
+	if count.Kind != blueprint.NodeFrame {
+		t.Errorf("Badge/Count = %#v, want an auto-layout spacing frame", count)
 	}
-	if got := blueprintContractStringValues(count.Props["text_props"]); !slices.Equal(got, []string{"count"}) {
+	blueprintContractAssertCondition(t, count, "visible_when", map[string]any{"count": "*"})
+	if fields := strings.Fields(count.Classes); !slices.Contains(fields, "pl-1") || slices.Contains(fields, "ml-1") || !slices.Contains(fields, "inline-flex") {
+		t.Errorf("Badge/Count classes = %q, want parseable inline-flex/pl-1 and no ml-1", count.Classes)
+	}
+	countValue := blueprintContractOnlyNodeNamed(t, count, "CountValue")
+	if countValue.Kind != blueprint.NodeText || countValue.Text != "" {
+		t.Errorf("Badge/CountValue = %#v, want empty optional text", countValue)
+	}
+	if got := blueprintContractStringValues(countValue.Props["text_props"]); !slices.Equal(got, []string{"count"}) {
 		t.Errorf("Badge/Count text props = %v, want [count]", got)
 	}
 	for _, property := range []string{"clear_when_unbound", "hide_when_empty"} {
-		if enabled, _ := count.Props[property].(bool); !enabled {
-			t.Errorf("Badge/Count %s = %#v, want true", property, count.Props[property])
+		if enabled, _ := countValue.Props[property].(bool); !enabled {
+			t.Errorf("Badge/CountValue %s = %#v, want true", property, countValue.Props[property])
 		}
+	}
+	for property, want := range map[string]string{
+		"integer_value_prop":    "count",
+		"integer_max":           "99",
+		"integer_overflow_text": "99+",
+	} {
+		if got := countValue.Props[property]; !reflect.DeepEqual(got, want) {
+			if property != "integer_max" || fmt.Sprint(got) != want {
+				t.Errorf("Badge/Count %s = %#v, want %q", property, got, want)
+			}
+		}
+	}
+	remove := blueprintContractOnlyNodeNamed(t, root, "Remove")
+	blueprintContractAssertCondition(t, remove, "visible_when", map[string]any{"removable": true})
+	if got := remove.Props["semantic_role"]; got != "button" {
+		t.Errorf("Badge/Remove semantic role = %#v, want button", got)
+	}
+	if got := remove.Props["accessible_name_prop"]; got != "removeLabel" {
+		t.Errorf("Badge/Remove accessible name binding = %#v, want removeLabel", got)
+	}
+	removeIcon := blueprintContractOnlyNodeNamed(t, remove, "RemoveIcon")
+	if removeIcon.Kind != blueprint.NodeInstance || removeIcon.Text != "Icon" || removeIcon.Props["instance_example"] != "X Mark / Fg Primary / 12" {
+		t.Errorf("Badge/RemoveIcon = %#v, want the runtime x-mark xs instance", removeIcon)
 	}
 }
 
@@ -151,7 +188,7 @@ func TestInputBlueprintPreservesBindingCascadeAndConditionalSources(t *testing.T
 			t.Errorf("Input/Control classes = %q, want %q", control.Classes, class)
 		}
 	}
-	blueprintContractAssertOrder(t, control, "size", "tone", "error", "invalid", "readOnly")
+	blueprintContractAssertOrder(t, control, "size", "tone", "error", "invalid", "readOnly", "disabled")
 	blueprintContractAssertClassBinding(t, control, "error", map[string]string{
 		"": "", "*": clInputError.Compile(),
 	})
@@ -161,15 +198,34 @@ func TestInputBlueprintPreservesBindingCascadeAndConditionalSources(t *testing.T
 	blueprintContractAssertClassBinding(t, control, "readOnly", map[string]string{
 		"false": "", "true": clInputReadOnly.Compile(),
 	})
+	blueprintContractAssertClassBinding(t, control, "disabled", map[string]string{
+		"false": "", "true": clInputDisabled.Compile(),
+	})
 
 	value := blueprintContractOnlyNodeNamed(t, root, "Value")
-	blueprintContractAssertOrder(t, value, "value")
-	blueprintContractAssertClassBinding(t, value, "value", map[string]string{
+	if value.Kind != blueprint.NodeFrame {
+		t.Errorf("Input/Value = %#v, want a growing auto-layout frame", value)
+	}
+	for _, class := range []string{"min-w-0", "flex-1"} {
+		if !slices.Contains(strings.Fields(value.Classes), class) {
+			t.Errorf("Input/Value classes = %q, want %q", value.Classes, class)
+		}
+	}
+	valueText := blueprintContractOnlyNodeNamed(t, value, "ValueText")
+	blueprintContractAssertOrder(t, valueText, "value")
+	blueprintContractAssertClassBinding(t, valueText, "value", map[string]string{
 		"":  tw.New().TextColor(tw.FgPlaceholder).Compile(),
 		"*": tw.New().TextColor(tw.FgPrimary).Compile(),
 	})
-	if got, want := value.Props["mask_when"], (map[string]any{"type": "password"}); !reflect.DeepEqual(got, want) {
+	if got, want := valueText.Props["mask_when"], (map[string]any{"type": "password"}); !reflect.DeepEqual(got, want) {
 		t.Errorf("Input/Value mask_when = %#v, want %#v", got, want)
+	}
+	labelRow := blueprintContractOnlyNodeNamed(t, root, "LabelRow")
+	blueprintContractAssertCondition(t, labelRow, "visible_when", map[string]any{"label": "*"})
+	requiredMarker := blueprintContractOnlyNodeNamed(t, root, "RequiredMarker")
+	blueprintContractAssertCondition(t, requiredMarker, "visible_when", map[string]any{"required": true})
+	if !slices.Contains(strings.Fields(requiredMarker.Classes), "text-fg-danger") {
+		t.Errorf("Input/RequiredMarker classes = %q, want danger token", requiredMarker.Classes)
 	}
 
 	help := blueprintContractOnlyNodeNamed(t, root, "Help")
@@ -177,6 +233,19 @@ func TestInputBlueprintPreservesBindingCascadeAndConditionalSources(t *testing.T
 	blueprintContractAssertClassBinding(t, help, "error", map[string]string{
 		"": "", "*": clFieldErr.Compile(),
 	})
+
+	required := deliveryExamplePropsForTest(t, "Input", "required")
+	if required["required"] != true || required["label"] == "" {
+		t.Errorf("Input required specimen = %#v, want labelled required state", required)
+	}
+	disabled := deliveryExamplePropsForTest(t, "Input", "disabled")
+	if disabled["disabled"] != true || disabled["value"] == "" {
+		t.Errorf("Input disabled specimen = %#v, want populated disabled state", disabled)
+	}
+	adorned := blueprintContractExample(t, definition, "with-adornments")
+	if got, want := blueprintContractExampleSlotNames(adorned), []string{"iconStart", "iconEnd"}; !slices.Equal(got, want) {
+		t.Errorf("Input adorned specimen slots = %v, want %v", got, want)
+	}
 }
 
 func TestDividerBlueprintOwnsThreeLayerLabelledStructure(t *testing.T) {
@@ -236,6 +305,7 @@ func TestProgressBlueprintUsesOneDerivedFill(t *testing.T) {
 	fill := fills[0]
 	blueprintContractAssertOrder(t, fill, "tone", "indeterminate")
 	blueprintContractAssertDerivedProgress(t, fill, false)
+	blueprintContractAssertCondition(t, fill, "progress_width_unless", map[string]any{"indeterminate": true})
 
 	value := blueprintContractOnlyNodeNamed(t, root, "Value")
 	blueprintContractAssertDerivedProgress(t, value, true)
@@ -258,6 +328,48 @@ func TestSpinnerBlueprintOwnsTrackAndTintableArc(t *testing.T) {
 	blueprintContractAssertOrder(t, arc, "size", "tone")
 	if len(definition.Design.Assets) != 1 || definition.Design.Assets[0].Name != "spinner-arc" {
 		t.Fatalf("Spinner assets = %#v, want spinner-arc", definition.Design.Assets)
+	}
+	source := definition.Design.Assets[0].Source
+	for _, fragment := range []string{`stroke-width="2"`, `stroke-linecap="round"`, `vector-effect="non-scaling-stroke"`} {
+		if !strings.Contains(source, fragment) {
+			t.Errorf("Spinner arc asset = %q, want %s", source, fragment)
+		}
+	}
+	if strings.Contains(source, `fill-rule="evenodd"`) {
+		t.Errorf("Spinner arc still uses a filled annulus instead of a two-pixel stroke: %s", source)
+	}
+}
+
+func TestTagBlueprintMatchesRemovalPredicateAndCoversSemanticTones(t *testing.T) {
+	t.Parallel()
+
+	definition := blueprintContractDefinition(t, "Tag")
+	remove := blueprintContractOnlyNodeNamed(t, definition.Design.Root, "Remove")
+	blueprintContractAssertCondition(t, remove, "visible_when", map[string]any{
+		"removable": true, "onRemoveURL": "*",
+	})
+	if got := remove.Props["semantic_role"]; got != "button" {
+		t.Errorf("Tag/Remove semantic role = %#v, want button", got)
+	}
+	removeGlyph := blueprintContractOnlyNodeNamed(t, remove, "RemoveGlyph")
+	if removeGlyph.Kind != blueprint.NodeText || removeGlyph.Text != "×" {
+		t.Errorf("Tag/RemoveGlyph = %#v, want runtime glyph", removeGlyph)
+	}
+
+	toneExamples := make(map[string]bool, len(canonicalTones))
+	for _, example := range definition.Examples {
+		if tone, _ := example.Props["tone"].(string); tone != "" {
+			toneExamples[tone] = true
+		}
+	}
+	for _, tone := range canonicalTones {
+		if !toneExamples[tone] {
+			t.Errorf("Tag examples do not cover tone %q: %v", tone, toneExamples)
+		}
+	}
+	removable := deliveryExamplePropsForTest(t, "Tag", "removable")
+	if removable["removable"] != true || removable["onRemoveURL"] == "" {
+		t.Errorf("Tag removable specimen = %#v, want state plus endpoint", removable)
 	}
 }
 
@@ -334,6 +446,30 @@ func TestAccordionAndModalBlueprintInstanceAndBindingPlacement(t *testing.T) {
 	if preserved, _ := headerContent.Props["preserve_fallback_when_empty"].(bool); !preserved {
 		t.Errorf("Modal/HeaderContent preserve_fallback_when_empty = %#v, want true", headerContent.Props["preserve_fallback_when_empty"])
 	}
+	if got, want := blueprintContractDirectChildNames(panel), []string{
+		"Header", "HeaderSeparator", "Body", "FooterSeparator", "Footer",
+	}; !slices.Equal(got, want) {
+		t.Fatalf("Modal/Panel child order = %v, want %v", got, want)
+	}
+	for _, name := range []string{"HeaderSeparator", "FooterSeparator"} {
+		separator := blueprintContractOnlyNodeNamed(t, panel, name)
+		for _, class := range []string{"w-full", "h-px", "bg-border-primary", "flex-shrink-0"} {
+			if !slices.Contains(strings.Fields(separator.Classes), class) {
+				t.Errorf("Modal/%s classes = %q, want %q", name, separator.Classes, class)
+			}
+		}
+		if got := separator.Props["semantic_role"]; got != "separator" {
+			t.Errorf("Modal/%s semantic role = %#v, want separator", name, got)
+		}
+	}
+	for _, name := range []string{"Header", "Footer"} {
+		node := blueprintContractOnlyNodeNamed(t, panel, name)
+		for _, class := range strings.Fields(node.Classes) {
+			if class == "border-t" || class == "border-b" {
+				t.Errorf("Modal/%s retains target-specific side border %q", name, class)
+			}
+		}
+	}
 }
 
 func blueprintContractDefinition(t *testing.T, component string) DeliveryDefinition {
@@ -345,6 +481,37 @@ func blueprintContractDefinition(t *testing.T, component string) DeliveryDefinit
 	}
 	t.Fatalf("delivery catalog has no %s definition", component)
 	return DeliveryDefinition{}
+}
+
+func blueprintContractExample(t *testing.T, definition DeliveryDefinition, name string) DeliveryExample {
+	t.Helper()
+	wantID := deliveryExampleID(string(definition.Identity.ID), name)
+	for _, example := range definition.Examples {
+		if example.ID == wantID {
+			return example
+		}
+	}
+	t.Fatalf("component %s has no example %s", definition.Identity.ID, name)
+	return DeliveryExample{}
+}
+
+func blueprintContractExampleSlotNames(example DeliveryExample) []string {
+	names := make([]string, 0, len(example.Slots))
+	for _, slot := range example.Slots {
+		names = append(names, slot.Name)
+	}
+	return names
+}
+
+func blueprintContractDirectChildNames(node *blueprint.Node) []string {
+	if node == nil {
+		return nil
+	}
+	names := make([]string, 0, len(node.Children))
+	for _, child := range node.Children {
+		names = append(names, child.Name)
+	}
+	return names
 }
 
 func blueprintContractWalk(root *blueprint.Node, visit func(string, *blueprint.Node)) {

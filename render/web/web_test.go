@@ -1391,11 +1391,20 @@ func TestModalOwnsAccessibleOverlayAndServerBehaviorContract(t *testing.T) {
 		`data-action="htmx:afterSwap-&gt;htmx-modal#show"`, `data-modal-backdrop`,
 		`data-action="click-&gt;htmx-modal#close"`, `data-modal-panel`, `tabindex="-1"`,
 		`max-w-3xl`, `aria-label="Close archive dialog"`, `data-pk-icon="x"`,
-		`data-modal-body`, `Rich body`, `data-modal-footer`, `Archive`,
+		`data-modal-separator="header"`, `data-modal-body`, `Rich body`,
+		`data-modal-separator="footer"`, `data-modal-footer`, `Archive`,
 	} {
 		if !strings.Contains(html, fragment) {
 			t.Errorf("canonical Modal is missing %q: %s", fragment, html)
 		}
+	}
+	headerSeparator := strings.Index(html, `data-modal-separator="header"`)
+	body := strings.Index(html, `data-modal-body`)
+	footerSeparator := strings.Index(html, `data-modal-separator="footer"`)
+	footer := strings.Index(html, `data-modal-footer`)
+	if headerSeparator < 0 || body < 0 || footerSeparator < 0 || footer < 0 ||
+		!(headerSeparator < body && body < footerSeparator && footerSeparator < footer) {
+		t.Errorf("Modal section boundaries are out of order: %s", html)
 	}
 }
 
@@ -2632,9 +2641,45 @@ func TestBadgeOwnsCountRemovalLiveAndSlotContract(t *testing.T) {
 		`role="status"`, `aria-live="polite"`, `data-badge-dot="true"`,
 		`data-pk-icon="envelope"`, `data-badge-count="true">99+`,
 		`data-badge-remove="true"`, `aria-label="Clear message filter"`,
+		`data-pk-icon="x-mark"`, `pl-1`,
 	} {
 		if !strings.Contains(html, fragment) {
 			t.Errorf("canonical Badge missing %s: %s", fragment, html)
+		}
+	}
+	dot := strings.Index(html, `data-badge-dot="true"`)
+	leading := strings.Index(html, `data-pk-icon="envelope"`)
+	label := strings.Index(html, `Messages`)
+	count := strings.Index(html, `data-badge-count="true"`)
+	remove := strings.Index(html, `data-badge-remove="true"`)
+	if dot < 0 || leading < 0 || label < 0 || count < 0 || remove < 0 ||
+		!(dot < leading && leading < label && label < count && count < remove) {
+		t.Errorf("Badge child order diverges from its delivery blueprint: %s", html)
+	}
+}
+
+func TestTagRemovalRequiresProgressiveEndpoint(t *testing.T) {
+	t.Parallel()
+
+	var unavailable strings.Builder
+	if err := Tag(atoms.TagProps{Label: "Design", Removable: true}).Render(&unavailable); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(unavailable.String(), "<button") || strings.Contains(unavailable.String(), "hx-delete") {
+		t.Errorf("Tag without an endpoint exposes a non-functional remove control: %s", unavailable.String())
+	}
+
+	var removable strings.Builder
+	if err := Tag(atoms.TagProps{
+		Label: "Design", Tone: "brand", Removable: true, OnRemoveURL: "/tags/design",
+	}).Render(&removable); err != nil {
+		t.Fatal(err)
+	}
+	for _, fragment := range []string{
+		`<button`, `hx-delete="/tags/design"`, `aria-label="Remove Design"`, `>×</button>`,
+	} {
+		if !strings.Contains(removable.String(), fragment) {
+			t.Errorf("removable Tag is missing %q: %s", fragment, removable.String())
 		}
 	}
 }

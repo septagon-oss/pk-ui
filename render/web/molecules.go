@@ -746,6 +746,7 @@ func modalPanel(p molecules.ModalProps, slots ModalSlots, standalone bool, size 
 	}
 	if len(header) > 0 {
 		panel = append(panel, h.Div(h.Class(clModalHeader.Compile()), g.Group(header)))
+		panel = append(panel, modalSeparator("header"))
 	}
 	panel = append(panel, h.Div(
 		h.Class(clModalBody.Compile()),
@@ -753,6 +754,7 @@ func modalPanel(p molecules.ModalProps, slots ModalSlots, standalone bool, size 
 		g.Group(body),
 	))
 	if len(footer) > 0 {
+		panel = append(panel, modalSeparator("footer"))
 		panel = append(panel, h.Div(
 			h.Class(clModalFooter.Compile()),
 			g.Attr("data-modal-footer", ""),
@@ -760,6 +762,16 @@ func modalPanel(p molecules.ModalProps, slots ModalSlots, standalone bool, size 
 		))
 	}
 	return h.Div(panel...)
+}
+
+// modalSeparator is explicit structure rather than a side-border utility so
+// browser and native design renderers receive the same one-pixel boundary.
+func modalSeparator(section string) g.Node {
+	return h.Div(
+		h.Class(clModalSeparator.Compile()),
+		g.Attr("data-modal-separator", section),
+		g.Attr("aria-hidden", "true"),
+	)
 }
 
 func modalSize(value string) string {

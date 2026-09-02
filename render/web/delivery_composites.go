@@ -1396,6 +1396,16 @@ func modalDeliveryDefinition() DeliveryDefinition {
 		deliveryInstance("Close", "Icon", "X Mark / Fg Primary / 20", clModalClose.Compile()),
 		map[string]any{"closable": false, "showClose": false},
 	)
+	headerSeparator := deliverySemantics(
+		deliveryFrame("HeaderSeparator", clModalSeparator.Compile()),
+		"separator",
+		"modal header boundary",
+	)
+	footerSeparator := deliverySemantics(
+		deliveryFrame("FooterSeparator", clModalSeparator.Compile()),
+		"separator",
+		"modal footer boundary",
+	)
 	panel := deliveryFrame(
 		"Panel",
 		clModalPanel.Compile(),
@@ -1411,9 +1421,11 @@ func modalDeliveryDefinition() DeliveryDefinition {
 			)),
 			close,
 		),
+		headerSeparator,
 		deliverySlot("Body", "content", clModalBody.Compile(),
 			deliveryInstance("BodyContent", "Text", "body", ""),
 		),
+		footerSeparator,
 		deliverySlot("Footer", "actions", clModalFooter.Compile(),
 			deliveryInstance("FooterAction", "Button", "primary", ""),
 		),

@@ -218,3 +218,28 @@ func deliveryProgressBound(node blueprint.Node, formatText bool) blueprint.Node 
 	}
 	return node
 }
+
+// deliveryProgressWidthUnless declares the state in which percentage-derived
+// fill width must yield to authored layout (for example, an indeterminate
+// progress fill that occupies the complete track).
+func deliveryProgressWidthUnless(node blueprint.Node, conditions map[string]any) blueprint.Node {
+	node.Props = maps.Clone(node.Props)
+	if node.Props == nil {
+		node.Props = make(map[string]any)
+	}
+	node.Props["progress_width_unless"] = maps.Clone(conditions)
+	return node
+}
+
+// deliveryIntegerCapped keeps compact numeric UI faithful to renderer-side
+// overflow formatting without replacing the underlying numeric property.
+func deliveryIntegerCapped(node blueprint.Node, prop string, maximum int, overflow string) blueprint.Node {
+	node.Props = maps.Clone(node.Props)
+	if node.Props == nil {
+		node.Props = make(map[string]any)
+	}
+	node.Props["integer_value_prop"] = strings.TrimSpace(prop)
+	node.Props["integer_max"] = maximum
+	node.Props["integer_overflow_text"] = overflow
+	return node
+}

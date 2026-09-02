@@ -198,10 +198,16 @@ var (
 		"danger":  tw.New().Bg(tw.FgDanger),
 		"info":    tw.New().Bg(tw.FgInfo),
 	}
-	clBadgeCount  = tw.New().MarginLeft(tw.S1).FontWeight(tw.FontSemibold).TabularNums()
-	clBadgeRemove = tw.New().MarginLeft(tw.S1).Display(tw.DisplayInlineFlex).
+	// The parent already contributes gap-1. Padding, rather than an additional
+	// margin, keeps the second four-pixel offset inside the authored layer so
+	// browser and native auto-layout targets resolve the same eight-pixel visual
+	// separation before count and removal affordances.
+	clBadgeCount = tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).
+			PaddingLeft(tw.S1).FontWeight(tw.FontSemibold).TabularNums()
+	clBadgeRemove = tw.New().PaddingLeft(tw.S1).Display(tw.DisplayInlineFlex).
 			Items(tw.ItemsCenter).Justify(tw.JustifyCenter).
-			Bg(tw.ColorTransparent).Border(tw.Border0).Padding(tw.S0).
+			Bg(tw.ColorTransparent).Border(tw.Border0).
+			PaddingY(tw.S0).PaddingRight(tw.S0).
 			Rounded(tw.RadiusFull).Cursor(tw.CursorPointer).
 			On(tw.StateHover, func(c tw.ClassList) tw.ClassList { return c.Opacity(tw.Opacity75) }).
 			Merge(clFocusRing)
@@ -266,13 +272,14 @@ var (
 	clFieldErr      = tw.New().FontSize(tw.TextXS).TextColor(tw.FgDanger)
 	clRequired      = tw.New().TextColor(tw.FgDanger)
 
-	clInput = tw.New().
-		Display(tw.DisplayBlock).Width(tw.SFull).
-		Rounded(tw.RadiusMD).Border(tw.Border1).
-		Bg(tw.SurfacePrimary).TextColor(tw.FgPrimary).
-		On(tw.StatePlaceholder, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgPlaceholder) }).
-		On(tw.StateDisabled, func(c tw.ClassList) tw.ClassList {
-			return c.Bg(tw.SurfaceDisabled).Cursor(tw.CursorNotAllowed)
+	clInputDisabled = tw.New().Bg(tw.SurfaceDisabled).Cursor(tw.CursorNotAllowed)
+	clInput         = tw.New().
+			Display(tw.DisplayBlock).Width(tw.SFull).
+			Rounded(tw.RadiusMD).Border(tw.Border1).
+			Bg(tw.SurfacePrimary).TextColor(tw.FgPrimary).
+			On(tw.StatePlaceholder, func(c tw.ClassList) tw.ClassList { return c.TextColor(tw.FgPlaceholder) }).
+			On(tw.StateDisabled, func(c tw.ClassList) tw.ClassList {
+			return c.Merge(clInputDisabled)
 		}).
 		Merge(clFocusRing)
 
@@ -566,14 +573,15 @@ var (
 	}
 	clModalHeader = tw.New().Display(tw.DisplayFlex).Items(tw.ItemsStart).
 			Justify(tw.JustifyBetween).Gap(tw.S4).PaddingX(tw.S6).PaddingY(tw.S4).
-			BorderBottom(tw.Border1).BorderColor(tw.BorderPrimary).
 			Bg(tw.SurfaceSecondary).FlexShrink0()
 	clModalTitleBlock  = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S1).MinWidth(tw.S0)
 	clModalTitle       = tw.New().FontSize(tw.TextLG).FontWeight(tw.FontSemibold).TextColor(tw.FgPrimary)
 	clModalDescription = tw.New().FontSize(tw.TextSM).TextColor(tw.FgMuted)
 	clModalBody        = tw.New().Flex1().OverflowY(tw.OverflowAuto).Padding(tw.S6)
-	clModalFooter      = tw.New().FlexShrink0().BorderTop(tw.Border1).BorderColor(tw.BorderPrimary).
+	clModalFooter      = tw.New().FlexShrink0().
 				Bg(tw.SurfaceSecondary).PaddingX(tw.S6).PaddingY(tw.S4)
+	clModalSeparator = tw.New().Width(tw.SFull).Height(tw.SPX).
+				Bg(tw.BorderPrimary).FlexShrink0()
 	clModalClose = tw.New().Display(tw.DisplayInlineFlex).FlexShrink0().Items(tw.ItemsCenter).
 			Justify(tw.JustifyCenter).Rounded(tw.RadiusMD).Padding(tw.S1_5).
 			TextColor(tw.FgMuted).Bg(tw.ColorTransparent).Border(tw.Border0).
@@ -1314,7 +1322,7 @@ func ClassLists() []tw.ClassList {
 		clAlertTitle, clAlertMessage, clAlertBody, clAlertIcon, clAlertActions, clAlertClose,
 		clToastBase, clToastIcon, clToastBody, clToastTitle, clToastMessage, clToastLead, clToastClose,
 		clFieldWrap, clFieldWrapFull, clLabel, clHelp, clFieldErr, clRequired,
-		clInput, clInputNormal, clInputError, clInputReadOnly,
+		clInput, clInputNormal, clInputError, clInputReadOnly, clInputDisabled,
 		clInputIconWrap, clInputIconStart, clInputIconEnd, clInputPadStart, clInputPadEnd,
 		clAutocompleteControl, clAutocompletePanel, clAutocompleteList,
 		clAutocompleteOption, clAutocompleteOptionActive, clAutocompleteIndicator, clAutocompleteSpinner,
@@ -1341,7 +1349,7 @@ func ClassLists() []tw.ClassList {
 		clDrawerFooter, clDrawerClose,
 		clModalRoot, clModalCentered, clModalBottomSheet, clModalOverlay,
 		clModalPanel, clModalHeader, clModalTitleBlock, clModalTitle,
-		clModalDescription, clModalBody, clModalFooter, clModalClose, clModalCancel,
+		clModalDescription, clModalBody, clModalFooter, clModalSeparator, clModalClose, clModalCancel,
 		clTextareaManual, clTextareaAuto, clTextareaFull, clTextareaMeta,
 		clTextareaSupporting, clTextareaCounter,
 		clCheckbox, clCheckRow, clCheckboxRoot, clCheckboxRootDisabled,

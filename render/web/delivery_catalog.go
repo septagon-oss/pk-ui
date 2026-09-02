@@ -29,7 +29,7 @@ import (
 // ordinary image URLs through the same public contracts.
 const deliveryFixtureImageDataURL = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23e2e8f0'/%3E%3Ccircle cx='32' cy='24' r='12' fill='%2364758b'/%3E%3Cpath d='M12 58c2-13 10-20 20-20s18 7 20 20' fill='%2364758b'/%3E%3C/svg%3E"
 
-const deliverySpinnerArcSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#000" fill-rule="evenodd" d="M12 2a10 10 0 0 1 10 10h-4a6 6 0 0 0-6-6V2Z"/></svg>`
+const deliverySpinnerArcSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><path d="M12 1a11 11 0 0 1 11 11" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`
 
 var (
 	buttonVariants = []string{
@@ -429,6 +429,9 @@ func iconDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "X Mark / Fg Primary / 20", map[string]any{
 				"name": "x-mark", "tone": "neutral", "size": "md", "weight": "outline",
 			}),
+			deliveryExample(componentType, "X Mark / Fg Primary / 12", map[string]any{
+				"name": "x-mark", "tone": "neutral", "size": "xs", "weight": "outline",
+			}),
 			deliveryExample(componentType, "Arrow Right / Fg Primary / 24", map[string]any{
 				"name": "arrow-right", "tone": "neutral", "size": "lg", "weight": "outline",
 			}),
@@ -634,18 +637,35 @@ func badgeDeliveryDefinition() DeliveryDefinition {
 	toneClasses := compileClassMap(clBadgeTone)
 	// Neutral preserves the selected visual variant, matching the renderer.
 	toneClasses["neutral"] = ""
+	countValue := deliveryIntegerCapped(
+		deliveryOptionalText(deliveryText("CountValue", "", "", "count")),
+		"count",
+		99,
+		"99+",
+	)
+	count := deliveryVisibleWhen(
+		deliveryFrame("Count", clBadgeCount.Compile(), countValue),
+		map[string]any{"count": "*"},
+	)
+	remove := deliverySemantics(
+		deliveryFrame(
+			"Remove",
+			clBadgeRemove.Compile(),
+			deliveryInstance("RemoveIcon", "Icon", "X Mark / Fg Primary / 12", ""),
+		),
+		"button",
+		"remove badge",
+	)
+	remove.Props["accessible_name_prop"] = "removeLabel"
 	root := deliveryFrame(
 		componentType,
 		clBadgeBase.Compile(),
-		deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
 		deliveryVisibleWhen(statusDot, map[string]any{"dot": true}),
+		deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
 		deliveryText("Label", "", "Active", "label"),
-		deliveryOptionalText(deliveryText("Count", clBadgeCount.Compile(), "", "count")),
+		count,
 		deliverySlot("TrailingIcon", "iconEnd", clIcon.Compile()),
-		deliveryVisibleWhen(
-			deliveryText("Remove", clBadgeRemove.Compile(), "×"),
-			map[string]any{"removable": true},
-		),
+		deliveryVisibleWhen(remove, map[string]any{"removable": true}),
 	)
 	root = deliveryClassBound(root, "variant", compileClassMap(clBadgeVariant))
 	root = deliveryClassBound(root, "tone", toneClasses)
@@ -837,12 +857,17 @@ func toastDeliveryDefinition() DeliveryDefinition {
 
 func inputDeliveryDefinition() DeliveryDefinition {
 	componentType := "Input"
-	value := deliveryOptionalText(deliveryText("Value", "", "", "value", "placeholder"))
-	value = deliveryClassBound(value, "value", map[string]string{
+	valueText := deliveryOptionalText(deliveryText("ValueText", "", "", "value", "placeholder"))
+	valueText = deliveryClassBound(valueText, "value", map[string]string{
 		"":  tw.New().TextColor(tw.FgPlaceholder).Compile(),
 		"*": tw.New().TextColor(tw.FgPrimary).Compile(),
 	})
-	value.Props["mask_when"] = map[string]any{"type": "password"}
+	valueText.Props["mask_when"] = map[string]any{"type": "password"}
+	value := deliveryFrame(
+		"Value",
+		tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).MinWidth(tw.S0).Flex1().Compile(),
+		valueText,
+	)
 	control := deliveryFrame(
 		"Control",
 		clInput.Compile()+" "+tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Gap(tw.S2).Compile(),
@@ -861,17 +886,32 @@ func inputDeliveryDefinition() DeliveryDefinition {
 	control = deliveryClassBound(control, "readOnly", map[string]string{
 		"false": "", "true": clInputReadOnly.Compile(),
 	})
+	control = deliveryClassBound(control, "disabled", map[string]string{
+		"false": "", "true": clInputDisabled.Compile(),
+	})
 	help := deliveryOptionalText(
 		deliveryText("Help", clHelp.Compile(), "", "error", "helpText"),
 	)
 	help = deliveryClassBound(help, "error", map[string]string{
 		"": "", "*": clFieldErr.Compile(),
 	})
+	labelRow := deliveryVisibleWhen(
+		deliveryFrame(
+			"LabelRow",
+			tw.New().Display(tw.DisplayFlex).Items(tw.ItemsCenter).Compile(),
+			deliveryOptionalText(deliveryText("Label", clLabel.Compile(), "", "label")),
+			deliveryVisibleWhen(
+				deliveryText("RequiredMarker", clLabel.Merge(clRequired).Compile(), " *"),
+				map[string]any{"required": true},
+			),
+		),
+		map[string]any{"label": "*"},
+	)
 	root := deliverySemantics(
 		deliveryFrame(
 			componentType,
 			clFieldWrap.Merge(clFieldWrapFull).Compile(),
-			deliveryOptionalText(deliveryText("Label", clLabel.Compile(), "", "label")),
+			labelRow,
 			control,
 			help,
 		),
@@ -900,6 +940,7 @@ func inputDeliveryDefinition() DeliveryDefinition {
 			"helpText":    contentProperty("Supporting guidance."),
 			"error":       contentProperty("Validation message; non-empty selects error styling."),
 			"invalid":     stateProperty("Whether invalid styling and aria-invalid are active without an inline message."),
+			"disabled":    stateProperty("Whether editing is unavailable and disabled styling is active."),
 			"required":    stateProperty("Whether a value is required."),
 			"readOnly":    stateProperty("Whether editing is prevented."),
 			"autoFocus":   stateProperty("Whether focus is requested on mount."),
@@ -947,6 +988,29 @@ func inputDeliveryDefinition() DeliveryDefinition {
 				"name": "workspace", "label": "Workspace", "value": "platform",
 				"readOnly": true,
 			}),
+			deliveryExample(componentType, "required", map[string]any{
+				"name": "company", "label": "Company name", "placeholder": "Septagon",
+				"required": true,
+			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"name": "account", "label": "Account", "value": "Managed by your administrator",
+				"disabled": true,
+			}),
+			withDeliveryExampleSlots(
+				deliveryExample(componentType, "with-adornments", map[string]any{
+					"name": "contact", "label": "Contact", "value": "name@example.com",
+				}),
+				deliveryExampleSlot("iconStart", deliveryExampleComponent(
+					"input-leading-envelope",
+					"Icon",
+					map[string]any{"name": "envelope", "size": "md", "tone": "neutral"},
+				)),
+				deliveryExampleSlot("iconEnd", deliveryExampleComponent(
+					"input-trailing-clear",
+					"Icon",
+					map[string]any{"name": "x-mark", "size": "md", "tone": "neutral"},
+				)),
+			),
 		},
 		func(props atoms.InputProps, slots DeliverySlotChildren) g.Node {
 			return inputWithSlots(
@@ -1616,9 +1680,12 @@ func spinnerDeliveryDefinition() DeliveryDefinition {
 func progressDeliveryDefinition() DeliveryDefinition {
 	componentType := "Progress"
 	toneClasses := compileClassMap(clProgressTone)
-	fill := deliveryProgressBound(
-		deliveryFrame("Fill", clProgressFill.Merge(clProgressTone["brand"]).Compile()),
-		false,
+	fill := deliveryProgressWidthUnless(
+		deliveryProgressBound(
+			deliveryFrame("Fill", clProgressFill.Merge(clProgressTone["brand"]).Compile()),
+			false,
+		),
+		map[string]any{"indeterminate": true},
 	)
 	fill = deliveryClassBound(fill, "tone", toneClasses)
 	fill = deliveryClassBound(fill, "indeterminate", map[string]string{
@@ -1984,14 +2051,25 @@ func tagDeliveryDefinition() DeliveryDefinition {
 	toneClasses := compileClassMap(clTagTone)
 	// Neutral preserves the selected state; semantic tones intentionally win.
 	toneClasses["neutral"] = ""
+	remove := deliverySemantics(
+		deliveryFrame(
+			"Remove",
+			clLink.Merge(
+				tw.New().Display(tw.DisplayInlineFlex).Items(tw.ItemsCenter).Justify(tw.JustifyCenter),
+			).Compile(),
+			deliveryText("RemoveGlyph", "", "×"),
+		),
+		"button",
+		"remove tag",
+	)
 	root := deliveryFrame(
 		componentType,
 		clTagBase.Compile()+" "+clTagIdle.Compile(),
 		deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
 		deliveryText("Label", "", "Design", "label"),
 		deliveryVisibleWhen(
-			deliveryText("Remove", clLink.Compile(), "×"),
-			map[string]any{"removable": true},
+			remove,
+			map[string]any{"removable": true, "onRemoveURL": "*"},
 		),
 	)
 	root = deliveryClassBound(root, "selected", map[string]string{
@@ -2007,9 +2085,9 @@ func tagDeliveryDefinition() DeliveryDefinition {
 		map[string]PropertyContract{
 			"label":       contentProperty("Visible tag label."),
 			"tone":        toneProperty(canonicalTones, "neutral", "Semantic intent."),
-			"removable":   stateProperty("Whether removal is available."),
+			"removable":   stateProperty("Whether removal is requested when an endpoint is present."),
 			"selected":    stateProperty("Whether the tag is selected."),
-			"onRemoveURL": contentProperty("Optional progressive-enhancement removal endpoint."),
+			"onRemoveURL": contentProperty("Progressive-enhancement endpoint required by the remove affordance."),
 		},
 		[]designcomponent.Slot{{
 			Name:         "iconStart",
@@ -2024,6 +2102,22 @@ func tagDeliveryDefinition() DeliveryDefinition {
 			}),
 			deliveryExample(componentType, "selected", map[string]any{
 				"label": "Design", "tone": "neutral", "selected": true,
+			}),
+			deliveryExample(componentType, "removable", map[string]any{
+				"label": "Design", "tone": "brand", "removable": true,
+				"onRemoveURL": "/tags/design",
+			}),
+			deliveryExample(componentType, "tone-success", map[string]any{
+				"label": "Approved", "tone": "success",
+			}),
+			deliveryExample(componentType, "tone-warning", map[string]any{
+				"label": "Needs review", "tone": "warning",
+			}),
+			deliveryExample(componentType, "tone-danger", map[string]any{
+				"label": "Blocked", "tone": "danger",
+			}),
+			deliveryExample(componentType, "tone-info", map[string]any{
+				"label": "Informational", "tone": "info",
 			}),
 		},
 		func(props atoms.TagProps, slots DeliverySlotChildren) g.Node {
