@@ -453,6 +453,9 @@ func iconDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "Check Circle / Fg Success / 20", map[string]any{
 				"name": "check-circle", "tone": "success", "size": "md", "weight": "outline",
 			}),
+			deliveryExample(componentType, "Check Circle / Fg Success / 16", map[string]any{
+				"name": "check-circle", "tone": "success", "size": "sm", "weight": "outline",
+			}),
 			deliveryExample(componentType, "Chevron Down / Fg Tertiary / 16", map[string]any{
 				"name": "chevron-down", "tone": "neutral", "size": "sm", "weight": "outline",
 			}),
@@ -483,8 +486,17 @@ func iconDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "Exclamation Triangle / Fg Warning / 20", map[string]any{
 				"name": "exclamation-triangle", "tone": "warning", "size": "md", "weight": "outline",
 			}),
+			deliveryExample(componentType, "Exclamation Triangle / Fg Warning / 16", map[string]any{
+				"name": "exclamation-triangle", "tone": "warning", "size": "sm", "weight": "outline",
+			}),
 			deliveryExample(componentType, "Information Circle / Fg Info / 20", map[string]any{
 				"name": "information-circle", "tone": "info", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Information Circle / Fg Info / 16", map[string]any{
+				"name": "information-circle", "tone": "info", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Information Circle / Fg Primary / 16", map[string]any{
+				"name": "information-circle", "tone": "neutral", "size": "sm", "weight": "outline",
 			}),
 			deliveryExample(componentType, "Trash / Fg Danger / 16", map[string]any{
 				"name": "trash", "tone": "danger", "size": "sm", "weight": "outline",
@@ -500,6 +512,9 @@ func iconDeliveryDefinition() DeliveryDefinition {
 			}),
 			deliveryExample(componentType, "X Circle / Fg Danger / 20", map[string]any{
 				"name": "x-circle", "tone": "danger", "size": "md", "weight": "outline",
+			}),
+			deliveryExample(componentType, "X Circle / Fg Danger / 16", map[string]any{
+				"name": "x-circle", "tone": "danger", "size": "sm", "weight": "outline",
 			}),
 			deliveryExample(componentType, "X Circle / Fg Primary / 20", map[string]any{
 				"name": "x-circle", "tone": "neutral", "size": "md", "weight": "outline",
@@ -741,22 +756,65 @@ func badgeDeliveryDefinition() DeliveryDefinition {
 
 func alertDeliveryDefinition() DeliveryDefinition {
 	componentType := "Alert"
-	root := deliveryClassBound(
-		deliveryFrame(
-			componentType,
-			clAlertBase.Compile(),
-			deliverySlot("LeadingIcon", "iconStart", clIcon.Compile()),
-			deliveryFrame(
-				"Body",
-				clAlertBody.Compile(),
-				deliveryText("Title", clAlertTitle.Compile(), "Update available", "title"),
-				deliveryText("Message", clAlertMessage.Compile(), "Review the latest changes.", "message"),
-			),
-			deliverySlot("Actions", "actions", ""),
+	leadingIcon := deliveryPreserveSlotFallback(deliverySlot(
+		"LeadingIcon",
+		"iconStart",
+		clAlertIcon.Compile(),
+		deliveryVisibleWhen(
+			deliveryInstance("NeutralIcon", "Icon", "Information Circle / Fg Primary / 16", ""),
+			map[string]any{"tone": "neutral"},
 		),
-		"tone",
-		compileClassMap(clAlertVariant),
+		deliveryVisibleWhen(
+			deliveryInstance("InfoIcon", "Icon", "Information Circle / Fg Info / 16", ""),
+			map[string]any{"tone": "info"},
+		),
+		deliveryVisibleWhen(
+			deliveryInstance("SuccessIcon", "Icon", "Check Circle / Fg Success / 16", ""),
+			map[string]any{"tone": "success"},
+		),
+		deliveryVisibleWhen(
+			deliveryInstance("WarningIcon", "Icon", "Exclamation Triangle / Fg Warning / 16", ""),
+			map[string]any{"tone": "warning"},
+		),
+		deliveryVisibleWhen(
+			deliveryInstance("DangerIcon", "Icon", "X Circle / Fg Danger / 16", ""),
+			map[string]any{"tone": "danger"},
+		),
+	))
+	closeButton := deliveryVisibleWhen(
+		deliverySemantics(
+			deliveryFrame(
+				"Close",
+				clAlertClose.Compile(),
+				deliveryInstance("CloseIcon", "Icon", "X Mark / Fg Primary / 20", ""),
+			),
+			"button",
+			"dismiss alert",
+		),
+		map[string]any{"dismissible": true},
 	)
+	root := deliveryFrame(
+		componentType,
+		clAlertBase.Compile(),
+		leadingIcon,
+		deliveryFrame(
+			"Body",
+			clAlertBody.Compile(),
+			deliveryOptionalText(deliveryText("Title", clAlertTitle.Compile(), "", "title")),
+			deliveryText("Message", clAlertMessage.Compile(), "Review the latest changes.", "message"),
+		),
+		deliverySlot("Actions", "actions", clAlertActions.Compile()),
+		closeButton,
+	)
+	root = deliveryClassBound(root, "tone", compileClassMap(clAlertVariant))
+	root = deliveryClassBound(root, "compact", map[string]string{
+		"false": clAlertRegular.Compile(),
+		"true":  clAlertCompact.Compile(),
+	})
+	root = deliveryClassBound(root, "bordered", map[string]string{
+		"false": "",
+		"true":  clAlertBordered.Compile(),
+	})
 	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
@@ -790,11 +848,35 @@ func alertDeliveryDefinition() DeliveryDefinition {
 			canonicalDeliveryExample(componentType, "info", map[string]any{
 				"title": "Update available", "message": "Review the latest changes.", "tone": "info",
 			}),
-			deliveryExample(componentType, "warning", map[string]any{
-				"title": "Check required", "message": "One field needs attention.", "tone": "warning",
-			}),
+			withDeliveryExampleSlots(
+				deliveryExample(componentType, "warning", map[string]any{
+					"title": "Check required", "message": "One field needs attention.", "tone": "warning",
+				}),
+				deliveryExampleSlot(
+					"actions",
+					deliveryExampleComponent(
+						"review-alert",
+						"Button",
+						map[string]any{
+							"label": "Review changes", "variant": "secondary", "tone": "neutral", "size": "sm",
+						},
+					),
+				),
+			),
 			deliveryExample(componentType, "info-alert", map[string]any{
-				"title": "Heads up", "message": "Your session will expire in 10 minutes.", "tone": "info",
+				"title": "Heads up", "message": "Your session will expire in 10 minutes.", "tone": "info", "dismissible": true,
+			}),
+			deliveryExample(componentType, "neutral", map[string]any{
+				"message": "This draft is available on this device.", "tone": "neutral",
+			}),
+			deliveryExample(componentType, "success-compact", map[string]any{
+				"title": "Changes saved", "message": "Your updates are now live.", "tone": "success", "compact": true,
+			}),
+			deliveryExample(componentType, "danger-bordered", map[string]any{
+				"title": "Save failed", "message": "Try again or contact support.", "tone": "danger", "bordered": true,
+			}),
+			deliveryExample(componentType, "info-compact-bordered", map[string]any{
+				"title": "Scheduled", "message": "This change takes effect tomorrow.", "tone": "info", "compact": true, "bordered": true,
 			}),
 		},
 		func(props atoms.AlertProps, slots DeliverySlotChildren) g.Node {

@@ -185,6 +185,248 @@ func TestBadgeBlueprintBindsDotToneAndKeepsCountOptional(t *testing.T) {
 	}
 }
 
+func TestAlertBlueprintMatchesRuntimeGeometryAndDefaultIcons(t *testing.T) {
+	t.Parallel()
+
+	definition := blueprintContractDefinition(t, "Alert")
+	root := definition.Design.Root
+	if root == nil || root.Kind != blueprint.NodeFrame {
+		t.Fatalf("Alert design root = %#v, want native frame", root)
+	}
+	if got, want := root.Classes, clAlertBase.Compile(); got != want {
+		t.Errorf("Alert root classes = %q, want runtime base %q", got, want)
+	}
+	blueprintContractAssertOrder(t, root, "tone", "compact", "bordered")
+	blueprintContractAssertClassBinding(t, root, "tone", compileClassMap(clAlertVariant))
+	blueprintContractAssertClassBinding(t, root, "compact", map[string]string{
+		"false": clAlertRegular.Compile(),
+		"true":  clAlertCompact.Compile(),
+	})
+	blueprintContractAssertClassBinding(t, root, "bordered", map[string]string{
+		"false": "",
+		"true":  clAlertBordered.Compile(),
+	})
+	if got, want := blueprintContractDirectChildNames(root), []string{"LeadingIcon", "Body", "Actions", "Close"}; !slices.Equal(got, want) {
+		t.Fatalf("Alert child order = %v, want runtime order %v", got, want)
+	}
+	dismissibleFound := false
+	for _, property := range definition.Contract.Props {
+		if property.Name != "dismissible" {
+			continue
+		}
+		dismissibleFound = true
+		if property.Type != "boolean" || property.Role != "state" || property.Default != "false" {
+			t.Errorf("Alert dismissible contract = %#v, want optional boolean state defaulting false", property)
+		}
+	}
+	if !dismissibleFound {
+		t.Fatal("Alert contract has no dismissible property")
+	}
+
+	leadingIcon := blueprintContractOnlyNodeNamed(t, root, "LeadingIcon")
+	if leadingIcon.Kind != blueprint.NodeSlot || leadingIcon.Slot != "iconStart" {
+		t.Fatalf("Alert/LeadingIcon = %#v, want iconStart slot", leadingIcon)
+	}
+	if got, want := leadingIcon.Classes, clAlertIcon.Compile(); got != want {
+		t.Errorf("Alert/LeadingIcon classes = %q, want runtime wrapper %q", got, want)
+	}
+	if preserved, _ := leadingIcon.Props["preserve_fallback_when_empty"].(bool); !preserved {
+		t.Errorf("Alert/LeadingIcon preserve_fallback_when_empty = %#v, want true", leadingIcon.Props["preserve_fallback_when_empty"])
+	}
+
+	body := blueprintContractOnlyNodeNamed(t, root, "Body")
+	title := blueprintContractOnlyNodeNamed(t, body, "Title")
+	if title.Kind != blueprint.NodeText || title.Text != "" {
+		t.Errorf("Alert/Title = %#v, want empty optional text", title)
+	}
+	if got := blueprintContractStringValues(title.Props["text_props"]); !slices.Equal(got, []string{"title"}) {
+		t.Errorf("Alert/Title text props = %v, want [title]", got)
+	}
+	for _, property := range []string{"clear_when_unbound", "hide_when_empty"} {
+		if enabled, _ := title.Props[property].(bool); !enabled {
+			t.Errorf("Alert/Title %s = %#v, want true", property, title.Props[property])
+		}
+	}
+
+	actions := blueprintContractOnlyNodeNamed(t, root, "Actions")
+	if actions.Kind != blueprint.NodeSlot || actions.Slot != "actions" {
+		t.Fatalf("Alert/Actions = %#v, want actions slot", actions)
+	}
+	if got, want := actions.Classes, clAlertActions.Compile(); got != want {
+		t.Errorf("Alert/Actions classes = %q, want runtime wrapper %q", got, want)
+	}
+
+	closeButton := blueprintContractOnlyNodeNamed(t, root, "Close")
+	if closeButton.Kind != blueprint.NodeFrame {
+		t.Fatalf("Alert/Close = %#v, want native frame", closeButton)
+	}
+	if got, want := closeButton.Classes, clAlertClose.Compile(); got != want {
+		t.Errorf("Alert/Close classes = %q, want runtime close button %q", got, want)
+	}
+	blueprintContractAssertCondition(t, closeButton, "visible_when", map[string]any{"dismissible": true})
+	if got := closeButton.Props["semantic_role"]; got != "button" {
+		t.Errorf("Alert/Close semantic role = %#v, want button", got)
+	}
+	if got := closeButton.Props["semantic_purpose"]; got != "dismiss alert" {
+		t.Errorf("Alert/Close semantic purpose = %#v, want dismiss alert", got)
+	}
+	closeIcon := blueprintContractOnlyNodeNamed(t, closeButton, "CloseIcon")
+	if closeIcon.Kind != blueprint.NodeInstance || closeIcon.Text != "Icon" || closeIcon.Props["instance_example"] != "X Mark / Fg Primary / 20" {
+		t.Errorf("Alert/CloseIcon = %#v, want the runtime x-mark md instance", closeIcon)
+	}
+
+	type iconFallback struct {
+		nodeName string
+		selector string
+	}
+	fallbacks := map[string]iconFallback{
+		"neutral": {nodeName: "NeutralIcon", selector: "Information Circle / Fg Primary / 16"},
+		"info":    {nodeName: "InfoIcon", selector: "Information Circle / Fg Info / 16"},
+		"success": {nodeName: "SuccessIcon", selector: "Check Circle / Fg Success / 16"},
+		"warning": {nodeName: "WarningIcon", selector: "Exclamation Triangle / Fg Warning / 16"},
+		"danger":  {nodeName: "DangerIcon", selector: "X Circle / Fg Danger / 16"},
+	}
+	if got, want := len(leadingIcon.Children), len(fallbacks); got != want {
+		t.Fatalf("Alert default icon fallback count = %d, want %d", got, want)
+	}
+
+	iconDefinition := blueprintContractDefinition(t, "Icon")
+	iconRoot := iconDefinition.Design.Root
+	if iconRoot == nil || iconRoot.Kind != blueprint.NodeSVG || iconRoot.AssetRef != "bound:icon-" {
+		t.Fatalf("Icon design root = %#v, want editable bound SVG", iconRoot)
+	}
+	blueprintContractAssertOrder(t, iconRoot, "size", "tone")
+	blueprintContractAssertClassBinding(t, iconRoot, "size", compileClassMap(clIconSize))
+	blueprintContractAssertClassBinding(t, iconRoot, "tone", compileClassMap(clIconTone))
+
+	for _, tone := range feedbackTones {
+		fallback, exists := fallbacks[tone]
+		if !exists {
+			t.Errorf("Alert tone %q has no design fallback", tone)
+			continue
+		}
+		node := blueprintContractOnlyNodeNamed(t, leadingIcon, fallback.nodeName)
+		if node.Kind != blueprint.NodeInstance || node.Text != "Icon" {
+			t.Errorf("Alert/%s = %#v, want reusable Icon instance", fallback.nodeName, node)
+		}
+		if got := node.Props["instance_example"]; got != fallback.selector {
+			t.Errorf("Alert/%s selector = %#v, want %q", fallback.nodeName, got, fallback.selector)
+		}
+		blueprintContractAssertCondition(t, node, "visible_when", map[string]any{"tone": tone})
+
+		example := blueprintContractExample(t, iconDefinition, fallback.selector)
+		if got, want := example.Props["name"], defaultAlertIcon(tone); got != want {
+			t.Errorf("Alert %s icon name = %#v, want runtime default %q", tone, got, want)
+		}
+		if got := example.Props["tone"]; got != tone {
+			t.Errorf("Alert %s icon tone = %#v, want tokenized tone %q", tone, got, tone)
+		}
+		if got := example.Props["size"]; got != "sm" {
+			t.Errorf("Alert %s icon size = %#v, want runtime size sm", tone, got)
+		}
+	}
+	closeIconExample := blueprintContractExample(t, iconDefinition, "X Mark / Fg Primary / 20")
+	for property, want := range map[string]any{"name": "x-mark", "tone": "neutral", "size": "md"} {
+		if got := closeIconExample.Props[property]; !reflect.DeepEqual(got, want) {
+			t.Errorf("Alert close icon %s = %#v, want %#v", property, got, want)
+		}
+	}
+
+	representedTones := make(map[string]bool, len(feedbackTones))
+	representedGeometry := make(map[string]bool, 4)
+	dismissibleExamples := 0
+	for _, example := range definition.Examples {
+		tone, _ := example.Props["tone"].(string)
+		representedTones[tone] = true
+		compact, _ := example.Props["compact"].(bool)
+		bordered, _ := example.Props["bordered"].(bool)
+		representedGeometry[fmt.Sprintf("%t/%t", compact, bordered)] = true
+		if dismissible, _ := example.Props["dismissible"].(bool); dismissible {
+			dismissibleExamples++
+		}
+	}
+	for _, tone := range feedbackTones {
+		if !representedTones[tone] {
+			t.Errorf("Alert examples do not materialize tone %q", tone)
+		}
+	}
+	for _, geometry := range []string{"false/false", "true/false", "false/true", "true/true"} {
+		if !representedGeometry[geometry] {
+			t.Errorf("Alert examples do not materialize compact/bordered=%s", geometry)
+		}
+	}
+	if dismissibleExamples != 1 {
+		t.Errorf("Alert examples with dismissible=true = %d, want one bounded state specimen", dismissibleExamples)
+	}
+
+	neutral := blueprintContractExample(t, definition, "neutral")
+	if _, titled := neutral.Props["title"]; titled {
+		t.Errorf("Alert neutral example unexpectedly supplies a title: %#v", neutral.Props)
+	}
+	warning := blueprintContractExample(t, definition, "warning")
+	if got, want := blueprintContractExampleSlotNames(warning), []string{"actions"}; !slices.Equal(got, want) {
+		t.Errorf("Alert warning example slots = %v, want %v", got, want)
+	}
+	dismissible := blueprintContractExample(t, definition, "info-alert")
+	if enabled, _ := dismissible.Props["dismissible"].(bool); !enabled {
+		t.Errorf("Alert info-alert dismissible = %#v, want true", dismissible.Props["dismissible"])
+	}
+
+	catalog := OSSDeliveryCatalog()
+	index := make(map[string]DeliveryDefinition, len(catalog))
+	for _, candidate := range catalog {
+		index[string(candidate.Identity.ID)] = candidate
+	}
+	renderExample := func(example DeliveryExample) string {
+		t.Helper()
+		node, err := renderDeliveryExampleWithCatalog(definition, example, nil, index)
+		if err != nil {
+			t.Fatalf("render Alert/%s: %v", example.Name, err)
+		}
+		var output strings.Builder
+		if err := node.Render(&output); err != nil {
+			t.Fatalf("render Alert/%s node: %v", example.Name, err)
+		}
+		return output.String()
+	}
+
+	neutralHTML := renderExample(neutral)
+	if !strings.Contains(neutralHTML, "This draft is available on this device.") {
+		t.Errorf("title-less Alert omitted its message: %s", neutralHTML)
+	}
+	if titleMarkup := `<p class="` + clAlertTitle.Compile() + `">`; strings.Contains(neutralHTML, titleMarkup) {
+		t.Errorf("title-less Alert rendered a title layer: %s", neutralHTML)
+	}
+
+	warningHTML := renderExample(warning)
+	if wrapper := `class="` + clAlertActions.Compile() + `" data-alert-actions=""`; !strings.Contains(warningHTML, wrapper) {
+		t.Errorf("Alert actions wrapper does not match runtime geometry %q: %s", wrapper, warningHTML)
+	}
+	if !strings.Contains(warningHTML, "Review changes") {
+		t.Errorf("Alert warning example omitted its authored action: %s", warningHTML)
+	}
+
+	dismissibleHTML := renderExample(dismissible)
+	for _, fragment := range []string{
+		`data-controller="alert"`,
+		`data-alert-dismissible-value="true"`,
+		`class="` + clAlertClose.Compile() + `"`,
+		`data-action="click-&gt;alert#dismiss"`,
+		`data-alert-close=""`,
+		`aria-label="Dismiss notification"`,
+		`data-pk-icon="x-mark"`,
+	} {
+		if !strings.Contains(dismissibleHTML, fragment) {
+			t.Errorf("dismissible Alert example missing %q: %s", fragment, dismissibleHTML)
+		}
+	}
+	for _, fragment := range []string{"data-controller=", "data-alert-close="} {
+		if strings.Contains(neutralHTML, fragment) {
+			t.Errorf("non-dismissible Alert unexpectedly contains %q: %s", fragment, neutralHTML)
+		}
+	}
+}
+
 func TestInputBlueprintPreservesBindingCascadeAndConditionalSources(t *testing.T) {
 	t.Parallel()
 
