@@ -149,6 +149,33 @@ func TestAvatarBlueprintProjectsImageInitialsAndIconFallbacks(t *testing.T) {
 	}
 }
 
+func TestFileUploadBlueprintPreservesVisiblePromptFallback(t *testing.T) {
+	t.Parallel()
+
+	root := blueprintContractDefinition(t, "FileUpload").Design.Root
+	control := blueprintContractOnlyNodeNamed(t, root, "Control")
+	dropZone := blueprintContractOnlyNodeNamed(t, control, "DropZone")
+	prompt := blueprintContractOnlyNodeNamed(t, dropZone, "Prompt")
+
+	if prompt.Kind != blueprint.NodeSlot || prompt.Slot != "content" {
+		t.Fatalf("FileUpload/Prompt = %#v, want the content slot", prompt)
+	}
+	if preserved, _ := prompt.Props["preserve_fallback_when_empty"].(bool); !preserved {
+		t.Fatalf(
+			"FileUpload/Prompt preserve_fallback_when_empty = %#v, want true",
+			prompt.Props["preserve_fallback_when_empty"],
+		)
+	}
+	if got, want := blueprintContractDirectChildNames(prompt), []string{"UploadIcon", "Action", "DropHint"}; !slices.Equal(got, want) {
+		t.Fatalf("FileUpload/Prompt fallback children = %v, want %v", got, want)
+	}
+	for _, class := range []string{"min-h-40", "w-full", "border-2"} {
+		if !slices.Contains(strings.Fields(dropZone.Classes), class) {
+			t.Errorf("FileUpload/DropZone classes = %q, want %q", dropZone.Classes, class)
+		}
+	}
+}
+
 func TestAvatarBlueprintRetainsExactFixtureGeometryAndShape(t *testing.T) {
 	t.Parallel()
 

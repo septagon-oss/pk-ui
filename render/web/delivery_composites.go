@@ -928,12 +928,12 @@ func fileUploadDeliveryDefinition() DeliveryDefinition {
 				deliveryFrame(
 					"DropZone",
 					clFileUploadDropZone.Compile(),
-					deliverySlot(
+					deliveryPreserveSlotFallback(deliverySlot(
 						"Prompt", "content", clFileUploadDropZoneInner.Compile(),
 						deliveryInstance("UploadIcon", "Icon", "Upload / Fg Tertiary / 40", clFileUploadIcon.Compile()),
 						deliveryText("Action", clFileUploadPromptAction.Compile(), "Click to upload", "promptLabel"),
 						deliveryText("DropHint", clFileUploadPromptText.Compile(), "or drag and drop", "dropLabel"),
-					),
+					)),
 				),
 				deliveryFrame(
 					"FileList",
