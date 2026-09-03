@@ -171,6 +171,9 @@ func avatarDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "with-image", map[string]any{
 				"src": deliveryFixtureImageDataURL, "alt": "Profile portrait", "shape": "rounded",
 			}),
+			deliveryExample(componentType, "with-image-circle-md", map[string]any{
+				"src": deliveryFixtureImageDataURL, "alt": "Assistant avatar", "shape": "circle", "size": "md",
+			}),
 			deliveryExample(componentType, "fallback-icon", map[string]any{
 				"fallbackIcon": "user", "alt": "Account", "size": "sm",
 			}),

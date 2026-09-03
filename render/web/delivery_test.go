@@ -195,6 +195,7 @@ func TestImageDeliveryExamplesAreBrowserSelfContained(t *testing.T) {
 		property  string
 	}{
 		{component: "Avatar", example: "with-image", property: "src"},
+		{component: "Avatar", example: "with-image-circle-md", property: "src"},
 		{component: "FileUpload", example: "remote-upload", property: "value"},
 	}
 
@@ -207,6 +208,72 @@ func TestImageDeliveryExamplesAreBrowserSelfContained(t *testing.T) {
 				t.Fatalf("%s fixture %s must use an inline image, got %q", tt.component, tt.property, value)
 			}
 		})
+	}
+}
+
+func TestAvatarDeliveryPublishesImageCircleMediumSpecimen(t *testing.T) {
+	t.Parallel()
+
+	const example = "with-image-circle-md"
+	props := deliveryExamplePropsForTest(t, "Avatar", example)
+	want := map[string]any{
+		"src":   deliveryFixtureImageDataURL,
+		"alt":   "Assistant avatar",
+		"shape": "circle",
+		"size":  "md",
+	}
+	if !reflect.DeepEqual(props, want) {
+		t.Fatalf("Avatar/%s props = %#v, want %#v", example, props, want)
+	}
+
+	node, err := RenderDeliveryExample("Avatar", deliveryExampleID("Avatar", example), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var rendered strings.Builder
+	if err := node.Render(&rendered); err != nil {
+		t.Fatal(err)
+	}
+	html := rendered.String()
+	for _, fragment := range []string{
+		`data-component="avatar"`,
+		`data-avatar-size="md"`,
+		`data-avatar-shape="circle"`,
+		`h-10`,
+		`w-10`,
+		`rounded-full`,
+		`<img`,
+		`alt="Assistant avatar"`,
+		`src="data:image/svg+xml,`,
+	} {
+		if !strings.Contains(html, fragment) {
+			t.Errorf("Avatar/%s is missing %q: %s", example, fragment, html)
+		}
+	}
+	if strings.Contains(html, ">AL<") {
+		t.Errorf("Avatar/%s rendered the design fallback instead of its image: %s", example, html)
+	}
+}
+
+func TestAvatarImageCircleMediumSpecimenSelectsExactDesignGeometry(t *testing.T) {
+	t.Parallel()
+
+	props := deliveryExamplePropsForTest(t, "Avatar", "with-image-circle-md")
+	definition := blueprintContractDefinition(t, "Avatar")
+	root := definition.Design.Root
+
+	size, _ := props["size"].(string)
+	sizeClasses := strings.Fields(root.ClassBindings["size"][size])
+	for _, class := range []string{"h-10", "w-10"} {
+		if !slices.Contains(sizeClasses, class) {
+			t.Errorf("Avatar size=%q design classes = %v, want %q", size, sizeClasses, class)
+		}
+	}
+
+	shape, _ := props["shape"].(string)
+	shapeClasses := strings.Fields(root.ClassBindings["shape"][shape])
+	if !slices.Contains(shapeClasses, "rounded-full") {
+		t.Errorf("Avatar shape=%q design classes = %v, want rounded-full", shape, shapeClasses)
 	}
 }
 
