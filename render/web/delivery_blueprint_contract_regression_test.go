@@ -793,6 +793,48 @@ func TestInputBlueprintPreservesBindingCascadeAndConditionalSources(t *testing.T
 	}
 }
 
+func TestFileUploadDropZoneKeepsGovernedGeometryAcrossDeliverySurfaces(t *testing.T) {
+	t.Parallel()
+
+	definition := blueprintContractDefinition(t, "FileUpload")
+	dropZone := blueprintContractOnlyNodeNamed(t, definition.Design.Root, "DropZone")
+	wantClasses := clFileUploadDropZone.Compile()
+	if got := dropZone.Classes; got != wantClasses {
+		t.Errorf("FileUpload/DropZone classes = %q, want runtime classes %q", got, wantClasses)
+	}
+	if !slices.Contains(strings.Fields(dropZone.Classes), "min-h-40") {
+		t.Errorf("FileUpload/DropZone classes = %q, want governed 160px minimum height", dropZone.Classes)
+	}
+
+	node, err := RenderDeliveryExample(
+		"FileUpload",
+		deliveryExampleID("FileUpload", "htmx-upload"),
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("render FileUpload/htmx-upload: %v", err)
+	}
+	var rendered strings.Builder
+	if err := node.Render(&rendered); err != nil {
+		t.Fatalf("render FileUpload/htmx-upload node: %v", err)
+	}
+	html := rendered.String()
+	if classAttribute := `class="` + wantClasses + `"`; !strings.Contains(html, classAttribute) {
+		t.Errorf("FileUpload/htmx-upload omits DropZone class attribute %q: %s", classAttribute, html)
+	}
+	if !strings.Contains(html, `data-file-upload-dropzone="true"`) {
+		t.Errorf("FileUpload/htmx-upload omits the runtime DropZone marker: %s", html)
+	}
+
+	css, err := DefaultMinifiedStylesheet()
+	if err != nil {
+		t.Fatalf("compile FileUpload stylesheet: %v", err)
+	}
+	if !strings.Contains(css, `.min-h-40{min-height:10rem}`) {
+		t.Errorf("FileUpload stylesheet omits governed min-h-40 rule")
+	}
+}
+
 func TestDividerBlueprintOwnsThreeLayerLabelledStructure(t *testing.T) {
 	t.Parallel()
 

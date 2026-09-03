@@ -366,6 +366,7 @@ var (
 	clFileUploadRoot = tw.New().Display(tw.DisplayFlex).Width(tw.SFull).
 				FlexDir(tw.FlexCol).Gap(tw.S2)
 	clFileUploadDropZone = tw.New().Position(tw.PositionRelative).Width(tw.SFull).
+				MinHeight(tw.S40).
 				Border(tw.Border2).BorderStyle(tw.BorderStyle("dashed")).
 				BorderColor(tw.BorderSecondary).Rounded(tw.RadiusLG).
 				Cursor(tw.CursorPointer).Transition(tw.TransitionColors).
