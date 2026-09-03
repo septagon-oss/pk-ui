@@ -119,6 +119,39 @@ func OSSDeliveryCatalog() []DeliveryDefinition {
 
 func avatarDeliveryDefinition() DeliveryDefinition {
 	componentType := "Avatar"
+	visibleWithImage := map[string]any{"src": "*"}
+	visibleWithFallbackIcon := map[string]any{"fallbackIcon": "*"}
+	image := deliveryVisibleWhen(blueprint.Node{
+		Kind:     blueprint.NodeImage,
+		Name:     "Image",
+		Classes:  clAvatarImage.Compile(),
+		AssetRef: "asset:avatar-fixture",
+	}, visibleWithImage)
+	initials := deliveryHiddenWhenAny(
+		deliveryText("Initials", clAvatarInitials.Compile(), "AL", "initials", "name"),
+		map[string]any{"src": "*", "fallbackIcon": "*"},
+	)
+	fallbackIcon := deliveryHiddenWhen(
+		deliveryVisibleWhen(
+			deliveryInstance("FallbackIcon", "Icon", "User / Fg Primary / 16", ""),
+			visibleWithFallbackIcon,
+		),
+		visibleWithImage,
+	)
+	status := deliveryClassBound(
+		deliveryClassBound(
+			deliveryClassBound(
+				deliveryFrame("Status", clAvatarStatus.Compile()),
+				"status",
+				compileClassMap(clAvatarStatusTone),
+			),
+			"size",
+			compileClassMap(clAvatarStatusSize),
+		),
+		"statusPosition",
+		compileClassMap(clAvatarStatusPosition),
+	)
+	status = deliveryHiddenWhen(status, map[string]any{"status": "none"})
 	root := deliveryClassBound(
 		deliveryClassBound(
 			deliveryClassBound(
@@ -129,7 +162,10 @@ func avatarDeliveryDefinition() DeliveryDefinition {
 						Merge(clAvatarShape["circle"]).
 						Merge(clAvatarTone["neutral"]).
 						Compile(),
-					deliveryText("Initials", clAvatarInitials.Compile(), "AL", "initials", "name"),
+					image,
+					initials,
+					fallbackIcon,
+					status,
 				),
 				"size",
 				compileClassMap(clAvatarSize),
@@ -140,6 +176,13 @@ func avatarDeliveryDefinition() DeliveryDefinition {
 		"tone",
 		compileClassMap(clAvatarTone),
 	)
+	design := deliveryDesign("initials", "02 Atoms", "Media", root)
+	design.Assets = []blueprint.Asset{{
+		Name:        "avatar-fixture",
+		Kind:        blueprint.AssetImage,
+		Source:      deliveryFixtureImageDataURL,
+		Description: "Self-contained profile portrait used by the authored image variants.",
+	}}
 	return newDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
@@ -159,7 +202,7 @@ func avatarDeliveryDefinition() DeliveryDefinition {
 			"statusLabel":    contentProperty("Localized accessible presence label."),
 		},
 		nil,
-		deliveryDesign("initials", "02 Atoms", "Media", root),
+		design,
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "initials", map[string]any{
 				"name": "Ada Lovelace", "size": "lg", "shape": "circle", "tone": "neutral",
@@ -538,6 +581,9 @@ func iconDeliveryDefinition() DeliveryDefinition {
 				"name": "upload", "tone": "neutral", "size": "2xl", "weight": "outline",
 			}),
 			deliveryExample(componentType, "User / Fg Tertiary / 16", map[string]any{
+				"name": "user", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "User / Fg Primary / 16", map[string]any{
 				"name": "user", "tone": "neutral", "size": "sm", "weight": "outline",
 			}),
 			deliveryExample(componentType, "User / Fg Primary / 20", map[string]any{

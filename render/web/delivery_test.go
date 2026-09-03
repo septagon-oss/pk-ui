@@ -378,6 +378,7 @@ func TestIconDeliveryPublishesEditorAndCompletionSpecimens(t *testing.T) {
 		{example: "Shape / Fg Primary / 16", name: "shape", size: "sm", tone: "neutral", classes: []string{"h-4", "w-4"}},
 		{example: "Design / Fg Primary / 16", name: "design", size: "sm", tone: "neutral", classes: []string{"h-4", "w-4"}},
 		{example: "Uploads / Fg Primary / 16", name: "uploads", size: "sm", tone: "neutral", classes: []string{"h-4", "w-4"}},
+		{example: "User / Fg Primary / 16", name: "user", size: "sm", tone: "neutral", classes: []string{"h-4", "w-4"}},
 		{example: "Check / Fg Success / 24", name: "check", size: "lg", tone: "success", classes: []string{"h-6", "w-6", "text-fg-success"}},
 		{example: "Check Circle / Fg Success / 48", name: "check-circle", size: "2xl", tone: "success", classes: []string{"h-12", "w-12", "text-fg-success"}},
 	}

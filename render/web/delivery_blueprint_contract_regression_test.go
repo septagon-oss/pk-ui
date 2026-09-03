@@ -5,6 +5,7 @@
 package web
 
 import (
+	"cmp"
 	"fmt"
 	"maps"
 	"reflect"
@@ -82,6 +83,143 @@ func TestCoreDeliveryBlueprintIconInstancesUseQualifiedSelectors(t *testing.T) {
 			}
 			if _, exists := selectors[selector]; !exists {
 				t.Errorf("%s/%s selects unknown Icon example %q", component, path, selector)
+			}
+		})
+	}
+}
+
+func TestAvatarBlueprintProjectsImageInitialsAndIconFallbacks(t *testing.T) {
+	t.Parallel()
+
+	definition := blueprintContractDefinition(t, "Avatar")
+	root := definition.Design.Root
+	if got, want := blueprintContractDirectChildNames(root), []string{"Image", "Initials", "FallbackIcon", "Status"}; !slices.Equal(got, want) {
+		t.Fatalf("Avatar direct children = %v, want %v", got, want)
+	}
+
+	if got := definition.Design.Assets; len(got) != 1 ||
+		got[0].Name != "avatar-fixture" ||
+		got[0].Kind != blueprint.AssetImage ||
+		got[0].Source != deliveryFixtureImageDataURL {
+		t.Fatalf("Avatar image assets = %#v, want one self-contained avatar-fixture", got)
+	}
+
+	image := blueprintContractOnlyNodeNamed(t, root, "Image")
+	if image.Kind != blueprint.NodeImage || image.AssetRef != "asset:avatar-fixture" {
+		t.Fatalf("Avatar/Image = %#v, want the governed image asset", image)
+	}
+	blueprintContractAssertCondition(t, image, "visible_when", map[string]any{"src": "*"})
+	for _, class := range []string{"h-full", "w-full", "object-cover"} {
+		if !slices.Contains(strings.Fields(image.Classes), class) {
+			t.Errorf("Avatar/Image classes = %q, want %q", image.Classes, class)
+		}
+	}
+
+	initials := blueprintContractOnlyNodeNamed(t, root, "Initials")
+	if initials.Kind != blueprint.NodeText || initials.Text != "AL" {
+		t.Fatalf("Avatar/Initials = %#v, want the canonical initials fallback", initials)
+	}
+	if got := blueprintContractStringValues(initials.Props["text_props"]); !slices.Equal(got, []string{"initials", "name"}) {
+		t.Errorf("Avatar/Initials text props = %v, want [initials name]", got)
+	}
+	blueprintContractAssertCondition(t, initials, "hidden_when_any", map[string]any{
+		"src": "*", "fallbackIcon": "*",
+	})
+
+	fallbackIcon := blueprintContractOnlyNodeNamed(t, root, "FallbackIcon")
+	if fallbackIcon.Kind != blueprint.NodeInstance || fallbackIcon.Text != "Icon" {
+		t.Fatalf("Avatar/FallbackIcon = %#v, want an Icon instance", fallbackIcon)
+	}
+	if got := fallbackIcon.Props["instance_example"]; got != "User / Fg Primary / 16" {
+		t.Errorf("Avatar/FallbackIcon selector = %#v, want the exact published User specimen", got)
+	}
+	blueprintContractAssertCondition(t, fallbackIcon, "visible_when", map[string]any{"fallbackIcon": "*"})
+	blueprintContractAssertCondition(t, fallbackIcon, "hidden_when", map[string]any{"src": "*"})
+
+	status := blueprintContractOnlyNodeNamed(t, root, "Status")
+	blueprintContractAssertOrder(t, status, "status", "size", "statusPosition")
+	blueprintContractAssertCondition(t, status, "hidden_when", map[string]any{"status": "none"})
+	blueprintContractAssertClassBinding(t, status, "status", compileClassMap(clAvatarStatusTone))
+	blueprintContractAssertClassBinding(t, status, "size", compileClassMap(clAvatarStatusSize))
+	blueprintContractAssertClassBinding(t, status, "statusPosition", compileClassMap(clAvatarStatusPosition))
+	for _, class := range []string{"absolute", "block", "rounded-full", "ring-2", "ring-surface-primary"} {
+		if !slices.Contains(strings.Fields(status.Classes), class) {
+			t.Errorf("Avatar/Status classes = %q, want %q", status.Classes, class)
+		}
+	}
+}
+
+func TestAvatarBlueprintRetainsExactFixtureGeometryAndShape(t *testing.T) {
+	t.Parallel()
+
+	definition := blueprintContractDefinition(t, "Avatar")
+	root := definition.Design.Root
+	status := blueprintContractOnlyNodeNamed(t, root, "Status")
+	for _, test := range []struct {
+		example     string
+		size        string
+		shape       string
+		sizeClasses []string
+		shapeClass  string
+		status      string
+	}{
+		{example: "initials", size: "lg", shape: "circle", sizeClasses: []string{"h-12", "w-12"}, shapeClass: "rounded-full"},
+		{example: "with-status", size: "md", shape: "circle", sizeClasses: []string{"h-10", "w-10"}, shapeClass: "rounded-full", status: "online"},
+		{example: "with-image", size: "md", shape: "rounded", sizeClasses: []string{"h-10", "w-10"}, shapeClass: "rounded-md"},
+		{example: "with-image-circle-md", size: "md", shape: "circle", sizeClasses: []string{"h-10", "w-10"}, shapeClass: "rounded-full"},
+		{example: "fallback-icon", size: "sm", shape: "circle", sizeClasses: []string{"h-8", "w-8"}, shapeClass: "rounded-full"},
+	} {
+		t.Run(test.example, func(t *testing.T) {
+			props := deliveryExamplePropsForTest(t, "Avatar", test.example)
+			size, _ := props["size"].(string)
+			if size == "" {
+				size = "md"
+			}
+			if size != test.size {
+				t.Fatalf("Avatar/%s size = %q, want %q", test.example, size, test.size)
+			}
+			shape, _ := props["shape"].(string)
+			if shape == "" {
+				shape = "circle"
+			}
+			if shape != test.shape {
+				t.Fatalf("Avatar/%s shape = %q, want %q", test.example, shape, test.shape)
+			}
+
+			sizeClasses := strings.Fields(root.ClassBindings["size"][size])
+			for _, class := range test.sizeClasses {
+				if !slices.Contains(sizeClasses, class) {
+					t.Errorf("Avatar/%s size classes = %v, want %q", test.example, sizeClasses, class)
+				}
+			}
+			shapeClasses := strings.Fields(root.ClassBindings["shape"][shape])
+			if !slices.Contains(shapeClasses, test.shapeClass) {
+				t.Errorf("Avatar/%s shape classes = %v, want %q", test.example, shapeClasses, test.shapeClass)
+			}
+
+			statusValue, _ := props["status"].(string)
+			if statusValue == "" {
+				statusValue = "none"
+			}
+			if statusValue != cmp.Or(test.status, "none") {
+				t.Errorf("Avatar/%s status = %q, want %q", test.example, statusValue, cmp.Or(test.status, "none"))
+			}
+			if statusValue == "online" {
+				for _, class := range []string{"bg-surface-success"} {
+					if !slices.Contains(strings.Fields(status.ClassBindings["status"][statusValue]), class) {
+						t.Errorf("Avatar/%s status classes = %q, want %q", test.example, status.ClassBindings["status"][statusValue], class)
+					}
+				}
+				for _, class := range []string{"h-3", "w-3"} {
+					if !slices.Contains(strings.Fields(status.ClassBindings["size"][size]), class) {
+						t.Errorf("Avatar/%s status size classes = %q, want %q", test.example, status.ClassBindings["size"][size], class)
+					}
+				}
+				for _, class := range []string{"bottom-0", "right-0", "translate-x-1/2", "translate-y-1/2"} {
+					if !slices.Contains(strings.Fields(status.ClassBindings["statusPosition"]["bottom-right"]), class) {
+						t.Errorf("Avatar/%s status position classes = %q, want %q", test.example, status.ClassBindings["statusPosition"]["bottom-right"], class)
+					}
+				}
 			}
 		})
 	}
