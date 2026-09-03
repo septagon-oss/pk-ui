@@ -664,8 +664,8 @@ var (
 	clChoiceGroupRoot        = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Gap(tw.S2)
 	clChoiceGroupLegend      = clLabel
 	clChoiceGroupDescription = clHelp
-	clChoiceGroupOptions     = tw.New().Display(tw.DisplayFlex).Gap(tw.S2)
-	clChoiceGroupVertical    = tw.New().FlexDir(tw.FlexCol)
+	clChoiceGroupOptions     = tw.New().Display(tw.DisplayFlex)
+	clChoiceGroupVertical    = tw.New().FlexDir(tw.FlexCol).Gap(tw.S2)
 	clChoiceGroupHorizontal  = tw.New().FlexDir(tw.FlexRow).FlexWrap().Gap(tw.S4)
 	clChoiceGroupError       = clFieldErr
 

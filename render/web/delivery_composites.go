@@ -24,17 +24,25 @@ import (
 
 func checkboxGroupDeliveryDefinition() DeliveryDefinition {
 	componentType := "CheckboxGroup"
+	options := deliveryClassBound(
+		deliveryFrame(
+			"Options",
+			clChoiceGroupOptions.Compile(),
+			deliveryInstance("Option", "Checkbox", "unchecked", ""),
+		),
+		"orientation",
+		map[string]string{
+			"vertical":   clChoiceGroupVertical.Compile(),
+			"horizontal": clChoiceGroupHorizontal.Compile(),
+		},
+	)
 	root := deliverySemantics(
 		deliveryFrame(
 			componentType,
 			clChoiceGroupRoot.Compile(),
 			deliveryText("Legend", clChoiceGroupLegend.Compile(), "Notify me about", "label"),
 			deliveryText("Description", clChoiceGroupDescription.Compile(), "Choose every update you want.", "description"),
-			deliveryFrame(
-				"Options",
-				clChoiceGroupOptions.Merge(clChoiceGroupVertical).Compile(),
-				deliveryInstance("Option", "Checkbox", "unchecked", ""),
-			),
+			options,
 			deliveryText("Error", clChoiceGroupError.Compile(), "Choose at least one option.", "error"),
 		),
 		"group",
@@ -88,17 +96,25 @@ func checkboxGroupDeliveryDefinition() DeliveryDefinition {
 
 func radioGroupDeliveryDefinition() DeliveryDefinition {
 	componentType := "RadioGroup"
+	options := deliveryClassBound(
+		deliveryFrame(
+			"Options",
+			clChoiceGroupOptions.Compile(),
+			deliveryInstance("Option", "Radio", "basic", ""),
+		),
+		"orientation",
+		map[string]string{
+			"vertical":   clChoiceGroupVertical.Compile(),
+			"horizontal": clChoiceGroupHorizontal.Compile(),
+		},
+	)
 	root := deliverySemantics(
 		deliveryFrame(
 			componentType,
 			clChoiceGroupRoot.Compile(),
 			deliveryText("Legend", clChoiceGroupLegend.Compile(), "Choose a plan", "label"),
 			deliveryText("Description", clChoiceGroupDescription.Compile(), "Select one plan.", "description"),
-			deliveryFrame(
-				"Options",
-				clChoiceGroupOptions.Merge(clChoiceGroupVertical).Compile(),
-				deliveryInstance("Option", "Radio", "basic", ""),
-			),
+			options,
 			deliveryText("Error", clChoiceGroupError.Compile(), "Choose one plan.", "error"),
 		),
 		"radiogroup",

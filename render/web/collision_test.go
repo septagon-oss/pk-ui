@@ -69,6 +69,8 @@ func composedLists(t *testing.T) map[string]tw.ClassList {
 	out["grid/actions"] = clGridActions
 	out["search/wrap"] = clSearchWrap
 	out["search/input"] = clSearchInput
+	out["choice-group/vertical"] = clChoiceGroupOptions.Merge(clChoiceGroupVertical)
+	out["choice-group/horizontal"] = clChoiceGroupOptions.Merge(clChoiceGroupHorizontal)
 	return out
 }
 

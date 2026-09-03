@@ -859,6 +859,28 @@ func TestInputBlueprintPreservesBindingCascadeAndConditionalSources(t *testing.T
 	}
 }
 
+func TestChoiceGroupBlueprintOptionsBindOrientationAtTheLayoutNode(t *testing.T) {
+	t.Parallel()
+
+	for _, component := range []string{"CheckboxGroup", "RadioGroup"} {
+		definition := blueprintContractDefinition(t, component)
+		options := blueprintContractOnlyNodeNamed(t, definition.Design.Root, "Options")
+		if got, want := options.Classes, clChoiceGroupOptions.Compile(); got != want {
+			t.Errorf("%s/Options default classes = %q, want %q", component, got, want)
+		}
+		blueprintContractAssertOrder(t, options, "orientation")
+		blueprintContractAssertClassBinding(t, options, "orientation", map[string]string{
+			"vertical":   clChoiceGroupVertical.Compile(),
+			"horizontal": clChoiceGroupHorizontal.Compile(),
+		})
+
+		horizontal := deliveryExamplePropsForTest(t, component, "horizontal")
+		if got := horizontal["orientation"]; got != "horizontal" {
+			t.Errorf("%s horizontal example orientation = %#v, want horizontal", component, got)
+		}
+	}
+}
+
 func TestFileUploadDropZoneKeepsGovernedGeometryAcrossDeliverySurfaces(t *testing.T) {
 	t.Parallel()
 
