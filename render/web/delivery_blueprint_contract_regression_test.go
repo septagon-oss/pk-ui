@@ -225,6 +225,72 @@ func TestAvatarBlueprintRetainsExactFixtureGeometryAndShape(t *testing.T) {
 	}
 }
 
+func TestSkeletonBlueprintProjectsDistinctGovernedAnatomies(t *testing.T) {
+	t.Parallel()
+
+	definition := blueprintContractDefinition(t, "Skeleton")
+	root := definition.Design.Root
+	if got, want := blueprintContractDirectChildNames(root), []string{"Block", "Text", "Circle"}; !slices.Equal(got, want) {
+		t.Fatalf("Skeleton direct children = %v, want %v", got, want)
+	}
+
+	block := blueprintContractOnlyNodeNamed(t, root, "Block")
+	blueprintContractAssertCondition(t, block, "visible_when", map[string]any{"shape": "block"})
+	blueprintContractAssertClassBinding(t, block, "size", compileClassMap(clSkeletonBlockSize))
+	for _, class := range strings.Fields(clSkeleton.Merge(clSkeletonBlockSize["md"]).Compile()) {
+		if !slices.Contains(strings.Fields(block.Classes), class) {
+			t.Errorf("Skeleton/Block classes = %q, want %q", block.Classes, class)
+		}
+	}
+
+	circle := blueprintContractOnlyNodeNamed(t, root, "Circle")
+	blueprintContractAssertCondition(t, circle, "visible_when", map[string]any{"shape": "circle"})
+	blueprintContractAssertClassBinding(t, circle, "size", compileClassMap(clSkeletonCircleSize))
+	for _, class := range strings.Fields(clSkeleton.Merge(clSkeletonCircleSize["md"]).Compile()) {
+		if !slices.Contains(strings.Fields(circle.Classes), class) {
+			t.Errorf("Skeleton/Circle classes = %q, want %q", circle.Classes, class)
+		}
+	}
+
+	text := blueprintContractOnlyNodeNamed(t, root, "Text")
+	blueprintContractAssertCondition(t, text, "visible_when", map[string]any{"shape": "text"})
+	if got, want := blueprintContractDirectChildNames(text), []string{"LineOne", "LineTwo", "LineThree"}; !slices.Equal(got, want) {
+		t.Fatalf("Skeleton/Text direct children = %v, want %v", got, want)
+	}
+	for _, class := range []string{"flex", "flex-col", "gap-2", "w-full"} {
+		if !slices.Contains(strings.Fields(text.Classes), class) {
+			t.Errorf("Skeleton/Text classes = %q, want %q", text.Classes, class)
+		}
+	}
+	for _, name := range []string{"LineOne", "LineTwo", "LineThree"} {
+		line := blueprintContractOnlyNodeNamed(t, text, name)
+		blueprintContractAssertClassBinding(t, line, "size", compileClassMap(clSkeletonLineSize))
+		for _, class := range []string{"animate-pulse", "bg-surface-tertiary", "h-4", "w-full", "rounded-md"} {
+			if !slices.Contains(strings.Fields(line.Classes), class) {
+				t.Errorf("Skeleton/Text/%s classes = %q, want %q", name, line.Classes, class)
+			}
+		}
+	}
+	last := blueprintContractOnlyNodeNamed(t, text, "LineThree")
+	if !slices.Contains(strings.Fields(last.Classes), "max-w-xs") {
+		t.Errorf("Skeleton/Text/LineThree classes = %q, want max-w-xs", last.Classes)
+	}
+
+	for _, test := range []struct {
+		example string
+		shape   string
+	}{
+		{example: "block", shape: "block"},
+		{example: "text", shape: "text"},
+		{example: "circle", shape: "circle"},
+	} {
+		props := deliveryExamplePropsForTest(t, "Skeleton", test.example)
+		if got := props["shape"]; got != test.shape {
+			t.Errorf("Skeleton/%s shape = %#v, want %q", test.example, got, test.shape)
+		}
+	}
+}
+
 func TestDeferredSlotBlueprintPreservesDefaultPlaceholder(t *testing.T) {
 	t.Parallel()
 

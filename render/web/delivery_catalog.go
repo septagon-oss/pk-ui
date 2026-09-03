@@ -2038,10 +2038,45 @@ func tooltipDeliveryDefinition() DeliveryDefinition {
 
 func skeletonDeliveryDefinition() DeliveryDefinition {
 	componentType := "Skeleton"
-	root := deliveryClassBound(
-		deliveryFrame(componentType, clSkeleton.Compile()),
+	block := deliveryVisibleWhen(deliveryClassBound(
+		deliveryFrame(
+			"Block",
+			clSkeleton.Merge(clSkeletonBlockSize["md"]).Compile(),
+		),
 		"size",
 		compileClassMap(clSkeletonBlockSize),
+	), map[string]any{"shape": "block"})
+	circle := deliveryVisibleWhen(deliveryClassBound(
+		deliveryFrame(
+			"Circle",
+			clSkeleton.Merge(clSkeletonCircleSize["md"]).Compile(),
+		),
+		"size",
+		compileClassMap(clSkeletonCircleSize),
+	), map[string]any{"shape": "circle"})
+	line := func(name string, classes tw.ClassList) blueprint.Node {
+		return deliveryClassBound(
+			deliveryFrame(
+				name,
+				clSkeleton.Merge(classes).Merge(clSkeletonLineSize["md"]).Compile(),
+			),
+			"size",
+			compileClassMap(clSkeletonLineSize),
+		)
+	}
+	text := deliveryVisibleWhen(deliveryFrame(
+		"Text",
+		clSkeletonText.Merge(tw.New().Width(tw.SFull)).Compile(),
+		line("LineOne", clSkeletonLine),
+		line("LineTwo", clSkeletonLine),
+		line("LineThree", clSkeletonLineLast),
+	), map[string]any{"shape": "text"})
+	root := deliveryFrame(
+		componentType,
+		"",
+		block,
+		text,
+		circle,
 	)
 	return newDeliveryDefinition(
 		componentType,
