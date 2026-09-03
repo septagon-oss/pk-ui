@@ -1006,7 +1006,7 @@ func fileUploadDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "remote-upload", map[string]any{
 				"name": "logo_url", "label": "Company logo", "accept": "image/*",
 				"preview": true, "uploadURL": "/api/v1/files/upload", "uploadCategory": "image",
-				"value": deliveryFixtureImageDataURL, "currentName": "logo.svg",
+				"value": deliveryFixtureImageDataURL, "currentName": "logo.png",
 			}),
 			deliveryExample(componentType, "htmx-upload", map[string]any{
 				"name": "evidence", "label": "Evidence", "accept": ".pdf",

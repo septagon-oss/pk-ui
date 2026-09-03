@@ -26,8 +26,9 @@ import (
 
 // deliveryFixtureImageDataURL keeps executable browser examples independent
 // from application routes and external hosts. Product consumers still provide
-// ordinary image URLs through the same public contracts.
-const deliveryFixtureImageDataURL = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23e2e8f0'/%3E%3Ccircle cx='32' cy='24' r='12' fill='%2364758b'/%3E%3Cpath d='M12 58c2-13 10-20 20-20s18 7 20 20' fill='%2364758b'/%3E%3C/svg%3E"
+// ordinary image URLs through the same public contracts. The lossless PNG also
+// follows Penpot's raster-only inline ImageData path; SVG remains a vector node.
+const deliveryFixtureImageDataURL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAmVBMVEX////i5/Dh6fDi6PDj6PDd5Ozj6fDh6PDT2+Sst8SHlad4hptqeo+suMXV2+aWo7Nmd4xkdYuNm6zR2OK6xNFre5C+x9PU3OWIlqh2hZlrfJCXpLSap7eSn7DGztmmsb+Mmap5iJxsfZGhrbxygZbK0d26w9BneI63wc20vsuBkKJ/jqHc4+xvf5Tb4eu5ws/Bytbj6O/j5+8Snb30AAAAAXRSTlMAQObYZgAAAa5JREFUWMO9121XwiAUB3B1rjkF5fowNiun27SsLOv7f7joqAnK4DKs/zvPdn+Hh4HQap3S7gTodNqti3RDfPUxd3J95FwuEp3rm5T/xLf+JDRqv9SL5uVHwX38pYS+LRCj0PYDIl+g4zMHhxYYHvbi/oCQQZ/2TINQ+2Q4YnAMG0/cgSkBKbPEFYgZKGGxGzC9qBdC4gJwAleZcQdgBJqM8ECP6QDG0UAM2lA0kOqBFA1kemCABogeIL7A3LcL2f8NIvWdRu8PSf8p3wd4YDjTzIHLYgoSz+Xsv6GINii9mDtvaWJTeThvqo88cAcEQdOMkCyl3PCS51/j3wKLfLkqGCtWy3zhDvCykmehKrkTEJZXWwIpQzyw1m4I2RoLbGp2pKdnHLBlUBO2xQBJbb12RV0BkwIMKSZW4AWMebUBFCyhZuBtZwOKdyOQ2+oBciNQ2YHKBHzY6wE2KqAcNMcYYKwC8lE3JBiAyKuqqwB7TD3AXiqJlON+iQNKuQfKhaOPA1IVkH5Zv6JDdirgdeA/XNua35pudfFs2gv58vzpXv51eYGPuuh2iFd/y74BR+lwFLl7/ScAAAAASUVORK5CYII="
 
 const deliverySpinnerArcSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"><path d="M12 1a11 11 0 0 1 11 11" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`
 

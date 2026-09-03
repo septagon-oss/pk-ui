@@ -11,6 +11,8 @@ package web
 
 import (
 	"bytes"
+	"encoding/base64"
+	"image/png"
 	"reflect"
 	"slices"
 	"strconv"
@@ -204,10 +206,36 @@ func TestImageDeliveryExamplesAreBrowserSelfContained(t *testing.T) {
 			t.Parallel()
 			props := deliveryExamplePropsForTest(t, tt.component, tt.example)
 			value, _ := props[tt.property].(string)
-			if !strings.HasPrefix(value, "data:image/svg+xml,") {
+			if !strings.HasPrefix(value, "data:image/png;base64,") {
 				t.Fatalf("%s fixture %s must use an inline image, got %q", tt.component, tt.property, value)
 			}
 		})
+	}
+
+	uploadProps := deliveryExamplePropsForTest(t, "FileUpload", "remote-upload")
+	if got, _ := uploadProps["currentName"].(string); got != "logo.png" {
+		t.Fatalf("FileUpload/remote-upload currentName = %q, want logo.png", got)
+	}
+}
+
+func TestDeliveryFixtureImageIsValidAvatarPNG(t *testing.T) {
+	t.Parallel()
+
+	const prefix = "data:image/png;base64,"
+	payload := strings.TrimPrefix(deliveryFixtureImageDataURL, prefix)
+	if payload == deliveryFixtureImageDataURL {
+		t.Fatalf("delivery fixture must use a PNG data URI, got %q", deliveryFixtureImageDataURL)
+	}
+	decoded, err := base64.StdEncoding.DecodeString(payload)
+	if err != nil {
+		t.Fatalf("decode delivery fixture: %v", err)
+	}
+	config, err := png.DecodeConfig(bytes.NewReader(decoded))
+	if err != nil {
+		t.Fatalf("decode delivery fixture PNG: %v", err)
+	}
+	if config.Width != 64 || config.Height != 64 {
+		t.Fatalf("delivery fixture PNG dimensions = %dx%d, want 64x64", config.Width, config.Height)
 	}
 }
 
@@ -244,7 +272,7 @@ func TestAvatarDeliveryPublishesImageCircleMediumSpecimen(t *testing.T) {
 		`rounded-full`,
 		`<img`,
 		`alt="Assistant avatar"`,
-		`src="data:image/svg+xml,`,
+		`src="data:image/png;base64,`,
 	} {
 		if !strings.Contains(html, fragment) {
 			t.Errorf("Avatar/%s is missing %q: %s", example, fragment, html)
