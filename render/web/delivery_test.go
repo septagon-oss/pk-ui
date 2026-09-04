@@ -85,6 +85,25 @@ func TestOSSDeliveryCatalogIsCompleteNativeAndExecutable(t *testing.T) {
 	}
 }
 
+func TestAtomicLibraryPagesAgreeWithComponentContracts(t *testing.T) {
+	t.Parallel()
+
+	categoryByPage := map[string]string{
+		"02 Atoms": "atom", "03 Molecules": "molecule",
+		"04 Organisms": "organism", "05 Templates": "template",
+	}
+	for _, definition := range OSSDeliveryCatalog() {
+		if definition.Design.Taxonomy == nil {
+			continue
+		}
+		page := definition.Design.Taxonomy.LibraryPage
+		wantCategory, atomicPage := categoryByPage[page]
+		if atomicPage && string(definition.Contract.Category) != wantCategory {
+			t.Errorf("%s: %s contains a %s component; want %s", definition.Identity.ID, page, definition.Contract.Category, wantCategory)
+		}
+	}
+}
+
 func TestAdaptiveDetailAndOfflineContractsArePublished(t *testing.T) {
 	t.Parallel()
 

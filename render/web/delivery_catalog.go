@@ -986,7 +986,7 @@ func alertDeliveryDefinition() DeliveryDefinition {
 				Attrs:        deliveryRepeatingSlotAttrs(),
 			},
 		},
-		deliveryDesign("info", "02 Atoms", "Feedback", root),
+		deliveryDesign("info", "03 Molecules", "Feedback", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "info", map[string]any{
 				"title": "Update available", "message": "Review the latest changes.", "tone": "info",
@@ -1198,7 +1198,7 @@ func inputDeliveryDefinition() DeliveryDefinition {
 				Cardinality:  designcomponent.SlotOne,
 			},
 		},
-		deliveryDesign("text", "02 Atoms", "Forms", root),
+		deliveryDesign("text", "03 Molecules", "Forms", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "text", map[string]any{
 				"name": "email", "type": "email", "label": "Email address",
@@ -1403,7 +1403,7 @@ func textareaDeliveryDefinition() DeliveryDefinition {
 			"fullWidth":  modifierProperty("Whether the field fills its container."),
 		},
 		nil,
-		deliveryDesign("default", "02 Atoms", "Forms", root),
+		deliveryDesign("default", "03 Molecules", "Forms", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "default", map[string]any{
 				"name": "notes", "label": "Notes", "placeholder": "Add context for reviewers.",
@@ -1484,7 +1484,7 @@ func checkboxDeliveryDefinition() DeliveryDefinition {
 			"helpText":      contentProperty("Supporting guidance."),
 		},
 		nil,
-		deliveryDesign("unchecked", "02 Atoms", "Forms", root),
+		deliveryDesign("unchecked", "03 Molecules", "Forms", root),
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "unchecked", map[string]any{
 				"name": "archived", "label": "Include archived items",
@@ -2304,7 +2304,7 @@ func emptyStateDeliveryDefinition() DeliveryDefinition {
 				Attrs:        deliveryRepeatingSlotAttrs(),
 			},
 		},
-		deliveryDesign("default", "02 Atoms", "Feedback", root),
+		deliveryDesign("default", "03 Molecules", "Feedback", root),
 		[]DeliveryExample{
 			withDeliveryExampleSlots(
 				canonicalDeliveryExample(componentType, "default", map[string]any{
