@@ -59,9 +59,11 @@ func TestBuiltinProviderResolvesEditorVocabulary(t *testing.T) {
 
 	for name, wantGlyph := range map[string]string{
 		"album-stack": "images",
+		"camera":      "camera",
 		"design":      "squares-four",
 		"graphics":    "image",
 		"photo":       "image",
+		"play":        "play",
 		"shape":       "shapes",
 		"text":        "text-t",
 		"uploads":     "upload-simple",

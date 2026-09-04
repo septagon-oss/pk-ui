@@ -118,6 +118,24 @@ func deliveryInstance(
 	return node
 }
 
+func deliveryInstanceProps(
+	name string,
+	componentType string,
+	example string,
+	classes string,
+	props map[string]any,
+) blueprint.Node {
+	node := deliveryInstance(name, componentType, example, classes)
+	if len(props) == 0 {
+		return node
+	}
+	if node.Props == nil {
+		node.Props = make(map[string]any)
+	}
+	node.Props["instance_props"] = maps.Clone(props)
+	return node
+}
+
 func deliverySVGBound(
 	name string,
 	classes string,

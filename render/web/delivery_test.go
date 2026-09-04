@@ -340,6 +340,18 @@ func TestAvatarImageCircleMediumSpecimenSelectsExactDesignGeometry(t *testing.T)
 	}
 }
 
+func TestSidebarAdminDeliveryUsesVerticalRootFlow(t *testing.T) {
+	t.Parallel()
+
+	root := blueprintContractDefinition(t, "Sidebar").Design.Root
+	classes := strings.Fields(root.Classes)
+	for _, class := range []string{"hidden", "flex-col", "lg:flex", "lg:w-64"} {
+		if !slices.Contains(classes, class) {
+			t.Errorf("Sidebar admin root classes = %v, want %q", classes, class)
+		}
+	}
+}
+
 func deliveryExamplePropsForTest(t *testing.T, componentType, exampleName string) map[string]any {
 	t.Helper()
 	for _, definition := range OSSDeliveryCatalog() {
@@ -720,6 +732,102 @@ func TestDataManagementSolutionHasOneResponsivePrimaryAction(t *testing.T) {
 	} {
 		if !strings.Contains(html, requiredClass) {
 			t.Errorf("responsive data toolbar is missing %q:\n%s", requiredClass, html)
+		}
+	}
+}
+
+func TestDataManagementSolutionExposesConfiguredLogoutAction(t *testing.T) {
+	t.Parallel()
+
+	var rendered bytes.Buffer
+	if err := renderDataManagementPage(DataManagementPageProps{
+		LogoutLabel: "Log out",
+		LogoutURL:   "/logout",
+	}).Render(&rendered); err != nil {
+		t.Fatal(err)
+	}
+	html := rendered.String()
+	for _, want := range []string{`href="/logout"`, `>Log out<`} {
+		if !strings.Contains(html, want) {
+			t.Errorf("data management logout action is missing %q:\n%s", want, html)
+		}
+	}
+	for _, want := range []string{"w-full", "h-[100vh]"} {
+		if !strings.Contains(html, want) {
+			t.Errorf("data management page is missing desktop/mobile canvas class %q:\n%s", want, html)
+		}
+	}
+
+	definition := dataManagementPageDeliveryDefinition()
+	var action *blueprint.Node
+	walkDeliveryNodes(definition.Design.Root, func(node *blueprint.Node) {
+		if node.Name == "LogoutAction" {
+			action = node
+		}
+	})
+	if action == nil || action.Kind != blueprint.NodeInstance || action.Text != "Button" {
+		t.Fatalf("data management design has no native LogoutAction Button: %#v", action)
+	}
+	instanceProps, ok := action.Props["instance_props"].(map[string]any)
+	if !ok || instanceProps["label"] != "Log out" || instanceProps["href"] != "/logout" {
+		t.Fatalf("data management LogoutAction props = %#v", action.Props)
+	}
+}
+
+func TestProductionCatalogCoversCriticalComponentStates(t *testing.T) {
+	t.Parallel()
+
+	type requiredAxis struct {
+		property string
+		values   []any
+	}
+	want := map[string][]requiredAxis{
+		"Button": {
+			{property: "size", values: []any{"lg", "xl", "2xl"}},
+			{property: "tone", values: []any{"warning", "info"}},
+			{property: "disabled", values: []any{true}},
+		},
+		"Checkbox": {
+			{property: "indeterminate", values: []any{true}},
+			{property: "disabled", values: []any{true}},
+		},
+		"Select":       {{property: "required", values: []any{true}}, {property: "disabled", values: []any{true}}},
+		"Textarea":     {{property: "required", values: []any{true}}, {property: "disabled", values: []any{true}}},
+		"Autocomplete": {{property: "required", values: []any{true}}, {property: "disabled", values: []any{true}}},
+		"DatePicker":   {{property: "disabled", values: []any{true}}},
+		"Dropdown":     {{property: "disabled", values: []any{true}}},
+		"SearchBar":    {{property: "disabled", values: []any{true}}},
+		"Tabs":         {{property: "disabled", values: []any{true}}},
+		"Pagination":   {{property: "disabled", values: []any{true}}},
+		"Link":         {{property: "disabled", values: []any{true}}},
+		"FileUpload":   {{property: "disabled", values: []any{true}}},
+		"Tooltip":      {{property: "position", values: []any{"top", "bottom", "left", "right"}}},
+		"Card":         {{property: "variant", values: []any{"default", "elevated", "outlined", "plain"}}},
+	}
+
+	definitions := make(map[string]DeliveryDefinition)
+	for _, definition := range OSSDeliveryCatalog() {
+		definitions[string(definition.Identity.ID)] = definition
+	}
+	for componentType, axes := range want {
+		definition, ok := definitions[componentType]
+		if !ok {
+			t.Errorf("catalog has no %s definition", componentType)
+			continue
+		}
+		for _, axis := range axes {
+			for _, value := range axis.values {
+				covered := false
+				for _, example := range definition.Examples {
+					if reflect.DeepEqual(example.Props[axis.property], value) {
+						covered = true
+						break
+					}
+				}
+				if !covered {
+					t.Errorf("%s has no authored %s=%v specimen", componentType, axis.property, value)
+				}
+			}
 		}
 	}
 }

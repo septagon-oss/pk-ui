@@ -363,7 +363,7 @@ func TestButtonBlueprintPreservesCascadeAndLoadingReplacement(t *testing.T) {
 
 	definition := blueprintContractDefinition(t, "Button")
 	root := definition.Design.Root
-	blueprintContractAssertOrder(t, root, "variant", "tone", "size", "fullWidth", "iconOnly")
+	blueprintContractAssertOrder(t, root, "variant", "tone", "size", "fullWidth", "iconOnly", "disabled")
 
 	loading := blueprintContractOnlyNodeNamed(t, root, "LoadingIndicator")
 	if loading.Kind != blueprint.NodeInstance || loading.Text != "Spinner" {

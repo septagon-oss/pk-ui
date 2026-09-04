@@ -9,6 +9,8 @@ package web
 // of catalog components and a native instance graph—not a flattened drawing.
 
 import (
+	"maps"
+
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 
@@ -299,22 +301,43 @@ func detailListDeliveryDefinition() DeliveryDefinition {
 
 func cardDeliveryDefinition() DeliveryDefinition {
 	componentType := "Card"
-	root := deliveryClassBound(
-		deliveryFrame(
-			componentType,
-			clCard.Compile(),
-			deliveryText("Title", clCardTitle.Compile(), "Quarterly summary", "title"),
-			deliveryText("Description", clCardDesc.Compile(), "Performance is tracking above plan.", "description"),
-			deliverySlot(
-				"Content",
-				"children",
-				"",
-				deliveryInstance("Body", "Text", "body", ""),
-			),
+	root := deliveryFrame(
+		componentType,
+		clCardFrame.Compile(),
+		deliveryText("Title", clCardTitle.Compile(), "Quarterly summary", "title"),
+		deliveryText("Description", clCardDesc.Compile(), "Performance is tracking above plan.", "description"),
+		deliverySlot(
+			"Content",
+			"children",
+			"",
+			deliveryInstance("Body", "Text", "body", ""),
 		),
-		"clickable",
-		map[string]string{"false": "", "true": clCardClickable.Compile()},
 	)
+	root = deliveryClassBound(root, "variant", map[string]string{
+		"default":  clCardBorder.Compile(),
+		"elevated": "",
+		"outlined": clCardBorder.Compile(),
+		"plain":    "",
+	})
+	root = deliveryClassBound(root, "padding", map[string]string{
+		"default": clCardPadDefault.Compile(),
+		"none":    clCardPadNone.Compile(),
+		"small":   clCardPadSmall.Compile(),
+		"medium":  clCardPadMedium.Compile(),
+		"large":   clCardPadLarge.Compile(),
+	})
+	root = deliveryClassBound(root, "shadow", map[string]string{
+		"none":   tw.New().Shadow(tw.ShadowNone).Compile(),
+		"small":  clCardShadowSmall.Compile(),
+		"medium": clCardShadowMedium.Compile(),
+		"large":  clCardShadowLarge.Compile(),
+	})
+	root = deliveryClassBound(root, "clickable", map[string]string{
+		"false": "", "true": clCardClickable.Compile(),
+	})
+	root = deliveryClassBound(root, "hoverable", map[string]string{
+		"false": "", "true": clCardHoverable.Compile(),
+	})
 	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
@@ -327,7 +350,7 @@ func cardDeliveryDefinition() DeliveryDefinition {
 			"imageAlt":      contentProperty("Alternative text for card media."),
 			"imagePosition": variantProperty([]string{"top", "bottom", "left", "right"}, "top", "Media placement."),
 			"variant":       variantProperty([]string{"default", "elevated", "outlined", "plain"}, "default", "Surface treatment."),
-			"padding":       variantProperty([]string{"none", "small", "medium", "large"}, "medium", "Content spacing."),
+			"padding":       variantProperty([]string{"default", "none", "small", "medium", "large"}, "default", "Content spacing."),
 			"shadow":        variantProperty([]string{"none", "small", "medium", "large"}, "small", "Surface elevation."),
 			"clickable":     stateProperty("Whether the whole card is interactive."),
 			"hoverable":     stateProperty("Whether the card lifts on hover."),
@@ -345,6 +368,7 @@ func cardDeliveryDefinition() DeliveryDefinition {
 			cardDeliveryExample(
 				canonicalDeliveryExample(componentType, "summary", map[string]any{
 					"title": "Quarterly summary", "description": "Performance is tracking above plan.",
+					"variant": "default", "padding": "default", "shadow": "small",
 				}),
 				"Review the current operational details.",
 			),
@@ -359,6 +383,24 @@ func cardDeliveryDefinition() DeliveryDefinition {
 					"title": "Quarterly summary", "description": "Performance is tracking above plan.",
 				}),
 				"Review the current operational details.",
+			),
+			cardDeliveryExample(
+				deliveryExample(componentType, "elevated", map[string]any{
+					"title": "Elevated card", "description": "A prominent floating surface.", "variant": "elevated", "shadow": "medium",
+				}),
+				"Use elevation for content that must stand above its surroundings.",
+			),
+			cardDeliveryExample(
+				deliveryExample(componentType, "outlined", map[string]any{
+					"title": "Outlined card", "description": "A quiet bounded surface.", "variant": "outlined", "shadow": "none",
+				}),
+				"Use an outline where hierarchy comes from structure rather than depth.",
+			),
+			cardDeliveryExample(
+				deliveryExample(componentType, "plain", map[string]any{
+					"title": "Plain card", "description": "A seamless grouped surface.", "variant": "plain", "shadow": "none",
+				}),
+				"Use a plain card when the surrounding canvas already provides containment.",
 			),
 		},
 		func(props molecules.CardProps, slots DeliverySlotChildren) g.Node {
@@ -851,24 +893,28 @@ func datePickerDeliveryDefinition() DeliveryDefinition {
 		Merge(clInputSize["md"]).
 		Merge(clInputPadStart).
 		Compile()
+	control := deliveryClassBound(
+		deliveryFrame(
+			"Control",
+			clInputIconWrap.Compile(),
+			deliveryInstance("CalendarIcon", "Icon", "Calendar / Fg Tertiary / 20", clInputIconStart.Compile()),
+			deliveryText("Value", controlClass, "2026-04-06", "value", "placeholder"),
+		),
+		"error",
+		map[string]string{
+			"":  clInputIconWrap.Compile(),
+			"*": clInputIconWrap.Compile(),
+		},
+	)
+	control = deliveryClassBound(control, "disabled", map[string]string{
+		"false": "", "true": clDisabledState.Compile(),
+	})
 	root := deliverySemantics(
 		deliveryFrame(
 			componentType,
 			clFieldWrap.Compile(),
 			deliveryText("Label", clLabel.Compile(), "Start Date", "label"),
-			deliveryClassBound(
-				deliveryFrame(
-					"Control",
-					clInputIconWrap.Compile(),
-					deliveryInstance("CalendarIcon", "Icon", "Calendar / Fg Tertiary / 20", clInputIconStart.Compile()),
-					deliveryText("Value", controlClass, "2026-04-06", "value", "placeholder"),
-				),
-				"error",
-				map[string]string{
-					"":  clInputIconWrap.Compile(),
-					"*": clInputIconWrap.Compile(),
-				},
-			),
+			control,
 			deliveryText("Supporting", clHelp.Compile(), "Choose an available date.", "helpText", "error"),
 		),
 		"field",
@@ -910,6 +956,9 @@ func datePickerDeliveryDefinition() DeliveryDefinition {
 				"name": "event_date", "label": "Event date",
 				"hx-get": "/api/availability", "hx-target": "#availability-results",
 			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"name": "start_date", "label": "Start date", "value": "2026-04-06", "disabled": true,
+			}),
 		},
 		DatePicker,
 	)
@@ -917,6 +966,19 @@ func datePickerDeliveryDefinition() DeliveryDefinition {
 
 func fileUploadDeliveryDefinition() DeliveryDefinition {
 	componentType := "FileUpload"
+	dropZone := deliveryFrame(
+		"DropZone",
+		clFileUploadDropZone.Compile(),
+		deliveryPreserveSlotFallback(deliverySlot(
+			"Prompt", "content", clFileUploadDropZoneInner.Compile(),
+			deliveryInstance("UploadIcon", "Icon", "Upload / Fg Tertiary / 40", clFileUploadIcon.Compile()),
+			deliveryText("Action", clFileUploadPromptAction.Compile(), "Click to upload", "promptLabel"),
+			deliveryText("DropHint", clFileUploadPromptText.Compile(), "or drag and drop", "dropLabel"),
+		)),
+	)
+	dropZone = deliveryClassBound(dropZone, "disabled", map[string]string{
+		"false": "", "true": clFileUploadDropZoneDisabled.Compile(),
+	})
 	root := deliverySemantics(
 		deliveryFrame(
 			componentType,
@@ -925,16 +987,7 @@ func fileUploadDeliveryDefinition() DeliveryDefinition {
 			deliveryFrame(
 				"Control",
 				"",
-				deliveryFrame(
-					"DropZone",
-					clFileUploadDropZone.Compile(),
-					deliveryPreserveSlotFallback(deliverySlot(
-						"Prompt", "content", clFileUploadDropZoneInner.Compile(),
-						deliveryInstance("UploadIcon", "Icon", "Upload / Fg Tertiary / 40", clFileUploadIcon.Compile()),
-						deliveryText("Action", clFileUploadPromptAction.Compile(), "Click to upload", "promptLabel"),
-						deliveryText("DropHint", clFileUploadPromptText.Compile(), "or drag and drop", "dropLabel"),
-					)),
-				),
+				dropZone,
 				deliveryFrame(
 					"FileList",
 					clFileUploadList.Compile(),
@@ -1012,6 +1065,9 @@ func fileUploadDeliveryDefinition() DeliveryDefinition {
 				"name": "evidence", "label": "Evidence", "accept": ".pdf",
 				"hx-post": "/api/evidence", "hx-target": "#evidence-results",
 			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"name": "attachment", "label": "Attachment unavailable", "accept": ".pdf", "disabled": true,
+			}),
 		},
 		func(props molecules.FileUploadProps, slots DeliverySlotChildren) g.Node {
 			return FileUploadWithSlots(props, FileUploadSlots{Content: slots.Nodes("content")})
@@ -1027,23 +1083,27 @@ func autocompleteDeliveryDefinition() DeliveryDefinition {
 		Merge(clInputSize["md"]).
 		Merge(clInputPadStart).
 		Compile()
+	control := deliveryFrame(
+		"Control",
+		clAutocompleteControl.Compile(),
+		deliveryInstance("SearchIcon", "Icon", "Search / Fg Tertiary / 20", clInputIconStart.Compile()),
+		deliveryText("Query", controlClass, "Search users...", "displayValue", "placeholder"),
+		deliveryFrame(
+			"Results",
+			clAutocompletePanel.Compile(),
+			deliveryText("Option", clAutocompleteOption.Compile(), "Ada Lovelace"),
+			deliveryText("Option", clAutocompleteOption.Compile(), "Grace Hopper"),
+		),
+	)
+	control = deliveryClassBound(control, "disabled", map[string]string{
+		"false": "", "true": clDisabledState.Compile(),
+	})
 	root := deliverySemantics(
 		deliveryFrame(
 			componentType,
 			clFieldWrap.Compile(),
 			deliveryText("Label", clLabel.Compile(), "Assign To", "label"),
-			deliveryFrame(
-				"Control",
-				clAutocompleteControl.Compile(),
-				deliveryInstance("SearchIcon", "Icon", "Search / Fg Tertiary / 20", clInputIconStart.Compile()),
-				deliveryText("Query", controlClass, "Search users...", "displayValue", "placeholder"),
-				deliveryFrame(
-					"Results",
-					clAutocompletePanel.Compile(),
-					deliveryText("Option", clAutocompleteOption.Compile(), "Ada Lovelace"),
-					deliveryText("Option", clAutocompleteOption.Compile(), "Grace Hopper"),
-				),
-			),
+			control,
 			deliveryText("Supporting", clHelp.Compile(), "Choose a teammate.", "helpText", "error"),
 		),
 		"field",
@@ -1103,6 +1163,13 @@ func autocompleteDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "validation-error", map[string]any{
 				"name": "owner_id", "label": "Owner", "error": "Choose a valid owner.",
 			}),
+			deliveryExample(componentType, "required", map[string]any{
+				"name": "owner_id", "label": "Owner", "placeholder": "Search users...", "required": true,
+				"options": []map[string]any{{"value": "ada", "label": "Ada Lovelace"}},
+			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"name": "owner_id", "label": "Owner", "displayValue": "Managed by policy", "disabled": true,
+			}),
 		},
 		Autocomplete,
 	)
@@ -1145,6 +1212,9 @@ func dropdownDeliveryDefinition() DeliveryDefinition {
 		"field",
 		"select-only listbox field",
 	)
+	root = deliveryClassBound(root, "disabled", map[string]string{
+		"false": "", "true": clDisabledState.Compile(),
+	})
 	return newDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
@@ -1201,6 +1271,10 @@ func dropdownDeliveryDefinition() DeliveryDefinition {
 					{"value": "active", "label": "Active"},
 					{"value": "paused", "label": "Paused"},
 				},
+			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"name": "country", "label": "Country", "value": "pt", "disabled": true,
+				"options": []map[string]any{{"value": "pt", "label": "Portugal"}},
 			}),
 		},
 		Dropdown,
@@ -1624,6 +1698,9 @@ func paginationDeliveryDefinition() DeliveryDefinition {
 			map[string]any{"totalPages": 0},
 		),
 	)
+	root = deliveryClassBound(root, "disabled", map[string]string{
+		"false": "", "true": clDisabledState.Compile(),
+	})
 	return newDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
@@ -1660,6 +1737,9 @@ func paginationDeliveryDefinition() DeliveryDefinition {
 				"currentPage": 1, "totalPages": 0,
 				"baseURL": "/workspaces?sort=recent", "nextCursor": "opaque",
 			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"currentPage": 1, "totalPages": 4, "baseURL": "/workspaces", "disabled": true,
+			}),
 		},
 		Pagination,
 	)
@@ -1685,6 +1765,9 @@ func searchBarDeliveryDefinition() DeliveryDefinition {
 		"field",
 		"field",
 	)
+	root = deliveryClassBound(root, "disabled", map[string]string{
+		"false": "", "true": clDisabledState.Compile(),
+	})
 	return newDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
@@ -1715,6 +1798,10 @@ func searchBarDeliveryDefinition() DeliveryDefinition {
 				"searchURL": "/search", "label": "Search everything",
 				"placeholder": "Search everything...", "instant": true, "showShortcut": true,
 			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"searchURL": "/search", "label": "Search unavailable",
+				"placeholder": "Search unavailable", "disabled": true,
+			}),
 		},
 		SearchBar,
 	)
@@ -1738,6 +1825,9 @@ func tabsDeliveryDefinition() DeliveryDefinition {
 			deliveryInstance("OverviewBody", "Text", "body", ""),
 		),
 	)
+	root = deliveryClassBound(root, "disabled", map[string]string{
+		"false": "", "true": clTabsDisabled.Compile(),
+	})
 	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierMolecule,
@@ -1778,6 +1868,15 @@ func tabsDeliveryDefinition() DeliveryDefinition {
 				deliveryExampleSlot("tab",
 					tabsDeliveryExampleComponent("profile", "Profile", "Update profile information."),
 					tabsDeliveryExampleComponent("security", "Security", "Review security settings."),
+				),
+			),
+			withDeliveryExampleSlots(
+				deliveryExample(componentType, "disabled", map[string]any{
+					"activeTab": "overview", "orientation": "horizontal", "variant": "underline", "disabled": true,
+				}),
+				deliveryExampleSlot("tab",
+					tabsDeliveryExampleComponent("overview", "Overview", "Current workspace summary."),
+					tabsDeliveryExampleComponent("activity", "Activity", "Recent workspace activity."),
 				),
 			),
 		},
@@ -2361,6 +2460,218 @@ func deliveryAlignClassMap() map[string]string {
 	return out
 }
 
+func deliveryFlexDirectionClassMap() map[string]string {
+	return map[string]string{
+		"row":    tw.New().FlexDir(tw.FlexRow).Compile(),
+		"column": tw.New().FlexDir(tw.FlexCol).Compile(),
+	}
+}
+
+func deliveryFlexWrapClassMap() map[string]string {
+	return map[string]string{
+		"false": "",
+		"true":  tw.New().FlexWrap().Compile(),
+	}
+}
+
+func deliveryJustifyClassMap() map[string]string {
+	out := make(map[string]string, len(justifyContent))
+	for name, justify := range justifyContent {
+		out[name] = tw.New().Justify(justify).Compile()
+	}
+	return out
+}
+
+func deliveryGridColumnsClassMap() map[string]string {
+	return map[string]string{
+		"1":  tw.New().GridCols(1).Compile(),
+		"2":  tw.New().GridCols(2).Compile(),
+		"3":  tw.New().GridCols(3).Compile(),
+		"4":  tw.New().GridCols(4).Compile(),
+		"6":  tw.New().GridCols(6).Compile(),
+		"12": tw.New().GridCols(12).Compile(),
+	}
+}
+
+func deliveryContainerWidthClassMap() map[string]string {
+	out := make(map[string]string, len(containerWidths))
+	for name, width := range containerWidths {
+		out[name] = tw.New().MaxWScaled(width).Compile()
+	}
+	return out
+}
+
+func deliveryHorizontalPaddingClassMap() map[string]string {
+	out := make(map[string]string, len(clGapScale))
+	for name, padding := range clGapScale {
+		out[name] = tw.New().PaddingX(padding).Compile()
+	}
+	return out
+}
+
+type deliveryAxisExampleSpec struct {
+	name      string
+	overrides map[string]any
+	canonical bool
+	mobile    bool
+}
+
+func deliveryAxisExamples(
+	componentType string,
+	baseline map[string]any,
+	specs []deliveryAxisExampleSpec,
+	slots func(string) []DeliveryExampleSlot,
+) []DeliveryExample {
+	examples := make([]DeliveryExample, 0, len(specs))
+	for _, spec := range specs {
+		props := maps.Clone(baseline)
+		maps.Copy(props, spec.overrides)
+
+		var example DeliveryExample
+		switch {
+		case spec.canonical:
+			example = canonicalDeliveryExample(componentType, spec.name, props)
+		case spec.mobile:
+			example = mobileDeliveryExample(componentType, spec.name, props)
+		default:
+			example = deliveryExample(componentType, spec.name, props)
+		}
+		examples = append(examples, withDeliveryExampleSlots(example, slots(spec.name)...))
+	}
+	return examples
+}
+
+func flexDeliveryExamples(componentType string) []DeliveryExample {
+	baseline := map[string]any{
+		"direction": "row",
+		"wrap":      false,
+		"gap":       "4",
+		"align":     "center",
+		"justify":   "start",
+	}
+	specs := []deliveryAxisExampleSpec{
+		{name: "row", canonical: true},
+		{name: "column", overrides: map[string]any{"direction": "column"}},
+		{name: "wrapped", overrides: map[string]any{"wrap": true}},
+		{name: "gap-0", overrides: map[string]any{"gap": "0"}},
+		{name: "gap-1", overrides: map[string]any{"gap": "1"}},
+		{name: "gap-2", overrides: map[string]any{"gap": "2"}},
+		{name: "gap-3", overrides: map[string]any{"gap": "3"}},
+		{name: "gap-5", overrides: map[string]any{"gap": "5"}},
+		{name: "gap-6", overrides: map[string]any{"gap": "6"}},
+		{name: "gap-8", overrides: map[string]any{"gap": "8"}},
+		{name: "align-start", overrides: map[string]any{"align": "start"}},
+		{name: "align-end", overrides: map[string]any{"align": "end"}},
+		{name: "align-stretch", overrides: map[string]any{"align": "stretch"}},
+		{name: "justify-center", overrides: map[string]any{"justify": "center"}},
+		{name: "justify-end", overrides: map[string]any{"justify": "end"}},
+		{name: "justify-between", overrides: map[string]any{"justify": "between"}},
+	}
+	return deliveryAxisExamples(componentType, baseline, specs, func(name string) []DeliveryExampleSlot {
+		return []DeliveryExampleSlot{deliveryExampleSlot(
+			"children",
+			deliveryExampleComponent(
+				name+"-primary-action",
+				"Button",
+				map[string]any{
+					"label": "Continue", "variant": "primary",
+					"tone": "neutral", "size": "md",
+				},
+			),
+			deliveryExampleComponent(
+				name+"-secondary-action",
+				"Button",
+				map[string]any{
+					"label": "Cancel", "variant": "secondary",
+					"tone": "neutral", "size": "md",
+				},
+			),
+		)}
+	})
+}
+
+func gridDeliveryExamples(componentType string) []DeliveryExample {
+	baseline := map[string]any{"columns": "1", "gap": "4"}
+	specs := []deliveryAxisExampleSpec{
+		{name: "two-columns", overrides: map[string]any{"columns": "2"}, canonical: true},
+		{name: "single-column", overrides: map[string]any{"gap": "3"}, mobile: true},
+		{name: "one-column"},
+		{name: "columns-3", overrides: map[string]any{"columns": "3"}},
+		{name: "columns-4", overrides: map[string]any{"columns": "4"}},
+		{name: "columns-6", overrides: map[string]any{"columns": "6"}},
+		{name: "columns-12", overrides: map[string]any{"columns": "12"}},
+		{name: "gap-0", overrides: map[string]any{"gap": "0"}},
+		{name: "gap-1", overrides: map[string]any{"gap": "1"}},
+		{name: "gap-2", overrides: map[string]any{"gap": "2"}},
+		{name: "gap-5", overrides: map[string]any{"gap": "5"}},
+		{name: "gap-6", overrides: map[string]any{"gap": "6"}},
+		{name: "gap-8", overrides: map[string]any{"gap": "8"}},
+	}
+	return deliveryAxisExamples(componentType, baseline, specs, func(name string) []DeliveryExampleSlot {
+		return []DeliveryExampleSlot{deliveryExampleSlot(
+			"children",
+			deliveryExampleCard(
+				name+"-primary-card",
+				"Quarterly summary",
+				"Performance is tracking above plan.",
+			),
+			deliveryExampleCard(
+				name+"-secondary-card",
+				"Open reviews",
+				"Three items need attention.",
+			),
+		)}
+	})
+}
+
+func containerDeliveryExamples(componentType string) []DeliveryExample {
+	baseline := map[string]any{"maxWidth": "7xl", "padding": "4"}
+	specs := []deliveryAxisExampleSpec{
+		{name: "default", canonical: true},
+		{name: "compact", overrides: map[string]any{"maxWidth": "sm", "padding": "2"}},
+		{name: "max-width-sm", overrides: map[string]any{"maxWidth": "sm"}},
+		{name: "max-width-md", overrides: map[string]any{"maxWidth": "md"}},
+		{name: "max-width-lg", overrides: map[string]any{"maxWidth": "lg"}},
+		{name: "max-width-xl", overrides: map[string]any{"maxWidth": "xl"}},
+		{name: "max-width-2xl", overrides: map[string]any{"maxWidth": "2xl"}},
+		{name: "max-width-4xl", overrides: map[string]any{"maxWidth": "4xl"}},
+		{name: "max-width-full", overrides: map[string]any{"maxWidth": "full"}},
+		{name: "padding-0", overrides: map[string]any{"padding": "0"}},
+		{name: "padding-1", overrides: map[string]any{"padding": "1"}},
+		{name: "padding-2", overrides: map[string]any{"padding": "2"}},
+		{name: "padding-3", overrides: map[string]any{"padding": "3"}},
+		{name: "padding-5", overrides: map[string]any{"padding": "5"}},
+		{name: "padding-6", overrides: map[string]any{"padding": "6"}},
+		{name: "padding-8", overrides: map[string]any{"padding": "8"}},
+	}
+	return deliveryAxisExamples(componentType, baseline, specs, func(name string) []DeliveryExampleSlot {
+		return []DeliveryExampleSlot{deliveryExampleSlot(
+			"children",
+			deliveryExampleComponent(
+				name+"-content-stack",
+				"Stack",
+				map[string]any{"gap": "2", "align": "stretch"},
+				deliveryExampleSlot(
+					"children",
+					deliveryExampleComponent(
+						name+"-content-heading",
+						"Heading",
+						map[string]any{"text": "Workspace overview", "level": 2},
+					),
+					deliveryExampleComponent(
+						name+"-content-copy",
+						"Text",
+						map[string]any{
+							"content": "Review current operational details.",
+							"size":    "base", "color": "muted",
+						},
+					),
+				),
+			),
+		)}
+	})
+}
+
 func flexDeliveryDefinition() DeliveryDefinition {
 	componentType := "Flex"
 	root := deliverySlot(
@@ -2370,6 +2681,11 @@ func flexDeliveryDefinition() DeliveryDefinition {
 		deliveryInstance("Primary", "Button", "primary", ""),
 		deliveryInstance("Secondary", "Button", "secondary", ""),
 	)
+	root = deliveryClassBound(root, "direction", deliveryFlexDirectionClassMap())
+	root = deliveryClassBound(root, "wrap", deliveryFlexWrapClassMap())
+	root = deliveryClassBound(root, "gap", deliveryGapClassMap())
+	root = deliveryClassBound(root, "align", deliveryAlignClassMap())
+	root = deliveryClassBound(root, "justify", deliveryJustifyClassMap())
 	return newLayoutDeliveryDefinition(
 		componentType,
 		stableDeliveryID(componentType),
@@ -2382,32 +2698,7 @@ func flexDeliveryDefinition() DeliveryDefinition {
 			"justify":   variantProperty([]string{"start", "center", "end", "between"}, "start", "Main-axis distribution."),
 		},
 		deliveryDesign("row", "05 Templates", "Layout", root),
-		[]DeliveryExample{
-			withDeliveryExampleSlots(
-				canonicalDeliveryExample(componentType, "row", map[string]any{
-					"direction": "row", "gap": "4", "align": "center", "justify": "start",
-				}),
-				deliveryExampleSlot(
-					"children",
-					deliveryExampleComponent(
-						"primary-action",
-						"Button",
-						map[string]any{
-							"label": "Continue", "variant": "primary",
-							"tone": "neutral", "size": "md",
-						},
-					),
-					deliveryExampleComponent(
-						"secondary-action",
-						"Button",
-						map[string]any{
-							"label": "Cancel", "variant": "secondary",
-							"tone": "neutral", "size": "md",
-						},
-					),
-				),
-			),
-		},
+		flexDeliveryExamples(componentType),
 		Flex,
 	)
 }
@@ -2421,6 +2712,8 @@ func gridDeliveryDefinition() DeliveryDefinition {
 		deliveryInstance("Primary", "Card", "summary", ""),
 		deliveryInstance("Secondary", "Card", "mobile-summary", ""),
 	)
+	root = deliveryClassBound(root, "columns", deliveryGridColumnsClassMap())
+	root = deliveryClassBound(root, "gap", deliveryGapClassMap())
 	return newLayoutDeliveryDefinition(
 		componentType,
 		stableDeliveryID(componentType),
@@ -2430,39 +2723,7 @@ func gridDeliveryDefinition() DeliveryDefinition {
 			"gap":     sizeProperty(gaps, "4", "Space between cells."),
 		},
 		deliveryDesign("two-columns", "05 Templates", "Layout", root),
-		[]DeliveryExample{
-			withDeliveryExampleSlots(
-				canonicalDeliveryExample(componentType, "two-columns", map[string]any{
-					"columns": "2", "gap": "4",
-				}),
-				deliveryExampleSlot(
-					"children",
-					deliveryExampleCard(
-						"primary-card",
-						"Quarterly summary",
-						"Performance is tracking above plan.",
-					),
-					deliveryExampleCard(
-						"secondary-card",
-						"Open reviews",
-						"Three items need attention.",
-					),
-				),
-			),
-			withDeliveryExampleSlots(
-				mobileDeliveryExample(componentType, "single-column", map[string]any{
-					"columns": "1", "gap": "3",
-				}),
-				deliveryExampleSlot(
-					"children",
-					deliveryExampleCard(
-						"mobile-card",
-						"Open reviews",
-						"Three items need attention.",
-					),
-				),
-			),
-		},
+		gridDeliveryExamples(componentType),
 		Grid,
 	)
 }
@@ -2472,9 +2733,11 @@ func containerDeliveryDefinition() DeliveryDefinition {
 	root := deliverySlot(
 		componentType,
 		"children",
-		clContainer.MaxWScaled(tw.MaxW7XL).Compile(),
+		clContainer.MaxWScaled(tw.MaxW7XL).PaddingX(tw.S4).Compile(),
 		deliveryInstance("Content", "Stack", "default", ""),
 	)
+	root = deliveryClassBound(root, "maxWidth", deliveryContainerWidthClassMap())
+	root = deliveryClassBound(root, "padding", deliveryHorizontalPaddingClassMap())
 	return newLayoutDeliveryDefinition(
 		componentType,
 		stableDeliveryID(componentType),
@@ -2484,40 +2747,7 @@ func containerDeliveryDefinition() DeliveryDefinition {
 			"padding":  sizeProperty(gaps, "4", "Horizontal padding."),
 		},
 		deliveryDesign("default", "05 Templates", "Layout", root),
-		[]DeliveryExample{
-			withDeliveryExampleSlots(
-				canonicalDeliveryExample(componentType, "default", map[string]any{
-					"maxWidth": "7xl", "padding": "4",
-				}),
-				deliveryExampleSlot(
-					"children",
-					deliveryExampleComponent(
-						"content-stack",
-						"Stack",
-						map[string]any{"gap": "2", "align": "stretch"},
-						deliveryExampleSlot(
-							"children",
-							deliveryExampleComponent(
-								"content-heading",
-								"Heading",
-								map[string]any{
-									"text":  "Workspace overview",
-									"level": 2,
-								},
-							),
-							deliveryExampleComponent(
-								"content-copy",
-								"Text",
-								map[string]any{
-									"content": "Review current operational details.",
-									"size":    "base", "color": "muted",
-								},
-							),
-						),
-					),
-				),
-			),
-		},
+		containerDeliveryExamples(componentType),
 		Container,
 	)
 }
@@ -2558,6 +2788,8 @@ type DataManagementPageProps struct {
 
 	Title       string               `json:"title"`
 	Description string               `json:"description,omitempty"`
+	LogoutLabel string               `json:"logoutLabel,omitempty"`
+	LogoutURL   string               `json:"logoutURL,omitempty"`
 	Rows        []molecules.TableRow `json:"rows,omitempty"`
 }
 
@@ -2568,16 +2800,31 @@ func dataManagementPageDeliveryDefinition() DeliveryDefinition {
 		clDataManagementPage.Compile(),
 		deliveryFrame(
 			"Container",
-			clContainer.MaxWScaled(tw.MaxW7XL).Compile(),
+			clContainer.MaxWScaled(tw.MaxW7XL).PaddingX(tw.S4).Compile(),
 			deliveryFrame(
 				"Stack",
 				clStack.Gap(tw.S6).Compile(),
 				deliveryInstance("Breadcrumb", "Breadcrumb", "default", ""),
 				deliveryFrame(
 					"Header",
-					clStack.Gap(tw.S2).Compile(),
-					deliveryInstance("Title", "Heading", "level-one", ""),
-					deliveryInstance("Description", "Text", "muted", ""),
+					clDataManagementHeader.Compile(),
+					deliveryFrame(
+						"HeaderCopy",
+						clStack.Gap(tw.S2).Merge(clDataManagementHeaderCopy).Compile(),
+						deliveryInstance("Title", "Heading", "level-one", ""),
+						deliveryInstance("Description", "Text", "muted", ""),
+					),
+					deliveryInstanceProps(
+						"LogoutAction",
+						"Button",
+						"outline",
+						"",
+						map[string]any{
+							"href":    "/logout",
+							"label":   "Log out",
+							"variant": "outline",
+						},
+					),
 				),
 				deliveryInstance("Tabs", "Tabs", "underline", ""),
 				deliveryInstance("Results", "DataGrid", "workspace-list", ""),
@@ -2600,6 +2847,8 @@ func dataManagementPageDeliveryDefinition() DeliveryDefinition {
 		map[string]PropertyContract{
 			"title":       contentProperty("Page heading."),
 			"description": contentProperty("Page purpose."),
+			"logoutLabel": contentProperty("Optional label for the session exit action."),
+			"logoutURL":   contentProperty("Optional route used by the session exit action."),
 			"rows":        contentProperty("Rows displayed by the shared data grid."),
 		},
 		nil,
@@ -2608,6 +2857,8 @@ func dataManagementPageDeliveryDefinition() DeliveryDefinition {
 			canonicalDeliveryExample(componentType, "workspace-management", map[string]any{
 				"title":       "Workspaces",
 				"description": "Manage access, lifecycle, and operational state.",
+				"logoutLabel": "Log out",
+				"logoutURL":   "/logout",
 				"rows": []map[string]any{
 					{"id": "alpha", "cells": map[string]any{"name": "Alpha workspace", "status": "Active", "updated": "Today"}},
 					{"id": "bravo", "cells": map[string]any{"name": "Bravo workspace", "status": "Review", "updated": "Yesterday"}},
@@ -2617,6 +2868,8 @@ func dataManagementPageDeliveryDefinition() DeliveryDefinition {
 			mobileDeliveryExample(componentType, "workspace-management-mobile", map[string]any{
 				"title":       "Workspaces",
 				"description": "Manage access and lifecycle.",
+				"logoutLabel": "Log out",
+				"logoutURL":   "/logout",
 				"rows": []map[string]any{
 					{"id": "alpha", "cells": map[string]any{"name": "Alpha workspace", "status": "Active", "updated": "Today"}},
 				},
@@ -2644,6 +2897,10 @@ func renderDataManagementPage(props DataManagementPageProps) g.Node {
 	if description == "" {
 		description = "Manage access, lifecycle, and operational state."
 	}
+	logoutLabel := props.LogoutLabel
+	if logoutLabel == "" {
+		logoutLabel = "Log out"
+	}
 	main := baseAttrs(props.ComponentProps)
 	main = append(main,
 		classes(clDataManagementPage.Compile(), props.Class),
@@ -2657,10 +2914,24 @@ func renderDataManagementPage(props DataManagementPageProps) g.Node {
 						{Label: title, Current: true},
 					},
 				}),
-				Stack(
-					layouts.StackProps{Gap: "2"},
-					Heading(atoms.HeadingProps{Text: title, Level: 1}),
-					Text(atoms.TextProps{Content: description, Size: "sm", Color: "muted"}),
+				h.Div(
+					h.Class(clDataManagementHeader.Compile()),
+					Stack(
+						layouts.StackProps{
+							ComponentProps: contracts.ComponentProps{Class: clDataManagementHeaderCopy.Compile()},
+							Gap:            "2",
+						},
+						Heading(atoms.HeadingProps{Text: title, Level: 1}),
+						Text(atoms.TextProps{Content: description, Size: "sm", Color: "muted"}),
+					),
+					g.If(
+						props.LogoutURL != "",
+						Button(atoms.ButtonProps{
+							Label:   logoutLabel,
+							Href:    props.LogoutURL,
+							Variant: "outline",
+						}),
+					),
 				),
 				Tabs(molecules.TabsProps{
 					ActiveTab: "all",

@@ -293,6 +293,8 @@ var (
 	clHelp          = tw.New().FontSize(tw.TextXS).TextColor(tw.FgMuted)
 	clFieldErr      = tw.New().FontSize(tw.TextXS).TextColor(tw.FgDanger)
 	clRequired      = tw.New().TextColor(tw.FgDanger)
+	clDisabledState = tw.New().Opacity(tw.Opacity50).Cursor(tw.CursorNotAllowed).
+			PointerEvents(tw.PointerNone)
 
 	clInputDisabled = tw.New().Bg(tw.SurfaceDisabled).Cursor(tw.CursorNotAllowed)
 	clInput         = tw.New().
@@ -947,12 +949,19 @@ var (
 	clStack     = tw.New().Display(tw.DisplayFlex).FlexDir(tw.FlexCol)
 	clFlex      = tw.New().Display(tw.DisplayFlex)
 	clGrid      = tw.New().Display(tw.DisplayGrid)
-	clContainer = tw.New().MarginX(tw.SAuto).Width(tw.SFull).PaddingX(tw.S4)
+	clContainer = tw.New().MarginX(tw.SAuto).Width(tw.SFull)
 
 	// Canonical OSS solution page shell. It is declared alongside the
 	// component primitives so browser CSS and native design compilation share
 	// the exact same utility vocabulary.
-	clDataManagementPage = tw.New().MinHeight(tw.S96).Bg(tw.SurfaceSecondary).PaddingY(tw.S8)
+	clDataManagementPage = tw.New().Width(tw.SFull).HeightViewport(tw.VH100).
+				Bg(tw.SurfaceSecondary).PaddingY(tw.S8)
+	clDataManagementHeader = tw.New().
+				Display(tw.DisplayFlex).FlexDir(tw.FlexCol).Items(tw.ItemsStretch).Gap(tw.S4).
+				Breakpoint(tw.BreakpointSM, func(cl tw.ClassList) tw.ClassList {
+			return cl.FlexDir(tw.FlexRow).Items(tw.ItemsStart).Justify(tw.JustifyBetween)
+		})
+	clDataManagementHeaderCopy = tw.New().MinWidth(tw.S0).Flex1()
 
 	clGapScale = map[string]tw.Spacing{
 		"0": tw.S0, "1": tw.S1, "2": tw.S2, "3": tw.S3, "4": tw.S4,
@@ -1133,7 +1142,7 @@ var (
 	}
 
 	// Sidebar.
-	clSidebarRootAdmin = tw.New().Display(tw.DisplayHidden).
+	clSidebarRootAdmin = tw.New().Display(tw.DisplayHidden).FlexDir(tw.FlexCol).
 				Breakpoint(tw.BreakpointLG, func(c tw.ClassList) tw.ClassList {
 			return c.Display(tw.DisplayFlex).FlexShrink0()
 		}).Transition(tw.TransitionAll)
@@ -1345,7 +1354,7 @@ func ClassLists() []tw.ClassList {
 		clAlertTitle, clAlertMessage, clAlertBody, clAlertIcon, clAlertActions, clAlertClose,
 		clToastBase, clToastIcon, clToastBody, clToastTitle, clToastMessage, clToastLead, clToastClose,
 		clFieldWrap, clFieldWrapFull, clLabel, clHelp, clFieldErr, clRequired,
-		clInput, clInputNormal, clInputError, clInputReadOnly, clInputDisabled,
+		clInput, clInputNormal, clInputError, clInputReadOnly, clInputDisabled, clDisabledState,
 		clInputIconWrap, clInputIconStart, clInputIconEnd, clInputPadStart, clInputPadEnd,
 		clAutocompleteControl, clAutocompletePanel, clAutocompleteList,
 		clAutocompleteOption, clAutocompleteOptionActive, clAutocompleteIndicator, clAutocompleteSpinner,
@@ -1395,6 +1404,7 @@ func ClassLists() []tw.ClassList {
 		clKbd, clLink, clTagBase, clTagIdle, clTagSelected,
 		clTextItalic, clTextUnderline, clTextNoWrap, clTruncate,
 		clStack, clFlex, clGrid, clContainer, clDataManagementPage,
+		clDataManagementHeader, clDataManagementHeaderCopy,
 		clTableWrap, clTable, clTableHead, clTableThBase, clTableTh, clTableTd, clTableRow, clTableTdC,
 		clTableThSort, clTableSortBtn, clTableRowAlt, clTableTdStrong, clTableActions, clTableCellNote,
 		clDetailList, clDetailHeader, clDetailTitle, clDetailDescription,

@@ -482,6 +482,24 @@ func iconDeliveryDefinition() DeliveryDefinition {
 			deliveryExample(componentType, "Arrow Right / Fg Primary / 24", map[string]any{
 				"name": "arrow-right", "tone": "neutral", "size": "lg", "weight": "outline",
 			}),
+			deliveryExample(componentType, "Play / Fg On Inverse / 24", map[string]any{
+				"name": "play", "tone": "neutral", "size": "lg", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Play / Fg On Inverse / 16", map[string]any{
+				"name": "play", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Camera / Fg On Inverse / 32", map[string]any{
+				"name": "camera", "tone": "neutral", "size": "xl", "weight": "outline",
+			}),
+			deliveryExample(componentType, "X Mark / Fg On Inverse / 16", map[string]any{
+				"name": "x-mark", "tone": "neutral", "size": "sm", "weight": "outline",
+			}),
+			deliveryExample(componentType, "Exclamation Triangle / Fg Danger / 32", map[string]any{
+				"name": "exclamation-triangle", "tone": "danger", "size": "xl", "weight": "outline",
+			}),
+			deliveryExample(componentType, "X Circle / Fg On Inverse / 32", map[string]any{
+				"name": "x-circle", "tone": "neutral", "size": "xl", "weight": "outline",
+			}),
 			deliveryExample(componentType, "Calendar / Fg Tertiary / 20", map[string]any{
 				"name": "calendar", "tone": "neutral", "size": "md", "weight": "outline",
 			}),
@@ -645,6 +663,10 @@ func buttonDeliveryDefinition() DeliveryDefinition {
 		"false": "",
 		"true":  clButtonIconOnly.Compile(),
 	})
+	root = deliveryClassBound(root, "disabled", map[string]string{
+		"false": "",
+		"true":  clButtonDisabledLink.Compile(),
+	})
 	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
@@ -698,6 +720,24 @@ func buttonDeliveryDefinition() DeliveryDefinition {
 			}),
 			deliveryExample(componentType, "primary-success-sm", map[string]any{
 				"label": "Complete", "variant": "primary", "tone": "success", "size": "sm",
+			}),
+			deliveryExample(componentType, "primary-warning", map[string]any{
+				"label": "Review warning", "variant": "primary", "tone": "warning", "size": "md",
+			}),
+			deliveryExample(componentType, "primary-info", map[string]any{
+				"label": "View information", "variant": "primary", "tone": "info", "size": "md",
+			}),
+			deliveryExample(componentType, "large", map[string]any{
+				"label": "Large action", "variant": "primary", "tone": "brand", "size": "lg",
+			}),
+			deliveryExample(componentType, "extra-large", map[string]any{
+				"label": "Extra-large action", "variant": "primary", "tone": "brand", "size": "xl",
+			}),
+			deliveryExample(componentType, "display", map[string]any{
+				"label": "Display action", "variant": "primary", "tone": "brand", "size": "2xl",
+			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"label": "Unavailable", "variant": "primary", "tone": "neutral", "size": "md", "disabled": true,
 			}),
 			deliveryExample(componentType, "loading", map[string]any{
 				"label": "Saving", "variant": "primary", "tone": "neutral", "size": "md", "loading": true,
@@ -1237,15 +1277,22 @@ func inputDeliveryDefinition() DeliveryDefinition {
 
 func selectDeliveryDefinition() DeliveryDefinition {
 	componentType := "Select"
+	control := deliveryFrame(
+		"Control",
+		clInput.Compile()+" "+clInputNormal.Compile(),
+		deliveryText("Selection", "", "Choose a status", "value", "placeholder"),
+	)
+	control = deliveryClassBound(control, "error", map[string]string{
+		"": "", "*": clInputError.Compile(),
+	})
+	control = deliveryClassBound(control, "disabled", map[string]string{
+		"false": "", "true": clInputDisabled.Compile(),
+	})
 	root := deliveryFrame(
 		componentType,
 		clFieldWrap.Compile(),
 		deliveryText("Label", clLabel.Compile(), "Status", "label"),
-		deliveryFrame(
-			"Control",
-			clInput.Compile()+" "+clInputNormal.Compile(),
-			deliveryText("Selection", "", "Choose a status", "value", "placeholder"),
-		),
+		control,
 		deliveryText("Help", clHelp.Compile(), "Select one option.", "helpText", "error"),
 	)
 	return newDeliveryDefinition(
@@ -1286,6 +1333,14 @@ func selectDeliveryDefinition() DeliveryDefinition {
 					{"label": "Archived", "value": "archived", "group": "History"},
 				},
 			}),
+			deliveryExample(componentType, "required", map[string]any{
+				"name": "status", "label": "Status", "placeholder": "Choose a status", "required": true,
+				"options": []map[string]any{{"label": "Draft", "value": "draft"}},
+			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"name": "status", "label": "Status", "value": "draft", "disabled": true,
+				"options": []map[string]any{{"label": "Draft", "value": "draft"}},
+			}),
 		},
 		Select,
 	)
@@ -1293,16 +1348,26 @@ func selectDeliveryDefinition() DeliveryDefinition {
 
 func textareaDeliveryDefinition() DeliveryDefinition {
 	componentType := "Textarea"
+	control := deliveryFrame(
+		"Control",
+		clInput.Compile()+" "+clInputNormal.Compile(),
+		deliveryText("Value", "", "Add context for reviewers.", "value", "placeholder"),
+	)
+	control = deliveryClassBound(control, "errorMessage", map[string]string{
+		"": "", "*": clInputError.Compile(),
+	})
+	control = deliveryClassBound(control, "readOnly", map[string]string{
+		"false": "", "true": clInputReadOnly.Compile(),
+	})
+	control = deliveryClassBound(control, "disabled", map[string]string{
+		"false": "", "true": clInputDisabled.Compile(),
+	})
 	root := deliverySemantics(
 		deliveryFrame(
 			componentType,
 			clFieldWrap.Compile(),
 			deliveryText("Label", clLabel.Compile(), "Notes", "label"),
-			deliveryFrame(
-				"Control",
-				clInput.Compile()+" "+clInputNormal.Compile(),
-				deliveryText("Value", "", "Add context for reviewers.", "value", "placeholder"),
-			),
+			control,
 			deliveryText("Help", clHelp.Compile(), "Keep it concise.", "helperText", "errorMessage"),
 		),
 		"field",
@@ -1355,6 +1420,12 @@ func textareaDeliveryDefinition() DeliveryDefinition {
 				"errorMessage": "Must be at least 20 characters.",
 				"helperText":   "Explain enough for another person to act.",
 			}),
+			deliveryExample(componentType, "required", map[string]any{
+				"name": "review", "label": "Review notes", "placeholder": "Add review notes", "required": true,
+			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"name": "review", "label": "Review notes", "value": "Managed by policy", "disabled": true,
+			}),
 		},
 		Textarea,
 	)
@@ -1362,22 +1433,40 @@ func textareaDeliveryDefinition() DeliveryDefinition {
 
 func checkboxDeliveryDefinition() DeliveryDefinition {
 	componentType := "Checkbox"
+	indicator := deliveryFrame(
+		"Indicator",
+		clCheckboxIndicator.Compile(),
+		deliveryVisibleWhen(
+			deliveryText("Checkmark", clCheckboxCheckmark.Compile(), "✓"),
+			map[string]any{"checked": true, "indeterminate": false},
+		),
+		deliveryVisibleWhen(
+			deliveryText("MixedMark", clCheckboxCheckmark.Compile(), "—"),
+			map[string]any{"indeterminate": true},
+		),
+	)
+	indicator = deliveryClassBound(indicator, "checked", map[string]string{
+		"false": clCheckboxIndicatorIdle.Compile(),
+		"true":  clCheckboxIndicatorActive.Compile(),
+	})
+	indicator = deliveryClassBound(indicator, "indeterminate", map[string]string{
+		"false": "",
+		"true":  clCheckboxIndicatorActive.Compile(),
+	})
+	controlRow := deliveryFrame(
+		"ControlRow",
+		clCheckboxRoot.Compile(),
+		indicator,
+		deliveryText("Label", clCheckboxLabel.Compile(), "Include archived items", "label"),
+	)
+	controlRow = deliveryClassBound(controlRow, "disabled", map[string]string{
+		"false": "",
+		"true":  clCheckboxRootDisabled.Compile(),
+	})
 	root := deliveryFrame(
 		componentType,
 		clFieldWrap.Compile(),
-		deliveryFrame(
-			"ControlRow",
-			clCheckboxRoot.Compile(),
-			deliveryClassBound(
-				deliveryFrame("Indicator", clCheckboxIndicator.Compile()),
-				"checked",
-				map[string]string{
-					"false": clCheckboxIndicatorIdle.Compile(),
-					"true":  clCheckboxIndicatorActive.Compile(),
-				},
-			),
-			deliveryText("Label", clCheckboxLabel.Compile(), "Include archived items", "label"),
-		),
+		controlRow,
 		deliveryText("Help", clHelp.Compile(), "Archived rows remain read-only.", "helpText"),
 	)
 	return newDeliveryDefinition(
@@ -1409,6 +1498,12 @@ func checkboxDeliveryDefinition() DeliveryDefinition {
 			}),
 			deliveryExample(componentType, "required", map[string]any{
 				"name": "terms", "label": "Accept terms of service", "required": true,
+			}),
+			deliveryExample(componentType, "indeterminate", map[string]any{
+				"name": "all", "label": "Select all rows", "indeterminate": true,
+			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"name": "archived", "label": "Archived selection unavailable", "disabled": true,
 			}),
 		},
 		Checkbox,
@@ -1658,7 +1753,12 @@ func textDeliveryDefinition() DeliveryDefinition {
 			deliveryClassBound(
 				deliveryClassBound(
 					deliveryClassBound(
-						deliveryText("Text", "", "A clear supporting sentence.", "content"),
+						deliveryText(
+							"Text",
+							tw.New().FontFamily(tw.FontSans).Compile(),
+							"A clear supporting sentence.",
+							"content",
+						),
 						"size",
 						textSizeClasses(),
 					),
@@ -2014,27 +2114,41 @@ func tooltipDeliveryDefinition() DeliveryDefinition {
 		}},
 		deliveryDesign("default", "02 Atoms", "Feedback", root),
 		[]DeliveryExample{
-			withDeliveryExampleSlots(
-				canonicalDeliveryExample(componentType, "default", map[string]any{
-					"content": "Helpful context", "position": "top", "delay": 200,
-				}),
-				deliveryExampleSlot(
-					"trigger",
-					deliveryExampleComponent(
-						"tooltip-trigger",
-						"Button",
-						map[string]any{
-							"label": "More information", "variant": "secondary", "size": "md",
-						},
-					),
-				),
-			),
+			tooltipDeliveryExample(componentType, "default", "top", true),
+			tooltipDeliveryExample(componentType, "bottom", "bottom", false),
+			tooltipDeliveryExample(componentType, "left", "left", false),
+			tooltipDeliveryExample(componentType, "right", "right", false),
 		},
 		func(props atoms.TooltipProps, slots DeliverySlotChildren) g.Node {
 			return Tooltip(props, slots.Nodes("trigger")...)
 		},
 	)
 	return withDeliveryTags(definition, "tooltip", "contextual-help", "accessibility")
+}
+
+func tooltipDeliveryExample(componentType, name, position string, canonical bool) DeliveryExample {
+	props := map[string]any{
+		"content": "Helpful context", "position": position, "delay": 200,
+	}
+	var example DeliveryExample
+	if canonical {
+		example = canonicalDeliveryExample(componentType, name, props)
+	} else {
+		example = deliveryExample(componentType, name, props)
+	}
+	return withDeliveryExampleSlots(
+		example,
+		deliveryExampleSlot(
+			"trigger",
+			deliveryExampleComponent(
+				"tooltip-trigger-"+position,
+				"Button",
+				map[string]any{
+					"label": "More information", "variant": "secondary", "size": "md",
+				},
+			),
+		),
+	)
 }
 
 func skeletonDeliveryDefinition() DeliveryDefinition {
@@ -2261,6 +2375,9 @@ func linkDeliveryDefinition() DeliveryDefinition {
 		deliveryText("Label", "", "View documentation", "label"),
 		deliverySlot("TrailingAdornment", "trailingAdornment", clIcon.Compile()),
 	)
+	root = deliveryClassBound(root, "disabled", map[string]string{
+		"false": "", "true": clDisabledState.Compile(),
+	})
 	return newSlottedDeliveryDefinition(
 		componentType,
 		uicomponent.TierAtom,
@@ -2287,6 +2404,9 @@ func linkDeliveryDefinition() DeliveryDefinition {
 			}),
 			deliveryExample(componentType, "external", map[string]any{
 				"label": "Open reference", "href": "https://example.com", "external": true,
+			}),
+			deliveryExample(componentType, "disabled", map[string]any{
+				"label": "Unavailable reference", "href": "/unavailable", "disabled": true,
 			}),
 		},
 		func(props atoms.LinkProps, slots DeliverySlotChildren) g.Node {

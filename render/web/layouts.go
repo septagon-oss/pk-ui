@@ -101,7 +101,7 @@ func Container(p layouts.ContainerProps, children ...g.Node) g.Node {
 	if mw, ok := containerWidths[p.MaxWidth]; ok {
 		w = mw
 	}
-	cl := clContainer.MaxWScaled(w)
+	cl := clContainer.MaxWScaled(w).PaddingX(gapOr(p.Padding, tw.S4))
 	nodes := baseAttrs(p.ComponentProps)
 	nodes = append(nodes, classes(cl.Compile(), p.Class))
 	nodes = append(nodes, children...)
