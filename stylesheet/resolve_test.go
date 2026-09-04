@@ -153,6 +153,47 @@ func TestIndexReadsARealProductStylesheet(t *testing.T) {
 	t.Logf("resolved %d classes from the Collect stylesheet", len(classes))
 }
 
+func TestVariablesRespectRootAndClassScopes(t *testing.T) {
+	t.Parallel()
+
+	index := newIndex(t, `
+.theme-dark {
+  --surface: black;
+  --theme-only: dark;
+}
+:root {
+  --surface: white;
+  --spacing: 8px;
+}
+.unrelated {
+  --surface: magenta;
+  --unrelated-only: leaked;
+}
+@media (min-width: 40rem) {
+  :root { --spacing: 16px; }
+}
+`)
+
+	if got, want := index.Variables(), map[string]string{
+		"--surface": "white",
+		"--spacing": "8px",
+	}; !maps.Equal(got, want) {
+		t.Errorf("Variables() = %v, want unconditional root variables %v", got, want)
+	}
+
+	if got, want := index.VariablesFor("theme-dark"), map[string]string{
+		"--surface":    "black",
+		"--spacing":    "8px",
+		"--theme-only": "dark",
+	}; !maps.Equal(got, want) {
+		t.Errorf("VariablesFor(theme-dark) = %v, want root plus matching theme %v", got, want)
+	}
+
+	if got := index.VariablesFor("some-component"); !maps.Equal(got, index.Variables()) {
+		t.Errorf("unrelated context leaked scoped variables: got %v, want %v", got, index.Variables())
+	}
+}
+
 // collectStylesheet locates the product stylesheet in the estate checkout.
 func collectStylesheet(t *testing.T) string {
 	t.Helper()

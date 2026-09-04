@@ -24,7 +24,6 @@ package stylesheet
 // Resolution stays with what a class declares unconditionally.
 
 import (
-	"maps"
 	"regexp"
 	"slices"
 	"sort"
@@ -43,8 +42,11 @@ type Index struct {
 	// contextual holds every unconditional rule with the classes its selector
 	// requires, for reachability.
 	contextual []contextualRule
-	// variables holds every custom property the stylesheet declares.
-	variables map[string]string
+	// variables holds custom-property declarations in stylesheet source
+	// order. Their selectors remain attached so callers can resolve only the
+	// scopes that are present instead of leaking an unrelated theme or
+	// component's values into every document.
+	variables []Declaration
 }
 
 // contextualRule is one declaration together with what a document must contain
@@ -69,14 +71,10 @@ func NewIndex(css []byte) (*Index, error) {
 	index := &Index{
 		declarations: map[string][]Declaration{},
 		order:        map[string]int{},
-		variables:    map[string]string{},
 	}
 	for position, declaration := range all {
 		if strings.HasPrefix(declaration.Property, "--") {
-			// A custom property is collected wherever it is declared, not only
-			// on the classes it happens to sit beside: it is defined once, on
-			// :root or a theme selector, and read from everywhere.
-			index.variables[declaration.Property] = declaration.Value
+			index.variables = append(index.variables, declaration)
 			continue
 		}
 		if declaration.AtRule != "" {
@@ -240,7 +238,8 @@ func (i *Index) Reachable(classes ...string) []Declaration {
 	return out
 }
 
-// Variables returns every custom property the stylesheet declares.
+// Variables returns the unconditional custom properties available to a
+// document without opting into a class-scoped context.
 //
 // These are what make a product's classes readable as design tokens rather
 // than as raw paint. Collect declares "--sm-green: rgb(var(--surface-success,
@@ -249,14 +248,78 @@ func (i *Index) Reachable(classes ...string) []Declaration {
 // removed. Following that chain is how a class resolves back to the token a
 // design tool should bind to.
 //
-// A property declared more than once resolves to the last, as the cascade
-// does. That is a real approximation: a stylesheet that redefines its tokens
-// per colour scheme declares each twice, and this keeps whichever comes last
-// in the file rather than knowing which scheme is in force.
+// Variables is retained as the context-free API. It deliberately excludes
+// declarations scoped to classes; use VariablesFor when resolving a theme or
+// component context. Within the unconditional scope, a later declaration wins
+// as the cascade does at equal specificity.
 func (i *Index) Variables() map[string]string {
-	out := make(map[string]string, len(i.variables))
-	maps.Copy(out, i.variables)
+	return i.VariablesFor()
+}
+
+// VariablesFor returns the custom properties available in a document whose
+// ancestry and elements collectively carry classes.
+//
+// Root-level declarations are always included. A class-scoped declaration is
+// included only when all classes named by one selector-list branch are
+// present. Scoped values layer over inherited root values even when the root
+// declaration appears later in the file; declarations within each layer keep
+// source-order precedence. Selectors involving state, attributes, IDs, or
+// conditional at-rules are excluded because a class list cannot prove those
+// contexts are active.
+//
+// The class set is intentionally flat, matching Reachable: this API answers
+// whether a variable can be available in the supplied document context, not
+// which exact element inherits it.
+func (i *Index) VariablesFor(classes ...string) map[string]string {
+	present := make(map[string]struct{}, len(classes))
+	for _, class := range classes {
+		present[class] = struct{}{}
+	}
+
+	out := map[string]string{}
+	for _, declaration := range i.variables {
+		if declaration.AtRule == "" && hasGlobalVariableSelector(declaration.Selector) {
+			out[declaration.Property] = declaration.Value
+		}
+	}
+	for _, declaration := range i.variables {
+		if declaration.AtRule == "" && hasMatchingVariableSelector(declaration.Selector, present) {
+			out[declaration.Property] = declaration.Value
+		}
+	}
 	return out
+}
+
+func hasGlobalVariableSelector(selector string) bool {
+	for part := range strings.SplitSeq(selector, ",") {
+		switch strings.TrimSpace(part) {
+		case ":root", "html", "html:root", "body", "*":
+			return true
+		}
+	}
+	return false
+}
+
+func hasMatchingVariableSelector(selector string, present map[string]struct{}) bool {
+	for part := range strings.SplitSeq(selector, ",") {
+		requirements := selectorRequirements(strings.TrimSpace(part))
+		for _, requirement := range requirements {
+			if len(requirement.requires) == 0 {
+				continue
+			}
+			matched := true
+			for _, required := range requirement.requires {
+				if _, ok := present[required]; !ok {
+					matched = false
+					break
+				}
+			}
+			if matched {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // Mentions reports whether any rule names this class at all, in any context.

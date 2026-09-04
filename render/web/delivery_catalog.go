@@ -206,10 +206,10 @@ func avatarDeliveryDefinition() DeliveryDefinition {
 		design,
 		[]DeliveryExample{
 			canonicalDeliveryExample(componentType, "initials", map[string]any{
-				"name": "Ada Lovelace", "size": "lg", "shape": "circle", "tone": "neutral",
+				"name": "Ada Lovelace", "initials": "AL", "size": "lg", "shape": "circle", "tone": "neutral",
 			}),
 			deliveryExample(componentType, "with-status", map[string]any{
-				"name": "Grace Hopper", "status": "online", "statusLabel": "Status: online",
+				"name": "Grace Hopper", "initials": "GH", "status": "online", "statusLabel": "Status: online",
 				"statusPosition": "bottom-right", "tone": "brand",
 			}),
 			deliveryExample(componentType, "with-image", map[string]any{

@@ -283,6 +283,41 @@ func TestAvatarDeliveryPublishesImageCircleMediumSpecimen(t *testing.T) {
 	}
 }
 
+func TestAvatarDeliveryExamplesBindExplicitInitials(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		example  string
+		initials string
+	}{
+		{example: "initials", initials: "AL"},
+		{example: "with-status", initials: "GH"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.example, func(t *testing.T) {
+			t.Parallel()
+
+			props := deliveryExamplePropsForTest(t, "Avatar", test.example)
+			if got, _ := props["initials"].(string); got != test.initials {
+				t.Fatalf("Avatar/%s initials = %q, want explicit %q", test.example, got, test.initials)
+			}
+
+			node, err := RenderDeliveryExample("Avatar", deliveryExampleID("Avatar", test.example), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var rendered strings.Builder
+			if err := node.Render(&rendered); err != nil {
+				t.Fatal(err)
+			}
+			if fragment := ">" + test.initials + "</span>"; !strings.Contains(rendered.String(), fragment) {
+				t.Errorf("Avatar/%s did not bind %q into its Initials node: %s", test.example, test.initials, rendered.String())
+			}
+		})
+	}
+}
+
 func TestAvatarImageCircleMediumSpecimenSelectsExactDesignGeometry(t *testing.T) {
 	t.Parallel()
 
